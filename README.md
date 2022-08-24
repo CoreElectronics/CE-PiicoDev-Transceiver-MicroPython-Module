@@ -56,6 +56,9 @@ id | List[int, int, int, int] | 1=ON, 0=OFF | [0,0,0,0] | Hardware switches chan
 
 ### `.off()`
 
+### `.send(message)`
+Sends a message string. This is the equivalent of send_bytes(bytes(message, 'utf8'))
+
 This library has been inspired by the [Micro:bit Radio library](https://microbit-micropython.readthedocs.io/en/v1.0.1/radio.html).
 
 # License
