@@ -56,7 +56,7 @@ ID | List[int, int, int, int] | 1=ON, 0=OFF | [0,0,0,0] | Hardware switches chan
 
 ### `.off()`
 
-This library has been designed to be compatible with the [Micro:bit Radio library]. (https://microbit-micropython.readthedocs.io/en/v1.0.1/radio.html)
+This library has been inspired by the [Micro:bit Radio library](https://microbit-micropython.readthedocs.io/en/v1.0.1/radio.html).
 
 # License
 This project is open source - please review the LICENSE.md file for further licensing information.
