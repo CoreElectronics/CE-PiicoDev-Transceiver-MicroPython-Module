@@ -39,38 +39,24 @@ ID | List[int, int, int, int] | 1=ON, 0=OFF | [0,0,0,0] | Hardware switches chan
 
 (default=7) can be an integer value from 0 to 83 (inclusive) that defines an arbitrary "channel" to which the radio is tuned. Messages will be sent via this channel and only messages received via this channel will be put onto the incoming message queue. Each step is 1MHz wide, based at 2400MHz.
 
-### `.power` (default=6) is an integer value from 0 to 7 (inclusive) to
-    indicate the strength of signal used when broadcasting a message. The
-    higher the value the stronger the signal, but the more power is consumed
-    by the device. The numbering translates to positions in the following list
-    of dBm (decibel milliwatt) values: -30, -20, -16, -12, -8, -4, 0, 4.
+### `.power`
+(default=6) is an integer value from 0 to 7 (inclusive) to indicate the strength of signal used when broadcasting a message. The higher the value the stronger the signal, but the more power is consumed by the device. The numbering translates to positions in the following list of dBm (decibel milliwatt) values: -30, -20, -16, -12, -8, -4, 0, 4.
 
-    The ``address`` (default=0x75626974) is an arbitrary name, expressed as a
-    32-bit address, that's used to filter incoming packets at the hardware
-    level, keeping only those that match the address you set. The default used
-    by other micro:bit related platforms is the default setting used here.
+### `.address`
+(default=0x75626974) is an arbitrary name, expressed as a 32-bit address, that's used to filter incoming packets at the hardware level, keeping only those that match the address you set. The default used by other micro:bit related platforms is the default setting used here.
 
-    The ``group`` (default=0) is an 8-bit value (0-255) used with the
-    ``address`` when filtering messages. Conceptually, "address" is like a
-    house/office address and "group" is like the person at that address to
-    which you want to send your message.
+### `.group`
+(default=0) is an 8-bit value (0-255) used with the `address` when filtering messages. Conceptually, "address" is like a house/office address and "group" is like the person at that address to which you want to send your message.
 
-    The ``data_rate`` (default=radio.RATE_1MBIT) indicates the speed at which
-    data throughput takes place. Can be one of the following contants defined
-    in the ``radio`` module : ``RATE_250KBIT``, ``RATE_1MBIT`` or
-    ``RATE_2MBIT``.
-
-
-Discussion Points: seperate boards for 915 or 434 - this should make it easier to use
+### `.data_rate`
+(default=radio.RATE_1MBIT) indicates the speed at which data throughput takes place. Can be one of the following contants defined in the ``radio`` module : `RATE_250KBIT`, `RATE_1MBIT` or `RATE_2MBIT`.
 
 ## Methods
 ### `.on()`
 
 ### `.off()`
 
-
-Use this:
-https://microbit-micropython.readthedocs.io/en/v1.0.1/radio.html
+This library has been designed to be compatible with the [Micro:bit Radio library]. (https://microbit-micropython.readthedocs.io/en/v1.0.1/radio.html)
 
 # License
 This project is open source - please review the LICENSE.md file for further licensing information.
