@@ -15,15 +15,15 @@ This module has been tested on:
 
 ## Initialisation
 
-### `PiicoDev_Radio(bus=, freq=, sda=, scl=, address=0x35, id=, frequency=None)`
+### `PiicoDev_Radio(bus=, freq=, sda=, scl=, address=0x1A, id=, frequency=None)`
 Parameter | Type | Range | Default | Description
 --- | --- | --- | --- | ---
 bus | int | 0,1 | Raspberry Pi Pico: 0, Raspberry Pi: 1 | I2C Bus.  Ignored on Micro:bit
 freq | int | 100 to 1000000 | Device dependent | I2C Bus frequency (Hz).  Ignored on Raspberry Pi
 sda | Pin | Device Dependent | Device Dependent | I2C SDA Pin. Implemented on Raspberry Pi Pico only
 scl | Pin | Device Dependent | Device Dependent | I2C SCL Pin. Implemented on Raspberry Pi Pico only
-address | int | 0x35, 0x08 - 0x77 | 0x1A | Manually specify the address of the connected device. For when a software address is set on the device.
-ID | List[int, int, int, int] | 1=ON, 0=OFF | [0,0,0,0] | Hardware switches change the device address - Abstracts the need for user to look up an address, simply input the switch positions. Alternatively, use `address` for explicit address.
+address | int | 0x1A, 0x08 - 0x77 | 0x1A | Manually specify the address of the connected device. For when a software address is set on the device.
+id | List[int, int, int, int] | 1=ON, 0=OFF | [0,0,0,0] | Hardware switches change the device address - Abstracts the need for user to look up an address, simply input the switch positions. Alternatively, use `address` for explicit address.
 
 ## Properties
 
@@ -39,38 +39,31 @@ ID | List[int, int, int, int] | 1=ON, 0=OFF | [0,0,0,0] | Hardware switches chan
 
 (default=7) can be an integer value from 0 to 83 (inclusive) that defines an arbitrary "channel" to which the radio is tuned. Messages will be sent via this channel and only messages received via this channel will be put onto the incoming message queue. Each step is 1MHz wide, based at 2400MHz.
 
-### `.power` (default=6) is an integer value from 0 to 7 (inclusive) to
-    indicate the strength of signal used when broadcasting a message. The
-    higher the value the stronger the signal, but the more power is consumed
-    by the device. The numbering translates to positions in the following list
-    of dBm (decibel milliwatt) values: -30, -20, -16, -12, -8, -4, 0, 4.
+### `.power`
+(default=6) is an integer value from 0 to 7 (inclusive) to indicate the strength of signal used when broadcasting a message. The higher the value the stronger the signal, but the more power is consumed by the device. The numbering translates to positions in the following list of dBm (decibel milliwatt) values: -30, -20, -16, -12, -8, -4, 0, 4.
 
-    The ``address`` (default=0x75626974) is an arbitrary name, expressed as a
-    32-bit address, that's used to filter incoming packets at the hardware
-    level, keeping only those that match the address you set. The default used
-    by other micro:bit related platforms is the default setting used here.
+### `.address`
+(default=0x75626974) is an arbitrary name, expressed as a 32-bit address, that's used to filter incoming packets at the hardware level, keeping only those that match the address you set. The default used by other micro:bit related platforms is the default setting used here.
 
-    The ``group`` (default=0) is an 8-bit value (0-255) used with the
-    ``address`` when filtering messages. Conceptually, "address" is like a
-    house/office address and "group" is like the person at that address to
-    which you want to send your message.
+### `.group`
+(default=0) is an 8-bit value (0-255) used with the `address` when filtering messages. Conceptually, "address" is like a house/office address and "group" is like the person at that address to which you want to send your message.
 
-    The ``data_rate`` (default=radio.RATE_1MBIT) indicates the speed at which
-    data throughput takes place. Can be one of the following contants defined
-    in the ``radio`` module : ``RATE_250KBIT``, ``RATE_1MBIT`` or
-    ``RATE_2MBIT``.
-
-
-Discussion Points: seperate boards for 915 or 434 - this should make it easier to use
+### `.data_rate`
+(default=radio.RATE_1MBIT) indicates the speed at which data throughput takes place. Can be one of the following contants defined in the ``radio`` module : `RATE_250KBIT`, `RATE_1MBIT` or `RATE_2MBIT`.
 
 ## Methods
 ### `.on()`
 
 ### `.off()`
 
+### `.send(message)`
+Sends a message string. This is the equivalent of send_bytes(bytes(message, 'utf8'))
 
-Use this:
-https://microbit-micropython.readthedocs.io/en/v1.0.1/radio.html
+### `.receive()`
+Works in exactly the same way as receive_bytes but returns whatever was sent.
+Currently, it’s equivalent to str(receive_bytes(), 'utf8').
+
+This library has been inspired by the [Micro:bit Radio library](https://microbit-micropython.readthedocs.io/en/v1.0.1/radio.html).
 
 # License
 This project is open source - please review the LICENSE.md file for further licensing information.
