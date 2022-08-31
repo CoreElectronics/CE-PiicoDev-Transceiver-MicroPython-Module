@@ -27,8 +27,8 @@ void firmwareMinorReturn(char *data) {
 
 // Control the power LED
 void getPowerLed(char *data) {
-  valueMap.led = digitalRead(powerLedPin);
-  loadArray((uint8_t)valueMap.led);
+  valueMap.ledRead = digitalRead(powerLedPin);
+  loadArray((uint8_t)valueMap.ledRead);
 }
 
 // Control the power LED
@@ -42,6 +42,10 @@ void powerLed(bool state) {
   } else {
     digitalWrite(powerLedPin, false);
   }
+}
+
+void getRadioState(char *data) {
+  return radioState;
 }
 
 void setRadioState(char *data) {
@@ -58,8 +62,12 @@ void setRadioState(char *data) {
   }
 }
 
-void getRadioState(char *data) {
-  return radioState;
+void getMessage(char *data) {
+
+}
+
+void setMessage(char *data) {
+  
 }
 
 void setAddress(char *data) {

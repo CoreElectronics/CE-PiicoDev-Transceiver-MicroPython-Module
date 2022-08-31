@@ -89,12 +89,12 @@ struct memoryMap {
   uint8_t firmwareMajor;
   uint8_t firmwareMinor;
   uint8_t i2cAddress;
-  uint8_t radioOn;
-  uint8_t radioOnWrite;
-  uint8_t led;
+  uint8_t ledRead;
   uint8_t ledWrite;
-  uint16_t sendData;
-  uint16_t receiveData;
+  uint8_t radioStateRead;
+  uint8_t radioStateWrite;
+  uint16_t messageRead;
+  uint16_t messageWrite;
 };
 
 // Register addresses.
@@ -103,12 +103,12 @@ const memoryMap registerMap = {
   .firmwareMajor = 0x02,
   .firmwareMinor = 0x03,
   .i2cAddress = 0x04,
-  .radioOn = 0x05,
-  .radioOnWrite = 0x85,
-  .led = 0x07,
-  .ledWrite = 0x87,
-  .sendData = 0xA1,
-  .receiveData = 0x21
+  .ledRead = 0x05,
+  .ledWrite = 0x85,
+  .radioStateRead = 0x06,
+  .radioStateWrite = 0x86,
+  .messageRead = 0x21,
+  .messageWrite = 0xA1
 };
 
 volatile memoryMap valueMap = {
@@ -116,12 +116,12 @@ volatile memoryMap valueMap = {
   .firmwareMajor = FIRMWARE_MAJOR,
   .firmwareMinor = FIRMWARE_MINOR,
   .i2cAddress = DEFAULT_I2C_ADDRESS,
-  .radioOn = 0,
-  .radioOnWrite = 0,
-  .led = 0x01,
+  .ledRead = 0x01,
   .ledWrite = 0x01,
-  .sendData = 0,
-  .receiveData = 0
+  .radioStateRead = 0,
+  .radioStateWrite = 0,
+  .messageRead = 0,
+  .messageWrite = 0
 };
 
 uint8_t currentRegisterNumber;
@@ -135,21 +135,24 @@ void idReturn(char *data);
 void firmwareMajorReturn(char *data);
 void firmwareMinorReturn(char *data);
 void setAddress(char *data);
-void readPotentiometer(char *data);
 void getPowerLed(char *data);
 void setPowerLed(char *data);
-void setRadioState(char *data);
 void getRadioState(char *data);
+void setRadioState(char *data);
+void getMessage(char *data);
+void setMessage(char *data);
 
 functionMap functions[] = {
   {registerMap.id, idReturn},
   {registerMap.firmwareMajor, firmwareMajorReturn},
   {registerMap.firmwareMinor, firmwareMinorReturn},
   {registerMap.i2cAddress, setAddress},
-  {registerMap.radioOn, getRadioState},
-  {registerMap.radioOnWrite, setRadioState},
-  {registerMap.led, getPowerLed},
+  {registerMap.ledRead, getPowerLed},
   {registerMap.ledWrite, setPowerLed},
+  {registerMap.radioStateRead, getRadioState},
+  {registerMap.radioStateWrite, setRadioState},
+  {registerMap.messageRead, getMessage},
+  {registerMap.messageWrite, setMessage},
 };
 
 void setup() {
