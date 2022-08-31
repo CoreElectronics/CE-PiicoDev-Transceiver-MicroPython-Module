@@ -2,7 +2,10 @@
 # Peter Johnston at Core Electronics
 # 2022-08-24: Initial release
 
+up to reading the config file, then i need to implement group, radio and destination in arduino
+
 from PiicoDev_Unified import *
+from radio_config import *
 
 compat_str = '\nUnified PiicoDev library out of date.  Get the latest module: https://piico.dev/unified \n'
 
@@ -15,6 +18,9 @@ _REG_FIRM_MIN     = 0x03
 _REG_I2C_ADDRESS  = 0x04
 _REG_LED          = 0x05
 _REG_RADIO_ON     = 0x06
+_REG_GROUP        = 0x07
+_REG_RADIO_ADDRESS = 0x08
+_REG_DESTINATION_RADIO_ADDRESS = 0x09
 _REG_WHOAMI       = 0x11
 _REG_MESSAGE      = 0x21
 
@@ -77,6 +83,30 @@ class PiicoDev_Radio(object):
         
     def off(self):
         self._off = 1
+    
+    @property
+    def group(self):
+        return self._read_int(_REG_GROUP)
+    
+    @group.setter
+    def group(self, value):
+        self._write_int(_set_bit(_REG_GROUP, 7), value)
+    
+    @property
+    def radio_address(self):
+        return self._read_int(_REG_RADIO_ADDRESS)
+    
+    @radio_address.setter
+    def radio_address(self, value):
+        self._write_int(_set_bit(_REG_RADIO_ADDRESS, 7), value)
+        
+    @property
+    def destination_radio_address(self):
+        return self._read_int(_REG_DESTINATION_RADIO_ADDRESS)
+    
+    @radio_address.setter
+    def destination_radio_address(self, value):
+        self._write_int(_set_bit(_REG_DESTINATION_RADIO_ADDRESS, 7), value)
     
     @property
     def message(self):

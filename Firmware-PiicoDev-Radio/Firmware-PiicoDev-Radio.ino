@@ -12,8 +12,8 @@
  */
 
 #include <RFM69.h>         //get it here: https://www.github.com/lowpowerlab/rfm69
-#include <RFM69_ATC.h>     //get it here: https://www.github.com/lowpowerlab/rfm69
-#include <SPIFlash.h>      //get it here: https://www.github.com/lowpowerlab/spiflash
+//#include <RFM69_ATC.h>     //get it here: https://www.github.com/lowpowerlab/rfm69
+//#include <SPIFlash.h>      //get it here: https://www.github.com/lowpowerlab/spiflash
 #include <SPI.h>           //included with Arduino IDE install (www.arduino.cc)
 
 #define DEBUG true
@@ -40,12 +40,12 @@
 #define HARDWARE_ADDRESS false
 #define I2C_BUFFER_SIZE 32 //For ATmega328 based Arduinos, the I2C buffer is limited to 32 bytes
 #define FREQUENCY RF69_915MHZ
-#define NODEID      99
+#define NODEID      1
 #define NETWORKID   100
-#define GATEWAYID   1
+#define GATEWAYID   99
 #define ENCRYPTKEY    "-PiicoDevRadio- " //has to be same 16 characters/bytes on all nodes, not more not less!
 
-RFM69_ATC radio;
+RFM69 radio;
 
 enum eepromLocations {
   LOCATION_I2C_ADDRESS = 0x00,  // Device's address
@@ -159,7 +159,8 @@ typedef struct {
   int           nodeId; //store this nodeId
   char          message[16];
 } Payload;
-Payload theData;
+Payload theDataRead;
+Payload theDataWrite;
 
 void setup() {
 #if DEBUG
