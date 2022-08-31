@@ -67,7 +67,12 @@ void getMessage(char *data) {
 }
 
 void setMessage(char *data) {
-  
+    strncpy(theData.message, data, sizeof(data));
+    if (radio.sendWithRetry(GATEWAYID, (const void*)(&theData), sizeof(theData))) {
+      debugln(" ok!");
+    } else {
+      debugln(" nothing...");
+    }
 }
 
 void setAddress(char *data) {

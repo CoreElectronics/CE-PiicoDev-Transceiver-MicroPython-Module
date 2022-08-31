@@ -5,7 +5,8 @@ radio = PiicoDev_Radio()   # Initialise the Radio module
 
 while True:
     radio.on()
-    radio.led = 1 
+    radio.led = 1
+    sleep_ms(5000)
     radio.message = 'hello world'
     #received_message = radio.message
     #print(received_message)

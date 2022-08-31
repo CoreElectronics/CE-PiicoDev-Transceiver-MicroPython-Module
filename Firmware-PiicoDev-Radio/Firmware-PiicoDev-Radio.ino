@@ -155,6 +155,12 @@ functionMap functions[] = {
   {registerMap.messageWrite, setMessage},
 };
 
+typedef struct {
+  int           nodeId; //store this nodeId
+  char          message[16];
+} Payload;
+Payload theData;
+
 void setup() {
 #if DEBUG
   Serial.begin(115200);

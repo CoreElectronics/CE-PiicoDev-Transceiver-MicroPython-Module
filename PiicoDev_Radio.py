@@ -13,11 +13,10 @@ _REG_STATUS       = 0x01
 _REG_FIRM_MAJ     = 0x02
 _REG_FIRM_MIN     = 0x03
 _REG_I2C_ADDRESS  = 0x04
-_REG_RADIO_ON     = 0x05
-_REG_LED          = 0x07
+_REG_LED          = 0x05
+_REG_RADIO_ON     = 0x06
 _REG_WHOAMI       = 0x11
-_REG_SEND_DATA    = 0x21
-_REG_RECEIVE_DATA = 0x31
+_REG_MESSAGE      = 0x21
 
 def _set_bit(x, n):
     return x | (1 << n)
@@ -67,11 +66,17 @@ class PiicoDev_Radio(object):
         self._write(register, int.to_bytes(integer, length, 'big'))
         
     def send_bytes(self, message):
-        self._write(_REG_SEND_DATA, message)
+        self._write(_set_bit(_REG_MESSAGE, 7), message)
         
     def receive_bytes(self):
-        message = self._read(_REG_RECEIVE_DATA)
+        message = self._read(_REG_MESSAGE)
         return message
+    
+    def on(self):
+        self._on = 1
+        
+    def off(self):
+        self._off = 1
     
     @property
     def message(self):
@@ -83,22 +88,24 @@ class PiicoDev_Radio(object):
         self.send_bytes(bytes(message_string, 'utf8'))
     
     @property
-    def on(self):
+    def _on(self):
         """Checks the radio state"""
         self._read_int(_REG_RADIO_ON, 1)
     
-    @on.setter
-    def on(self):
+    @_on.setter
+    def _on(self, val):
         """Turns the radio on"""
+        print('Turning radio on')
         self._write_int(_set_bit(_REG_RADIO_ON, 7), 1)
     
     @property
-    def off(self):
+    def _off(self):
         """Checks the radio state"""
+        print('Turning radio off')
         self._read_int(_REG_RADIO_ON, 0)
     
-    @off.setter
-    def off(self):
+    @_off.setter
+    def _off(self, val):
         """Turns the radio off"""
         self._write_int(_set_bit(_REG_RADIO_ON, 7), 0)
     
