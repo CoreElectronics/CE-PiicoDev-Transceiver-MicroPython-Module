@@ -40,8 +40,8 @@
 #define HARDWARE_ADDRESS false
 #define I2C_BUFFER_SIZE 32 //For ATmega328 based Arduinos, the I2C buffer is limited to 32 bytes
 #define FREQUENCY RF69_915MHZ
-#define NODEID      1
-#define NETWORKID   100
+//#define NODEID      1
+//#define NETWORKID   100
 #define GATEWAYID   99
 #define ENCRYPTKEY    "-PiicoDevRadio- " //has to be same 16 characters/bytes on all nodes, not more not less!
 
@@ -93,6 +93,12 @@ struct memoryMap {
   uint8_t ledWrite;
   uint8_t radioStateRead;
   uint8_t radioStateWrite;
+  uint8_t radioAddressRead;
+  uint8_t radioAddressWrite;
+  uint8_t channelRead;
+  uint8_t channelWrite;
+  uint8_t destinationRadioAddressRead;
+  uint8_t destinationRadioAddressWrite;
   uint16_t messageRead;
   uint16_t messageWrite;
 };
@@ -107,6 +113,12 @@ const memoryMap registerMap = {
   .ledWrite = 0x85,
   .radioStateRead = 0x06,
   .radioStateWrite = 0x86,
+  .radioAddressRead = 0x07,
+  .radioAddressWrite = 0x87,
+  .channelRead = 0x08,
+  .channelWrite = 0x88,
+  .destinationRadioAddressRead = 0x09,
+  .destinationRadioAddressWrite = 0x89,
   .messageRead = 0x21,
   .messageWrite = 0xA1
 };
@@ -120,6 +132,12 @@ volatile memoryMap valueMap = {
   .ledWrite = 0x01,
   .radioStateRead = 0,
   .radioStateWrite = 0,
+  .radioAddressRead = 0,
+  .radioAddressWrite = 0,
+  .channelRead = 0,
+  .channelWrite = 0,
+  .destinationRadioAddressRead = 0,
+  .destinationRadioAddressWrite = 0,
   .messageRead = 0,
   .messageWrite = 0
 };
@@ -139,6 +157,12 @@ void getPowerLed(char *data);
 void setPowerLed(char *data);
 void getRadioState(char *data);
 void setRadioState(char *data);
+void getRadioAddress(char *data);
+void setRadioAddress(char *data);
+void getChannel(char *data);
+void setChannel(char *data);
+void getDestinationRadioAddress(char *data);
+void setDestinationRadioAddress(char *data);
 void getMessage(char *data);
 void setMessage(char *data);
 
@@ -151,6 +175,12 @@ functionMap functions[] = {
   {registerMap.ledWrite, setPowerLed},
   {registerMap.radioStateRead, getRadioState},
   {registerMap.radioStateWrite, setRadioState},
+  {registerMap.radioAddressRead, getRadioAddress},
+  {registerMap.radioAddressWrite, setRadioAddress},
+  {registerMap.channelRead, getChannel},
+  {registerMap.channelWrite, setChannel},
+  {registerMap.destinationRadioAddressRead, getDestinationRadioAddress},
+  {registerMap.destinationRadioAddressWrite, getDestinationRadioAddress},
   {registerMap.messageRead, getMessage},
   {registerMap.messageWrite, setMessage},
 };
@@ -186,7 +216,17 @@ void loop() {
     startI2C(); // reinitialise I2C with new address, update EEPROM with custom address as necessary
     updateFlag = false;
   }
-  sleep_mode();
+  if (radio.receiveDone()) {
+    debug('[');
+    debug(radio.SENDERID);
+    debug("] ");
+    debug(" [RX_RSSI:");
+    debug(radio.readRSSI());
+    debug("]");
+  }
+  if (radioState == false) {
+    sleep_mode();
+  }
 }
 
 // Begin listening on I2C bus as I2C slave using the global variable valueMap.i2cAddress

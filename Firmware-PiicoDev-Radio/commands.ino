@@ -50,16 +50,42 @@ void getRadioState(char *data) {
 
 void setRadioState(char *data) {
   if (data[0] == 1) {
-    radio.initialize(FREQUENCY, NODEID, NETWORKID);
+    radio.initialize(FREQUENCY, valueMap.radioAddressWrite, valueMap.channelWrite);
     //radio.setHighPower();
     radio.encrypt(ENCRYPTKEY);
     radioState = true;
-    debugln("Radio turned on");
+    debug("Radio turned on with address ");
+    debug(valueMap.radioAddressWrite);
+    debug(" and channel ");
+    debugln(valueMap.channelWrite);
   } else {
     radio.sleep();
     radioState = false;
     debugln("Radio turned off");
   }
+}
+
+void getRadioAddress(char *data) {
+  loadArray((uint8_t)valueMap.radioAddressWrite);
+}
+
+void setRadioAddress(char *data) {
+  valueMap.radioAddressWrite = data[0];
+}
+void getChannel(char *data) {
+  loadArray((uint8_t)valueMap.channelWrite);
+}
+void setChannel(char *data) {
+  debugln("------------------------------------------- setchannel called");
+  debugln(data[0]);
+  valueMap.channelWrite = data[0];
+}
+void getDestinationRadioAddress(char *data) {
+  loadArray((uint8_t)valueMap.destinationRadioAddressWrite);
+}
+void setDestinationRadioAddress(char *data) {
+  debugln("------------------------------------------- setDestinationRadioAddress called");
+  valueMap.destinationRadioAddressWrite = data[0];
 }
 
 void getMessage(char *data) {
@@ -88,14 +114,15 @@ void getMessage(char *data) {
 void setMessage(char *data) {
   debugln(data);
   strncpy(theDataWrite.message, data, sizeof(data));
-  radio.send(GATEWAYID, (const void *)(&theDataWrite), sizeof(theDataWrite));
+  radio.send(valueMap.destinationRadioAddressWrite, (const void *)(&theDataWrite), sizeof(theDataWrite));
   // if (radio.sendWithRetry(GATEWAYID, "hello", 5)) { it's crashing on this line
   //   debugln(" ok!");
   // } else {
   //   debugln(" nothing...");
   // }
   //radio.send(GATEWAYID, "hello", 5);
-  debugln("Radio didn't crash");
+  debug("Radio didn't crash when sending to ");
+  debugln(valueMap.destinationRadioAddressWrite);
 }
 
 void setAddress(char *data) {

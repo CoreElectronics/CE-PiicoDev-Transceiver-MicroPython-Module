@@ -16,14 +16,18 @@ This module has been tested on:
 ## Initialisation
 
 ### `PiicoDev_Radio(bus=, freq=, sda=, scl=, address=0x1A, id=, frequency=None)`
-Parameter | Type | Range | Default | Description
---- | --- | --- | --- | ---
-bus | int | 0,1 | Raspberry Pi Pico: 0, Raspberry Pi: 1 | I2C Bus.  Ignored on Micro:bit
-freq | int | 100 to 1000000 | Device dependent | I2C Bus frequency (Hz).  Ignored on Raspberry Pi
-sda | Pin | Device Dependent | Device Dependent | I2C SDA Pin. Implemented on Raspberry Pi Pico only
-scl | Pin | Device Dependent | Device Dependent | I2C SCL Pin. Implemented on Raspberry Pi Pico only
-address | int | 0x1A, 0x08 - 0x77 | 0x1A | Manually specify the address of the connected device. For when a software address is set on the device.
-id | List[int, int, int, int] | 1=ON, 0=OFF | [0,0,0,0] | Hardware switches change the device address - Abstracts the need for user to look up an address, simply input the switch positions. Alternatively, use `address` for explicit address.
+
+| Parameter      | Type                     | Range             | Default                               | Description
+| -------------- | ------------------------ | ----------------- | ------------------------------------- | -----------
+| bus            | int                      | 0,1               | Raspberry Pi Pico: 0, Raspberry Pi: 1 | I2C Bus.  Ignored on Micro:bit
+| freq           | int                      | 100 to 1000000    | Device dependent                      | I2C Bus frequency (Hz).  Ignored on Raspberry Pi
+| sda            | Pin                      | Device Dependent  | Device Dependent                      | I2C SDA Pin. Implemented on Raspberry Pi Pico only
+| scl            | Pin                      | Device Dependent  | Device Dependent                      | I2C SCL Pin. Implemented on Raspberry Pi Pico only
+| address        | int                      | 0x1A, 0x08 - 0x77 | 0x1A                                  | Manually specify the address of the connected device. For when a software address is set on the device.
+| id             | List[int, int, int, int] | 1=ON, 0=OFF       | [0,0,0,0]                             | Hardware switches change the device address - Abstracts the need for user to look up an address, simply input the switch positions. Alternatively, use `address` for explicit address.
+| radio_adddress | int                      | 0 - 255           | 0                                     |
+| channel        | int                      | 0 - 255           | 0                                     |
+
 
 ## Properties
 
@@ -37,13 +41,13 @@ id | List[int, int, int, int] | 1=ON, 0=OFF | [0,0,0,0] | Hardware switches chan
 
 ### `.channel`
 
-(default=7) can be an integer value from 0 to 83 (inclusive) that defines an arbitrary "channel" to which the radio is tuned. Messages will be sent via this channel and only messages received via this channel will be put onto the incoming message queue. Each step is 1MHz wide, based at 2400MHz.
+(default=7) can be an integer value from 0 to 255 (inclusive) that defines an arbitrary "channel" to which the radio is tuned. Messages will be sent via this channel and only messages received via this channel will be put onto the incoming message queue.
 
 ### `.power`
 (default=6) is an integer value from 0 to 7 (inclusive) to indicate the strength of signal used when broadcasting a message. The higher the value the stronger the signal, but the more power is consumed by the device. The numbering translates to positions in the following list of dBm (decibel milliwatt) values: -30, -20, -16, -12, -8, -4, 0, 4.
 
 ### `.address`
-(default=0x75626974) is an arbitrary name, expressed as a 32-bit address, that's used to filter incoming packets at the hardware level, keeping only those that match the address you set. The default used by other micro:bit related platforms is the default setting used here.
+(default=0) is an arbitrary name, expressed as a 8-bit address, that's used to filter incoming packets at the hardware level, keeping only those that match the address you set. The default used by other micro:bit related platforms is the default setting used here.
 
 ### `.group`
 (default=0) is an 8-bit value (0-255) used with the `address` when filtering messages. Conceptually, "address" is like a house/office address and "group" is like the person at that address to which you want to send your message.
@@ -52,6 +56,7 @@ id | List[int, int, int, int] | 1=ON, 0=OFF | [0,0,0,0] | Hardware switches chan
 (default=radio.RATE_1MBIT) indicates the speed at which data throughput takes place. Can be one of the following contants defined in the ``radio`` module : `RATE_250KBIT`, `RATE_1MBIT` or `RATE_2MBIT`.
 
 ## Methods
+
 ### `.on()`
 
 ### `.off()`

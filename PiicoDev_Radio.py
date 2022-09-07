@@ -2,33 +2,35 @@
 # Peter Johnston at Core Electronics
 # 2022-08-24: Initial release
 
-up to reading the config file, then i need to implement group, radio and destination in arduino
+
 
 from PiicoDev_Unified import *
-from radio_config import *
+import radio_config
 
 compat_str = '\nUnified PiicoDev library out of date.  Get the latest module: https://piico.dev/unified \n'
 
-_BASE_ADDRESS = 0xA1
-_DEVICE_ID    = 495
+_BASE_ADDRESS                  = 0xA1
+_DEVICE_ID                     = 495
 
-_REG_STATUS       = 0x01
-_REG_FIRM_MAJ     = 0x02
-_REG_FIRM_MIN     = 0x03
-_REG_I2C_ADDRESS  = 0x04
-_REG_LED          = 0x05
-_REG_RADIO_ON     = 0x06
-_REG_GROUP        = 0x07
-_REG_RADIO_ADDRESS = 0x08
+_REG_STATUS                    = 0x01
+_REG_FIRM_MAJ                  = 0x02
+_REG_FIRM_MIN                  = 0x03
+_REG_I2C_ADDRESS               = 0x04
+_REG_LED                       = 0x05
+_REG_RADIO_ON                  = 0x06
+_REG_RADIO_ADDRESS             = 0x07
+_REG_CHANNEL                   = 0x08
 _REG_DESTINATION_RADIO_ADDRESS = 0x09
-_REG_WHOAMI       = 0x11
-_REG_MESSAGE      = 0x21
+_REG_WHOAMI                    = 0x11
+_REG_MESSAGE                   = 0x21
 
 def _set_bit(x, n):
     return x | (1 << n)
 
+print(radio_config.radio_address)
+
 class PiicoDev_Radio(object):
-    def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None):
+    def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None, radio_address=radio_config.radio_address, channel=radio_config.channel):
         try:
             if compat_ind >= 1:
                 pass
@@ -42,6 +44,9 @@ class PiicoDev_Radio(object):
             assert max(id) <= 1 and min(id) >= 0 and len(id) == 4, "id must be a list of 1/0, length=4"
             self._address=8+id[0]+2*id[1]+4*id[2]+8*id[3] # select address from pool
         else: self._address = address # accept an integer
+        self.radio_address = radio_address
+        self.channel = channel
+        self.destination_radio_address = radio_config.destination_radio_address
         try:
             if self.whoami != _DEVICE_ID:
                 print("* Incorrect device found at address {}".format(address))   
@@ -85,12 +90,13 @@ class PiicoDev_Radio(object):
         self._off = 1
     
     @property
-    def group(self):
-        return self._read_int(_REG_GROUP)
+    def channel(self):
+        return self._read_int(_REG_CHANNEL)
     
-    @group.setter
-    def group(self, value):
-        self._write_int(_set_bit(_REG_GROUP, 7), value)
+    @channel.setter
+    def channel(self, value):
+        print("channel setter called")
+        self._write_int(_set_bit(_REG_CHANNEL, 7), value)
     
     @property
     def radio_address(self):
@@ -104,8 +110,9 @@ class PiicoDev_Radio(object):
     def destination_radio_address(self):
         return self._read_int(_REG_DESTINATION_RADIO_ADDRESS)
     
-    @radio_address.setter
+    @destination_radio_address.setter
     def destination_radio_address(self, value):
+        print("setting destination address")
         self._write_int(_set_bit(_REG_DESTINATION_RADIO_ADDRESS, 7), value)
     
     @property
