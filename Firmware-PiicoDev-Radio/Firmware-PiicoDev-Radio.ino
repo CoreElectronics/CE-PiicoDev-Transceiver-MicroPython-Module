@@ -42,7 +42,7 @@
 #define FREQUENCY RF69_915MHZ
 //#define NODEID      1
 //#define NETWORKID   100
-#define GATEWAYID   99
+//#define GATEWAYID   99
 #define ENCRYPTKEY    "-PiicoDevRadio- " //has to be same 16 characters/bytes on all nodes, not more not less!
 
 RFM69 radio;
@@ -180,7 +180,7 @@ functionMap functions[] = {
   {registerMap.channelRead, getChannel},
   {registerMap.channelWrite, setChannel},
   {registerMap.destinationRadioAddressRead, getDestinationRadioAddress},
-  {registerMap.destinationRadioAddressWrite, getDestinationRadioAddress},
+  {registerMap.destinationRadioAddressWrite, setDestinationRadioAddress},
   {registerMap.messageRead, getMessage},
   {registerMap.messageWrite, setMessage},
 };
