@@ -6,16 +6,11 @@
 #define TONODEID      2   // Destination node ID
 #define FREQUENCY     RF69_915MHZ
 #define ENCRYPT       true // Set to "true" to use encryption
-#define ENCRYPTKEY    "TOPSECRETPASSWRD" // Use the same 16-byte key on all nodes
+#define ENCRYPTKEY    "-PiicoDevRadio- " // Use the same 16-byte key on all nodes
 
 // Use ACKnowledge when sending messages (or not):
 
 #define USEACK        true // Request ACKs or not
-
-// Packet sent/received indicator LED (optional):
-
-#define LED           9 // LED positive pin
-#define GND           8 // LED ground pin
 
 // Create a library object for our RFM69HCW module:
 
@@ -29,13 +24,6 @@ void setup()
   Serial.print("Node ");
   Serial.print(MYNODEID,DEC);
   Serial.println(" ready");  
-
-  // Set up the indicator LED (optional):
-
-  pinMode(LED,OUTPUT);
-  digitalWrite(LED,LOW);
-  pinMode(GND,OUTPUT);
-  digitalWrite(GND,LOW);
 
   // Initialize the RFM69HCW:
   // radio.setCS(10);  //uncomment this if using Pro Micro
@@ -106,7 +94,6 @@ void loop()
       }
 
       sendlength = 0; // reset the packet
-      Blink(LED,10);
     }
   }
 
@@ -143,14 +130,5 @@ void loop()
       radio.sendACK();
       Serial.println("ACK sent");
     }
-    Blink(LED,10);
   }
-}
-
-void Blink(byte PIN, int DELAY_MS)
-// Blink an LED for a given number of ms
-{
-  digitalWrite(PIN,HIGH);
-  delay(DELAY_MS);
-  digitalWrite(PIN,LOW);
 }
