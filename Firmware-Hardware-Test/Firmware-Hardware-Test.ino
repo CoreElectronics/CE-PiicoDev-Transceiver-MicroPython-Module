@@ -5,7 +5,6 @@
 #define MYNODEID      1   // My node ID
 #define TONODEID      2   // Destination node ID
 #define FREQUENCY     RF69_915MHZ
-#define ENCRYPT       true // Set to "true" to use encryption
 #define ENCRYPTKEY    "-PiicoDevRadio- " // Use the same 16-byte key on all nodes
 
 RFM69 radio;
@@ -13,21 +12,14 @@ RFM69 radio;
 void setup()
 {
   // Open a serial port so we can send keystrokes to the module:
-
   Serial.begin(115200);
   Serial.print("Node ");
   Serial.print(MYNODEID, DEC);
   Serial.println(" ready");
 
-  // Initialize the RFM69HCW:
-  // radio.setCS(10);  //uncomment this if using Pro Micro
   radio.initialize(FREQUENCY, MYNODEID, NETWORKID);
-  radio.setHighPower(); // Always use this for RFM69HCW
-
-  // Turn on encryption if desired:
-
-  if (ENCRYPT)
-    radio.encrypt(ENCRYPTKEY);
+  radio.setHighPower();
+  radio.encrypt(ENCRYPTKEY);
 }
 
 void loop()
