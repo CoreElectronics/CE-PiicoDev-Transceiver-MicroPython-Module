@@ -8,12 +8,6 @@
 #define ENCRYPT       true // Set to "true" to use encryption
 #define ENCRYPTKEY    "-PiicoDevRadio- " // Use the same 16-byte key on all nodes
 
-// Use ACKnowledge when sending messages (or not):
-
-#define USEACK        true // Request ACKs or not
-
-// Create a library object for our RFM69HCW module:
-
 RFM69 radio;
 
 void setup()
@@ -22,8 +16,8 @@ void setup()
 
   Serial.begin(115200);
   Serial.print("Node ");
-  Serial.print(MYNODEID,DEC);
-  Serial.println(" ready");  
+  Serial.print(MYNODEID, DEC);
+  Serial.println(" ready");
 
   // Initialize the RFM69HCW:
   // radio.setCS(10);  //uncomment this if using Pro Micro
@@ -67,7 +61,6 @@ void loop()
     {
       // Send the packet!
 
-
       Serial.print("sending to node ");
       Serial.print(TONODEID, DEC);
       Serial.print(", message [");
@@ -78,20 +71,10 @@ void loop()
       // There are two ways to send packets. If you want
       // acknowledgements, use sendWithRetry():
 
-      if (USEACK)
-      {
-        if (radio.sendWithRetry(TONODEID, sendbuffer, sendlength))
-          Serial.println("ACK received!");
-        else
-          Serial.println("no ACK received");
-      }
-
-      // If you don't need acknowledgements, just use send():
-
-      else // don't use ACK
-      {
-        radio.send(TONODEID, sendbuffer, sendlength);
-      }
+      if (radio.sendWithRetry(TONODEID, sendbuffer, sendlength))
+        Serial.println("ACK received!");
+      else
+        Serial.println("no ACK received");
 
       sendlength = 0; // reset the packet
     }
@@ -121,9 +104,6 @@ void loop()
 
     Serial.print("], RSSI ");
     Serial.println(radio.RSSI);
-
-    // Send an ACK if requested.
-    // (You don't need this code if you're not using ACKs.)
 
     if (radio.ACKRequested())
     {
