@@ -1,15 +1,15 @@
 /*
- * PiicoDev Radio Firmware
- * Written by Peter Johnston @ Core Electronics
- * Based off the Core Electronics Buzzer module https://github.com/CoreElectronics/CE-PiicoDev-Buzzer-MicroPython-Module
- * Based off work by Felix Rusu 2018, http://www.LowPowerLab.com/contact
- * Date: AUGUST 2022
- * An I2C based module that utilises an RFM69 radio
- *
- * Feel like supporting PiicoDev? Buy a module here: 
- * Radio: https://core-electronics.com.au/catalog/product/view/sku/CE08757
- *
- */
+   PiicoDev Radio Firmware
+   Written by Peter Johnston @ Core Electronics
+   Based off the Core Electronics Buzzer module https://github.com/CoreElectronics/CE-PiicoDev-Buzzer-MicroPython-Module
+   Based off work by Felix Rusu 2018, http://www.LowPowerLab.com/contact
+   Date: AUGUST 2022
+   An I2C based module that utilises an RFM69 radio
+
+   Feel like supporting PiicoDev? Buy a module here:
+   Radio: https://core-electronics.com.au/catalog/product/view/sku/CE08757
+
+*/
 
 #include <RFM69.h>         //get it here: https://www.github.com/lowpowerlab/rfm69
 //#include <RFM69_ATC.h>     //get it here: https://www.github.com/lowpowerlab/rfm69
@@ -57,18 +57,18 @@ uint8_t oldAddress;
 // Hardware Connectins
 // Prototyping with Arduino Uno
 #if defined(__AVR_ATmega328P__)
-  const uint8_t powerLedPin = 3;
-  const uint16_t addressPin1 = 8;
-  const uint16_t addressPin2 = 7;
-  const uint16_t addressPin3 = 6;
-  const uint16_t addressPin4 = 5;
+const uint8_t powerLedPin = 3;
+const uint16_t addressPin1 = 8;
+const uint16_t addressPin2 = 7;
+const uint16_t addressPin3 = 6;
+const uint16_t addressPin4 = 5;
 #else
-  // ATTINY 8x6 or 16x6
-  const uint8_t powerLedPin = PIN_PA3;
-  const uint8_t addressPin1 = PIN_PA1;
-  const uint8_t addressPin2 = PIN_PC3;
-  const uint8_t addressPin3 = PIN_PC2;
-  const uint8_t addressPin4 = PIN_PC1;
+// ATTINY 8x6 or 16x6
+const uint8_t powerLedPin = PIN_PA3;
+const uint8_t addressPin1 = PIN_PA1;
+const uint8_t addressPin2 = PIN_PC3;
+const uint8_t addressPin3 = PIN_PC2;
+const uint8_t addressPin4 = PIN_PC1;
 #endif
 
 // System global variables
@@ -99,8 +99,9 @@ struct memoryMap {
   uint8_t channelWrite;
   uint8_t destinationRadioAddressRead;
   uint8_t destinationRadioAddressWrite;
-  uint16_t messageRead;
-  uint16_t messageWrite;
+  uint16_t messageLength;
+  uint8_t *messageRead;
+  uint8_t *messageWrite;
 };
 
 // Register addresses.
@@ -119,6 +120,7 @@ const memoryMap registerMap = {
   .channelWrite = 0x88,
   .destinationRadioAddressRead = 0x09,
   .destinationRadioAddressWrite = 0x89,
+  .messageLength = 0x8A,
   .messageRead = 0x21,
   .messageWrite = 0xA1
 };
@@ -138,6 +140,7 @@ volatile memoryMap valueMap = {
   .channelWrite = 0,
   .destinationRadioAddressRead = 0,
   .destinationRadioAddressWrite = 0,
+  .messageLength = 0,
   .messageRead = 0,
   .messageWrite = 0
 };
@@ -163,6 +166,7 @@ void getChannel(char *data);
 void setChannel(char *data);
 void getDestinationRadioAddress(char *data);
 void setDestinationRadioAddress(char *data);
+void setMessageLength(char *data);
 void getMessage(char *data);
 void setMessage(char *data);
 
@@ -181,6 +185,7 @@ functionMap functions[] = {
   {registerMap.channelWrite, setChannel},
   {registerMap.destinationRadioAddressRead, getDestinationRadioAddress},
   {registerMap.destinationRadioAddressWrite, setDestinationRadioAddress},
+  {registerMap.messageLength, setMessageLength},
   {registerMap.messageRead, getMessage},
   {registerMap.messageWrite, setMessage},
 };
@@ -209,6 +214,7 @@ void setup() {
   readSystemSettings(); //Load all system settings from EEPROM
   startI2C();          //Determine the I2C address we should be using and begin listening on I2C bus
   oldAddress = valueMap.i2cAddress;
+
 }
 
 void loop() {
@@ -237,41 +243,19 @@ void loop() {
 
   // If there is any serial input, add it to the buffer:
 
-  if (Serial.available() > 0)
+
+  //if (Serial.available() > 0)
+  if (valueMap.messageLength > 0)
   {
-    char input = Serial.read();
-
-    if (input != '\r') // not a carriage return
-    {
-      sendbuffer[sendlength] = input;
-      sendlength++;
-    }
-
-    // If the input is a carriage return, or the buffer is full:
-
-    if ((input == '\r') || (sendlength == 61)) // CR or buffer full
-    {
-      // Send the packet!
-
-      Serial.print("sending to node ");
-      Serial.print(valueMap.destinationRadioAddressWrite, DEC);
-      //Serial.print(TONODEID, DEC);
-      Serial.print(", message [");
-      for (byte i = 0; i < sendlength; i++)
-        Serial.print(sendbuffer[i]);
-      Serial.println("]");
-
-      // There are two ways to send packets. If you want
-      // acknowledgements, use sendWithRetry():
-
-      if (radio.sendWithRetry(valueMap.destinationRadioAddressWrite, sendbuffer, sendlength))
-      //if (radio.sendWithRetry(TONODEID, sendbuffer, sendlength))
-        Serial.println("ACK received!");
-      else
-        Serial.println("no ACK received");
-
-      sendlength = 0; // reset the packet
-    }
+    //debug("(char)valueMap.messageWrite ");
+    //debugln((char)valueMap.messageWrite);
+    //if (radio.sendWithRetry(valueMap.destinationRadioAddressWrite, valueMap.messageWrite, valueMap.messageLength))
+    if (radio.sendWithRetry(valueMap.destinationRadioAddressWrite, "asdf", 4))
+      debugln("ACK received!");
+    else
+      debugln("no ACK received");
+    valueMap.messageLength = 0; // Don't resend the same data
+    return;
   }
 
   // RECEIVING
@@ -283,26 +267,26 @@ void loop() {
   {
     // Print out the information:
 
-    Serial.print("received from node ");
-    Serial.print(radio.SENDERID, DEC);
-    Serial.print(", message [");
+    debug("received from node ");
+    debug(radio.SENDERID);
+    debug(", message [");
 
     // The actual message is contained in the DATA array,
     // and is DATALEN bytes in size:
 
     for (byte i = 0; i < radio.DATALEN; i++)
-      Serial.print((char)radio.DATA[i]);
+      debug((char)radio.DATA[i]);
 
     // RSSI is the "Receive Signal Strength Indicator",
     // smaller numbers mean higher power.
 
-    Serial.print("], RSSI ");
-    Serial.println(radio.RSSI);
+    debug("], RSSI ");
+    debugln(radio.RSSI);
 
     if (radio.ACKRequested())
     {
       radio.sendACK();
-      Serial.println("ACK sent");
+      debugln("ACK sent");
     }
   }
   if (radioState == false) {
@@ -344,7 +328,7 @@ void startI2C()
   // If none of the address jumpers are set, we use registerMap (but check to make sure that the value is legal first)
   else
   {
-      debug("valueMap.i2cAddress: "); debugln(valueMap.i2cAddress);
+    debug("valueMap.i2cAddress: "); debugln(valueMap.i2cAddress);
     // if the value is legal, then set it
     if (valueMap.i2cAddress > 0x07 && valueMap.i2cAddress < 0x78)
       address = valueMap.i2cAddress;

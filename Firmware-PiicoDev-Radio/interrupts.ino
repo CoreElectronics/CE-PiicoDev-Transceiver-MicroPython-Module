@@ -13,7 +13,7 @@ void receiveEvent(uint16_t numberOfBytesReceived)
     {
       incomingData[incomingDataSpot++] = Wire.read();
       #if DEBUG
-      Serial.print(char(incomingData[incomingDataSpot-1]), HEX);
+      //Serial.print(char(incomingData[incomingDataSpot-1]), HEX);
       //incomingData is 32 bytes. We shouldn't spill over because receiveEvent can't receive more than 32 bytes
       #endif
     }
