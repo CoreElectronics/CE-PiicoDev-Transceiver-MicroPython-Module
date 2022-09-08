@@ -51,7 +51,7 @@ void getRadioState(char *data) {
 void setRadioState(char *data) {
   if (data[0] == 1) {
     radio.initialize(FREQUENCY, valueMap.radioAddressWrite, valueMap.channelWrite);
-    //radio.setHighPower();
+    radio.setHighPower();
     radio.encrypt(ENCRYPTKEY);
     radioState = true;
     debug("Radio turned on with address ");
@@ -114,13 +114,56 @@ void getMessage(char *data) {
 void setMessage(char *data) {
   debugln(data);
   strncpy(theDataWrite.message, data, sizeof(data));
-  radio.send(valueMap.destinationRadioAddressWrite, (const void *)(&theDataWrite), sizeof(theDataWrite));
+  //radio.send(valueMap.destinationRadioAddressWrite, (const void *)(&theDataWrite), sizeof(theDataWrite));
+  //radio.send(2, "abcd", 4);
   // if (radio.sendWithRetry(GATEWAYID, "hello", 5)) { it's crashing on this line
   //   debugln(" ok!");
   // } else {
   //   debugln(" nothing...");
   // }
   //radio.send(GATEWAYID, "hello", 5);
+
+  // Sparkfun begin
+  // Set up a "buffer" for characters that we'll send:
+
+  static char sendbuffer[4];
+  static int sendlength = 0;
+
+  // SENDING
+
+  // In this section, we'll gather serial characters and
+  // send them to the other node if we (1) get a carriage return,
+  // or (2) the buffer is full (61 characters).
+
+  // If there is any serial input, add it to the buffer:
+
+  //char input = Serial.read(debug);
+
+  if (data != '\r')  // not a carriage return
+  {
+    sendbuffer[sendlength] = data;
+    sendlength++;
+  }
+  debugln(sendbuffer);
+  // If the input is a carriage return, or the buffer is full:
+
+  if ((data == '\r') || (sendlength == 3))  // CR or buffer full
+  {
+    // Send the packet!
+
+
+    debug(", message [");
+    for (byte i = 0; i < sendlength; i++)
+      debug(sendbuffer[i]);
+    debugln("]");
+
+    radio.send(2, sendbuffer, sendlength);
+
+
+    sendlength = 0;  // reset the packet
+  }
+  // sparkfun end
+
   debug("Radio didn't crash when sending to ");
   debugln(valueMap.destinationRadioAddressWrite);
 }
