@@ -21,11 +21,18 @@ _REG_RADIO_ON                  = 0x06
 _REG_RADIO_ADDRESS             = 0x07
 _REG_CHANNEL                   = 0x08
 _REG_DESTINATION_RADIO_ADDRESS = 0x09
+_REG_MESSAGE_LENGTH            = 0x0A
 _REG_WHOAMI                    = 0x11
 _REG_MESSAGE                   = 0x21
 
+DEBUG = True
+
 def _set_bit(x, n):
     return x | (1 << n)
+
+def debug(text):
+    if DEBUG:
+        print(text)
 
 print(radio_config.radio_address)
 
@@ -112,8 +119,17 @@ class PiicoDev_Radio(object):
     
     @destination_radio_address.setter
     def destination_radio_address(self, value):
-        print("setting destination address")
+        debug("Setting destination radio address to " + str(value) + ".")
         self._write_int(_set_bit(_REG_DESTINATION_RADIO_ADDRESS, 7), value)
+    
+    @property
+    def messageLength(self):
+        return 0
+    
+    @messageLength.setter
+    def messageLength(self, value):
+        debug("Setting message length" + str(value) + ".")
+        self._write_int(_set_bit(_REG_MESSAGE_LENGTH, 7), value)
     
     @property
     def message(self):

@@ -3,7 +3,7 @@ from PiicoDev_Unified import sleep_ms
 
 radio = PiicoDev_Radio()   # Initialise the Radio module
 
-Current ststus - send data from micropython.  Send to arduino running on vm.  Still need to do Arduino -> micropython link
+#Current ststus - send data from micropython.  Send to arduino running on vm.  Still need to do Arduino -> micropython link
 
 radio.on()
 

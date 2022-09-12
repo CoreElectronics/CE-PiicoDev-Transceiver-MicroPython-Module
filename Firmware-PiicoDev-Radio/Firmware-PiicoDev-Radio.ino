@@ -249,8 +249,8 @@ void loop() {
   {
     //debug("(char)valueMap.messageWrite ");
     //debugln((char)valueMap.messageWrite);
-    //if (radio.sendWithRetry(valueMap.destinationRadioAddressWrite, valueMap.messageWrite, valueMap.messageLength))
-    if (radio.sendWithRetry(valueMap.destinationRadioAddressWrite, "asdf", 4))
+    if (radio.sendWithRetry(valueMap.destinationRadioAddressWrite, valueMap.messageWrite, valueMap.messageLength))
+    //if (radio.sendWithRetry(valueMap.destinationRadioAddressWrite, "asdf", 4))
       debugln("ACK received!");
     else
       debugln("no ACK received");
