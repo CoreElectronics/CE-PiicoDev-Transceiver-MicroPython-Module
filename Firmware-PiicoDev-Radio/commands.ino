@@ -116,9 +116,14 @@ void getMessage(char *data) {
 }
 
 void setMessage(char *data) {
-  debug("setMessage begin with data ");
+  debug("setMessage data:");
   debugln(data);
+//  for (byte i = 0; i < sizeof(data); i++) {
+//      ?
+//  }
   valueMap.messageWrite = *data;
+  debug("valueMap.messageWrite:");
+  Serial.println(*valueMap.messageWrite);
 }
 
 void setAddress(char *data) {

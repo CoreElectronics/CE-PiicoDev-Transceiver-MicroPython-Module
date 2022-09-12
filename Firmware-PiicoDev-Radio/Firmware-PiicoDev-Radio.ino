@@ -249,7 +249,10 @@ void loop() {
   {
     //debug("(char)valueMap.messageWrite ");
     //debugln((char)valueMap.messageWrite);
+    //debug("*valueMap.messageWrite ");
+    //Serial.println(valueMap.messageWrite);
     if (radio.sendWithRetry(valueMap.destinationRadioAddressWrite, valueMap.messageWrite, valueMap.messageLength))
+    
     //if (radio.sendWithRetry(valueMap.destinationRadioAddressWrite, "asdf", 4))
       debugln("ACK received!");
     else
@@ -274,9 +277,10 @@ void loop() {
     // The actual message is contained in the DATA array,
     // and is DATALEN bytes in size:
 
-    for (byte i = 0; i < radio.DATALEN; i++)
+    for (byte i = 0; i < radio.DATALEN; i++) {
       debug((char)radio.DATA[i]);
-
+      valueMap.messageRead = (char)radio.DATA[i];
+    }
     // RSSI is the "Receive Signal Strength Indicator",
     // smaller numbers mean higher power.
 
