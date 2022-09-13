@@ -15,7 +15,8 @@ This module has been tested on:
 
 ## Overview
 
-![Overview](overview.svg?raw=true "Title")
+![Overview](overview.svg?raw=true "Overview")
+![Overview](overview.svg?raw=false "Overview")
 
 ## Initialisation
 
