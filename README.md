@@ -15,7 +15,7 @@ This module has been tested on:
 
 ## Overview
 
-![Overview](overview.svg "Overview")
+![Overview](docs/overview.svg "Overview")
 
 ## Initialisation
 
