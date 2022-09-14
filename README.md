@@ -97,7 +97,7 @@ This library has been inspired by the [Micro:bit Radio library](https://microbit
 | I2C Address      | 0x05    | 1     | Write Only | 0xA1             | Set new I2C address
 | LED              | 0x06    | 1     | Read/Write | 1                | 0=OFF, 1=ON
 | Encryption       | 0x11    | 1     | Read/Write | 0                | 0=OFF, 1=ON
-| Encryption Key   | 0x12    | 1     | Read/Write | -PiicoDevRadio-> | Must be exactly 16 characters on all nodes
+| Encryption Key   | 0x12    | 1     | Read/Write | PiicoDev---Radio | Must be exactly 16 characters on all nodes
 | High Power       | 0x13    | 1     | Read/Write | 0                | 0=OFF, 1=ON
 | Radio            | 0x14    | 1     | Read/Write | False            | 0=OFF, 1=ON
 | RFM69 Node ID    | 0x15    | 1     | Read/Write | 1                | Do not change, addressing handled by the MicroPython driver
@@ -105,7 +105,7 @@ This library has been inspired by the [Micro:bit Radio library](https://microbit
 | RFM69 To Node ID | 0x17    | 1     | Read/Write | 1                | Do not change, addressing handled by the MicroPython driver
 | RFM69 Reg        | 0x18    | 1     | Write Only | N/A              | To read or write to a register in the RFM69, write the address of interest to this register then read or write the value to _RFM69 Value_ Register
 | RFM69 Value      | 0x19    | 1     | Read/Write | N/A              | To read or write to a register in the RFM69, write the address of interest to _RFM69 Reg_ Register then read or write the value this register
-| Payload Length   | 0x21    | 2     | Write Only | N/A              | To send a message, write to the _payload_ register, then write the length to this register to trigger sending of the message over the air
+| Payload Length   | 0x21    | 2     | Write Only | N/A              | To send a message, write to the _Payload_ register, then write the length to this register to trigger sending of the message over the air
 | Payload          | 0x23    | 1     | Read/Write | N/A              | To send a message, write the payload to this register, then write the length to the _Payload Length_ register to trigger sending of the message over the air. Read this register to check for a new message.
 
 
