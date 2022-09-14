@@ -87,6 +87,28 @@ Currently, it’s equivalent to str(receive_bytes(), 'utf8').
 
 This library has been inspired by the [Micro:bit Radio library](https://microbit-micropython.readthedocs.io/en/v1.0.1/radio.html).
 
+## Smart Module I2C Registers
+
+| Register Name    | Address | Bytes | Mode       | Default Value    | Description
+| ---------------- | ------- | ----- | ---------- | ---------------- | -----------
+| Device ID        | 0x01    | 2     | Read Only  | 495              |
+| Firmware Major   | 0x03    | 1     | Read Only  | Varies           |
+| Firmware Minor   | 0x04    | 1     | Read Only  | Varies           | 
+| I2C Address      | 0x05    | 1     | Write Only | 0xA1             |
+| LED              | 0x06    | 1     | Read/Write | 1                |
+| Encryption On    | 0x11    | 1     | Read/Write | 0                |
+| Encryption Key   | 0x12    | 1     | Read/Write | -PiicoDevRadio-> |
+| High Power On    | 0x13    | 1     | Read/Write | 0                |
+| Radio On         | 0x14    | 1     | Read/Write | False            |
+| RFM69 Node ID    | 0x15    | 1     | Read/Write | 1                |
+| RFM69 Network ID | 0x16    | 1     | Read/Write | 0                |
+| RFM69 To Node ID | 0x17    | 1     | Read/Write | 1                |
+| RFM69 Reg        | 0x18    | 1     | Write Only | N/A              |
+| RFM69 Value      | 0x19    | 1     | Read/Write | N/A              |
+| Payload Length   | 0x21    | 2     | Write Only | N/A              |
+| Payload          | 0x23    | 1     | Write Only | N/A              |
+
+
 # License
 This project is open source - please review the LICENSE.md file for further licensing information.
 
