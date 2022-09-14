@@ -43,7 +43,7 @@
 //#define MYNODEID      1
 //#define NETWORKID   0
 //#define TONODEID   2
-#define ENCRYPTKEY    "-PiicoDevRadio- " //has to be same 16 characters/bytes on all nodes, not more not less!
+#define ENCRYPTKEY    "PiicoDev---Radio" //has to be same 16 characters/bytes on all nodes, not more not less!
 
 RFM69 radio;
 

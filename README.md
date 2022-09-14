@@ -99,7 +99,7 @@ This library has been inspired by the [Micro:bit Radio library](https://microbit
 | Encryption       | 0x11    | 1     | Read/Write | 0                | 0=OFF, 1=ON
 | Encryption Key   | 0x12    | 1     | Read/Write | PiicoDev---Radio | Must be exactly 16 characters on all nodes
 | High Power       | 0x13    | 1     | Read/Write | 0                | 0=OFF, 1=ON
-| Radio            | 0x14    | 1     | Read/Write | False            | 0=OFF, 1=ON
+| RFM69 Radio      | 0x14    | 1     | Read/Write | False            | 0=OFF, 1=ON
 | RFM69 Node ID    | 0x15    | 1     | Read/Write | 1                | Do not change, addressing handled by the MicroPython driver
 | RFM69 Network ID | 0x16    | 1     | Read/Write | 0                | Do not change, addressing handled by the MicroPython driver
 | RFM69 To Node ID | 0x17    | 1     | Read/Write | 1                | Do not change, addressing handled by the MicroPython driver
