@@ -19,7 +19,7 @@ This module has been tested on:
 
 ## Initialisation
 
-### `PiicoDev_Radio(bus=, freq=, sda=, scl=, address=0x1A, id=, frequency=None)`
+### `PiicoDev_Radio(bus=, freq=, sda=, scl=, address=0x1A, id=, frequency=None, radio_address=0, channel=0, queue=3)`
 
 | Parameter      | Type                     | Range             | Default                               | Description
 | -------------- | ------------------------ | ----------------- | ------------------------------------- | -----------
@@ -29,35 +29,28 @@ This module has been tested on:
 | scl            | Pin                      | Device Dependent  | Device Dependent                      | I2C SCL Pin. Implemented on Raspberry Pi Pico only.
 | address        | int                      | 0x1A, 0x08 - 0x77 | 0x1A                                  | Manually specify the address of the connected device. For when a software address is set on the device.
 | id             | List[int, int, int, int] | 1=ON, 0=OFF       | [0,0,0,0]                             | Hardware switches change the device address - Abstracts the need for user to look up an address, simply input the switch positions. Alternatively, use `address` for explicit address.
-| radio_adddress | int                      | 0 - 255           | 0                                     |
-| channel        | int                      | 0 - 255           | 0                                     |
+| radio_adddress | int                      | 0 - 255           | 0                                     | See the `.radio_address` property for more information
+| channel        | int                      | 0 - 255           | 0                                     | See the `.channel` property for more information
+| queue          | int                      | 0 - 255           | 3                                     | See the `.queue` property for more information
 
 
 ## Properties
 
 ### `.radio_address`
 
-(default=0) is an arbitrary name, expressed as an integer, that's used to filter incoming packets, keeping only those that match the address you set. The default used by other micro:bit related platforms is the default setting used here.
+(default=0) is an arbitrary name, expressed as an integer value from 0 to 255 (inclusive), that's used to filter incoming packets, keeping only those that match the address you set.
 
-### `.length`
+### `.channel`
 
-(default=32) defines the maximum length, in bytes, of a message sent via the radio. It can be up to 251 bytes long (254 - 3 bytes for S0, LENGTH and S1 preamble).
+(default=0) can be an integer value from 0 to 255 (inclusive) that defines an arbitrary "channel" to which the radio is tuned. Messages will be sent via this channel and only messages received via this channel will be put onto the incoming message queue.  If the channel is set to 0, all channels will be received and messages sent will be received by all radios regardless of what channel they are set to.
 
 ### `.queue`
 
 (default=3) specifies the number of messages that can be stored on the incoming message queue. If there are no spaces left on the queue for incoming messages, then the incoming message is dropped.
 
-### `.channel`
-
-(default=7) can be an integer value from 0 to 255 (inclusive) that defines an arbitrary "channel" to which the radio is tuned. Messages will be sent via this channel and only messages received via this channel will be put onto the incoming message queue.
-
 ### `.power`
 
 (default=6) is an integer value from 0 to 7 (inclusive) to indicate the strength of signal used when broadcasting a message. The higher the value the stronger the signal, but the more power is consumed by the device. The numbering translates to positions in the following list of dBm (decibel milliwatt) values: -30, -20, -16, -12, -8, -4, 0, 4.
-
-### `.group`
-
-(default=0) is an 8-bit value (0-255) used with the `address` when filtering messages. Conceptually, "address" is like a house/office address and "group" is like the person at that address to which you want to send your message.
 
 ### `.data_rate`
 
@@ -67,11 +60,11 @@ This module has been tested on:
 
 ### `.on()`
 
-Turns the radio on. This needs to be explicitly called since the radio draws power and takes up memory that you may otherwise need.
+Turns the radio on.
 
 ### `.off()`
 
-Turns off the radio, thus saving power and memory.
+Turns off the radio.
 
 ### `.send(message)`
 
@@ -105,7 +98,7 @@ This library has been inspired by the [Micro:bit Radio library](https://microbit
 | RFM69 To Node ID | 0x17/0x97 | 1      | R/W  | 1                | Do not change, addressing handled by the MicroPython driver
 | RFM69 Reg        | 0x18      | 1      | W    | N/A              | To read or write to a register in the RFM69, write the address of interest to this register then read or write the value to _RFM69 Value_ Register
 | RFM69 Value      | 0x19/0x99 | 1      | R/W  | N/A              | To read or write to a register in the RFM69, write the address of interest to _RFM69 Reg_ Register then read or write the value this register
-| Payload Length   | 0x21      | 2      | W    | N/A              | To send a message, write to the _Payload_ register, then write the length to this register to trigger sending of the message over the air
+| Payload Length   | 0x21      | 1      | W    | N/A              | To send a message, write to the _Payload_ register, then write the length to this register to trigger sending of the message over the air
 | Payload          | 0x22/0xA2 | 26 Max | R/W  | N/A              | To send a message, write the payload to this register, then write the length to the _Payload Length_ register to trigger sending of the message over the air. Read this register to check for a new message.
 
 # License
