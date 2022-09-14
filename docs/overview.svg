@@ -29,9 +29,9 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      showgrid="true"
-     inkscape:zoom="3.659624"
-     inkscape:cx="1663.149"
-     inkscape:cy="499.23162"
+     inkscape:zoom="2.5877449"
+     inkscape:cx="1720.2236"
+     inkscape:cy="520.91687"
      inkscape:window-width="3840"
      inkscape:window-height="2097"
      inkscape:window-x="3832"
@@ -312,37 +312,6 @@
          x="154.8812"
          y="65.250488"
          id="tspan418-4-2-2">messageLength</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:10.5833px;line-height:1.25;font-family:Roboto;-inkscape-font-specification:Roboto;stroke-width:0.264583"
-       x="436.99997"
-       y="109"
-       id="text2721"><tspan
-         sodipodi:role="line"
-         id="tspan2719"
-         style="stroke-width:0.264583"
-         x="436.99997"
-         y="109">Device ID</tspan><tspan
-         sodipodi:role="line"
-         style="stroke-width:0.264583"
-         x="436.99997"
-         y="122.22913"
-         id="tspan2723">Firmware Major</tspan><tspan
-         sodipodi:role="line"
-         style="stroke-width:0.264583"
-         x="436.99997"
-         y="135.45825"
-         id="tspan2725">Firmware Minor</tspan><tspan
-         sodipodi:role="line"
-         style="stroke-width:0.264583"
-         x="436.99997"
-         y="148.68738"
-         id="tspan2727">I2C Address</tspan><tspan
-         sodipodi:role="line"
-         style="stroke-width:0.264583"
-         x="436.99997"
-         y="161.9165"
-         id="tspan2729">Led </tspan></text>
   </g>
   <metadata
      id="metadata132">

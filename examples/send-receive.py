@@ -3,6 +3,8 @@ from PiicoDev_Unified import sleep_ms
 
 radio = PiicoDev_Radio()   # Initialise the Radio module
 
+#https://lowpowerlab.com/forum/moteino/rfm69hw-bit-rate-settings/
+
 # Notes from Graham:
 #ToDo - Test to see what happens when we have the same address for all devices.
 # We need this to be the same as the microbit

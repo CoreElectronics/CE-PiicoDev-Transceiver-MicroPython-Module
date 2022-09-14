@@ -106,7 +106,7 @@ struct memoryMap {
 
 // Register addresses.
 const memoryMap registerMap = {
-  .id = 0x11,
+  .id = 0x01,
   .firmwareMajor = 0x02,
   .firmwareMinor = 0x03,
   .i2cAddress = 0x04,
