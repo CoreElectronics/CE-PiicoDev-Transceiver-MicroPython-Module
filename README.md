@@ -91,22 +91,22 @@ This library has been inspired by the [Micro:bit Radio library](https://microbit
 
 | Register Name    | Address | Bytes | Mode       | Default Value    | Description
 | ---------------- | ------- | ----- | ---------- | ---------------- | -----------
-| Device ID        | 0x01    | 2     | Read Only  | 495              |
-| Firmware Major   | 0x03    | 1     | Read Only  | Varies           |
-| Firmware Minor   | 0x04    | 1     | Read Only  | Varies           | 
-| I2C Address      | 0x05    | 1     | Write Only | 0xA1             |
-| LED              | 0x06    | 1     | Read/Write | 1                |
-| Encryption On    | 0x11    | 1     | Read/Write | 0                |
-| Encryption Key   | 0x12    | 1     | Read/Write | -PiicoDevRadio-> |
-| High Power On    | 0x13    | 1     | Read/Write | 0                |
-| Radio On         | 0x14    | 1     | Read/Write | False            |
-| RFM69 Node ID    | 0x15    | 1     | Read/Write | 1                |
-| RFM69 Network ID | 0x16    | 1     | Read/Write | 0                |
-| RFM69 To Node ID | 0x17    | 1     | Read/Write | 1                |
-| RFM69 Reg        | 0x18    | 1     | Write Only | N/A              |
-| RFM69 Value      | 0x19    | 1     | Read/Write | N/A              |
-| Payload Length   | 0x21    | 2     | Write Only | N/A              |
-| Payload          | 0x23    | 1     | Write Only | N/A              |
+| Device ID        | 0x01    | 2     | Read Only  | 495              | I2C device ID
+| Firmware Major   | 0x03    | 1     | Read Only  | Varies           | Major firmware version
+| Firmware Minor   | 0x04    | 1     | Read Only  | Varies           | Minor firmware version
+| I2C Address      | 0x05    | 1     | Write Only | 0xA1             | Set new I2C address
+| LED              | 0x06    | 1     | Read/Write | 1                | 0=OFF, 1=ON
+| Encryption       | 0x11    | 1     | Read/Write | 0                | 0=OFF, 1=ON
+| Encryption Key   | 0x12    | 1     | Read/Write | -PiicoDevRadio-> | Must be exactly 16 characters on all nodes
+| High Power       | 0x13    | 1     | Read/Write | 0                | 0=OFF, 1=ON
+| Radio            | 0x14    | 1     | Read/Write | False            | 0=OFF, 1=ON
+| RFM69 Node ID    | 0x15    | 1     | Read/Write | 1                | Do not change, addressing handled by the MicroPython driver
+| RFM69 Network ID | 0x16    | 1     | Read/Write | 0                | Do not change, addressing handled by the MicroPython driver
+| RFM69 To Node ID | 0x17    | 1     | Read/Write | 1                | Do not change, addressing handled by the MicroPython driver
+| RFM69 Reg        | 0x18    | 1     | Write Only | N/A              | To read or write to a register in the RFM69, write the address of interest to this register then read or write the value to _RFM69 Value_ Register
+| RFM69 Value      | 0x19    | 1     | Read/Write | N/A              | To read or write to a register in the RFM69, write the address of interest to _RFM69 Reg_ Register then read or write the value this register
+| Payload Length   | 0x21    | 2     | Write Only | N/A              | To send a message, write to the _payload_ register, then write the length to this register to trigger sending of the message over the air
+| Payload          | 0x23    | 1     | Read/Write | N/A              | To send a message, write the payload to this register, then write the length to the _Payload Length_ register to trigger sending of the message over the air. Read this register to check for a new message.
 
 
 # License
@@ -115,7 +115,3 @@ This project is open source - please review the LICENSE.md file for further lice
 If you have any technical questions, or concerns about licensing, please contact technical support on the [Core Electronics forums](https://forum.core-electronics.com.au/).
 
 *\"PiicoDev\" and the PiicoDev logo are trademarks of Core Electronics Pty Ltd.*
-
-
-Todo
-type | length | payload
