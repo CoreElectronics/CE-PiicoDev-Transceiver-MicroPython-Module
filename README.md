@@ -89,24 +89,24 @@ This library has been inspired by the [Micro:bit Radio library](https://microbit
 
 ## Smart Module I2C Registers
 
-| Register Name    | Address | Bytes | Mode | Default Value    | Description
-| ---------------- | ------- | ----- | ---- | ---------------- | -----------
-| Device ID        | 0x01    | 2     | R    | 495              | I2C device ID
-| Firmware Major   | 0x03    | 1     | R    | Varies           | Major firmware version
-| Firmware Minor   | 0x04    | 1     | R    | Varies           | Minor firmware version
-| I2C Address      | 0x05    | 1     | W    | 0xA1             | Set new I2C address
-| LED              | 0x06    | 1     | RW   | 1                | 0=OFF, 1=ON
-| Encryption       | 0x11    | 1     | RW   | 0                | 0=OFF, 1=ON
-| Encryption Key   | 0x12    | 1     | RW   | PiicoDev---Radio | Must be exactly 16 characters on all nodes
-| High Power       | 0x13    | 1     | RW   | 0                | 0=OFF, 1=ON
-| RFM69 Radio      | 0x14    | 1     | RW   | False            | 0=OFF, 1=ON
-| RFM69 Node ID    | 0x15    | 1     | RW   | 1                | Do not change, addressing handled by the MicroPython driver
-| RFM69 Network ID | 0x16    | 1     | RW   | 0                | Do not change, addressing handled by the MicroPython driver
-| RFM69 To Node ID | 0x17    | 1     | RW   | 1                | Do not change, addressing handled by the MicroPython driver
-| RFM69 Reg        | 0x18    | 1     | W    | N/A              | To read or write to a register in the RFM69, write the address of interest to this register then read or write the value to _RFM69 Value_ Register
-| RFM69 Value      | 0x19    | 1     | RW   | N/A              | To read or write to a register in the RFM69, write the address of interest to _RFM69 Reg_ Register then read or write the value this register
-| Payload Length   | 0x21    | 2     | W    | N/A              | To send a message, write to the _Payload_ register, then write the length to this register to trigger sending of the message over the air
-| Payload          | 0x23    | 1     | RW   | N/A              | To send a message, write the payload to this register, then write the length to the _Payload Length_ register to trigger sending of the message over the air. Read this register to check for a new message.
+| Register Name    | Address   | Bytes | Mode | Default Value    | Description
+| ---------------- | --------- | ----- | ---- | ---------------- | -----------
+| Device ID        | 0x01      | 2     | R    | 495              | I2C device ID
+| Firmware Major   | 0x03      | 1     | R    | Varies           | Major firmware version
+| Firmware Minor   | 0x04      | 1     | R    | Varies           | Minor firmware version
+| I2C Address      | 0x05      | 1     | W    | 0xA1             | Set new I2C address
+| LED              | 0x06/0x86 | 1     | R/W  | 1                | 0=OFF, 1=ON
+| Encryption       | 0x11/0x91 | 1     | R/W  | 0                | 0=OFF, 1=ON
+| Encryption Key   | 0x12/0x92 | 1     | R/W  | PiicoDev---Radio | Must be exactly 16 characters on all nodes
+| High Power       | 0x13/0x93 | 1     | R/W  | 0                | 0=OFF, 1=ON
+| RFM69 Radio      | 0x14/0x94 | 1     | R/W  | 0                | 0=OFF, 1=ON
+| RFM69 Node ID    | 0x15/0x95 | 1     | R/W  | 1                | Do not change, addressing handled by the MicroPython driver
+| RFM69 Network ID | 0x16/0x96 | 1     | R/W  | 0                | Do not change, addressing handled by the MicroPython driver
+| RFM69 To Node ID | 0x17/0x97 | 1     | R/W  | 1                | Do not change, addressing handled by the MicroPython driver
+| RFM69 Reg        | 0x18      | 1     | W    | N/A              | To read or write to a register in the RFM69, write the address of interest to this register then read or write the value to _RFM69 Value_ Register
+| RFM69 Value      | 0x19/0x99 | 1     | R/W  | N/A              | To read or write to a register in the RFM69, write the address of interest to _RFM69 Reg_ Register then read or write the value this register
+| Payload Length   | 0x21      | 2     | W    | N/A              | To send a message, write to the _Payload_ register, then write the length to this register to trigger sending of the message over the air
+| Payload          | 0x23/0xA3 | 1     | R/W  | N/A              | To send a message, write the payload to this register, then write the length to the _Payload Length_ register to trigger sending of the message over the air. Read this register to check for a new message.
 
 
 # License
