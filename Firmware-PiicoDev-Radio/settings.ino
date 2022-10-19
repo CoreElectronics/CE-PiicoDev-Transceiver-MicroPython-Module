@@ -3,11 +3,14 @@
 void readSystemSettings(void)
 {
   //Read what I2C address we should use
-  EEPROM.get(LOCATION_I2C_ADDRESS, valueMap.i2cAddress);
+  unsigned char i2cAddress = valueMap.i2cAddress;
+  EEPROM.get(LOCATION_I2C_ADDRESS, i2cAddress);
+  valueMap.i2cAddress = i2cAddress;
+
   if (valueMap.i2cAddress == 255)
   {
     valueMap.i2cAddress = DEFAULT_I2C_ADDRESS; //By default, we listen for DEFAULT_I2C_ADDRESS
-    EEPROM.put(LOCATION_I2C_ADDRESS, valueMap.i2cAddress);
+    EEPROM.put(LOCATION_I2C_ADDRESS, DEFAULT_I2C_ADDRESS);
   }
 
   //Error check I2C address we read from EEPROM
@@ -16,7 +19,7 @@ void readSystemSettings(void)
     //User has set the address out of range
     //Go back to defaults
     valueMap.i2cAddress = DEFAULT_I2C_ADDRESS;
-    EEPROM.put(LOCATION_I2C_ADDRESS, valueMap.i2cAddress);
+    EEPROM.put(LOCATION_I2C_ADDRESS, DEFAULT_I2C_ADDRESS);
   }
 }
 
@@ -37,6 +40,6 @@ void recordSystemSettings(void)
     }
   } else {
     EEPROM.get(LOCATION_I2C_ADDRESS, i2cAddr);
-    valueMap.i2cAddress == i2cAddr; //Return to original address
+    valueMap.i2cAddress = i2cAddr; //Return to original address
   }
 }

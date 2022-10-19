@@ -2,46 +2,135 @@
   User accessible functions
 */
 
-// Macro for number of elements in an array
-#define COUNT_OF(x) ((sizeof(x) / sizeof(0 [x])) / ((size_t)(!(sizeof(x) % sizeof(0 [x])))))
-
-// void readPotentiometer(char *data) {
-//   #if DEBUG
-//     Serial.println(analogRead(potentiometerPin));
-//   #endif
-//   valueMap.pot = analogRead(potentiometerPin);
-//   loadArray((uint16_t)valueMap.pot);
-// }
-
 void idReturn(char *data) {
-  loadArray((uint16_t)valueMap.id);
+  loadArray(valueMap.id);
 }
 
 void firmwareMajorReturn(char *data) {
-  loadArray((uint8_t)valueMap.firmwareMajor);
+  loadArray(valueMap.firmwareMajor);
 }
 
 void firmwareMinorReturn(char *data) {
-  loadArray((uint8_t)valueMap.firmwareMinor);
+  loadArray(valueMap.firmwareMinor);
 }
 
-// Control the power LED
+void setAddress(char *data) {
+  debugln("SetAddress is running");
+  uint8_t tempAddress = data[0];
+
+  if (tempAddress < 0x08 || tempAddress > 0x77)
+    return; // Command failed. This address is out of bounds.
+  valueMap.i2cAddress = tempAddress;
+
+  EEPROM.put(LOCATION_ADDRESS_TYPE, SOFTWARE_ADDRESS);
+  updateFlag = true; // will trigger a I2C re-initalise and save custom address to EEPROM
+}
+
 void getPowerLed(char *data) {
   valueMap.ledRead = digitalRead(powerLedPin);
-  loadArray((uint8_t)valueMap.ledRead);
+  loadArray(valueMap.ledRead);
 }
 
-// Control the power LED
 void setPowerLed(char *data) {
   powerLed((data[0] == 1));
 }
 
 void powerLed(bool state) {
-  if (state) {
-    digitalWrite(powerLedPin, true);
-  } else {
-    digitalWrite(powerLedPin, false);
-  }
+  digitalWrite(powerLedPin, state);
+}
+
+void getEncryption(char *data) {
+
+}
+
+void setEncryption(char *data) {
+
+}
+
+void getEncryptionKey(char *data) {
+
+}
+
+void setEncryptionKey(char *data) {
+
+}
+
+void getHighPower(char *data) {
+
+}
+
+void setHighPower(char *data) {
+
+}
+
+void getRfm69RadioState(char *data) {
+
+}
+
+void setRfm69RadioState(char *data) {
+
+}
+
+void getRfm69NodeID(char *data) {
+  loadArray(valueMap.rfm69NodeIDRead);
+}
+
+void setRfm69NodeID(char *data) {
+  valueMap.rfm69NetworkIDRead = data[0];
+}
+
+void getRfm69NetworkID(char *data) {
+  loadArray(valueMap.rfm69NetworkIDRead);
+}
+
+void setRfm69NetworkID(char *data) {
+  debugln("------------------------------------------- setchannel called");
+  valueMap.rfm69NetworkIDWrite = data[0];
+}
+
+void getRfm69ToNodeID(char *data) {
+ loadArray(valueMap.rfm69NodeIDRead);
+}
+
+void setRfm69ToNodeID(char *data) {
+    debugln("------------------------------------------- setDestinationRadioAddress called");
+  valueMap.rfm69NodeIDWrite = data[0];
+}
+
+void setRfm69Reg(char *data) {
+
+}
+
+void getRfm69Value(char *data) {
+
+}
+
+void setRfm69Value(char *data) {
+
+}
+
+void receivePayloadLength(char *data) {
+
+}
+
+void sendPayloadLength(char *data) {
+    debugln("------------------------------------------- setting message length called");
+  valueMap.payloadLengthWrite = data[0];
+}
+
+void receivePayload(char *data) {
+
+}
+
+void sendPayload(char *data) {
+    debug("setMessage data:");
+  debugln(data);
+//  for (byte i = 0; i < sizeof(data); i++) {
+//      ?
+//  }
+  valueMap.payloadWrite = *data;
+  debug("valueMap.payloadWrite:");
+  Serial.println(*valueMap.payloadWrite);
 }
 
 void getRadioState(char *data) {
@@ -50,46 +139,19 @@ void getRadioState(char *data) {
 
 void setRadioState(char *data) {
   if (data[0] == 1) {
-    radio.initialize(FREQUENCY, valueMap.radioAddressWrite, valueMap.channelWrite);
+    radio.initialize(FREQUENCY, valueMap.rfm69NodeIDWrite, valueMap.rfm69NetworkIDWrite);
     radio.setHighPower();
     radio.encrypt(ENCRYPTKEY);
     radioState = true;
     debug("Radio turned on with address ");
-    debug(valueMap.radioAddressWrite);
+    debug(valueMap.rfm69NodeIDWrite);
     debug(" and channel ");
-    debugln(valueMap.channelWrite);
+    debugln(valueMap.rfm69NetworkIDWrite);
   } else {
     radio.sleep();
     radioState = false;
     debugln("Radio turned off");
   }
-}
-
-void getRadioAddress(char *data) {
-  loadArray((uint8_t)valueMap.radioAddressWrite);
-}
-
-void setRadioAddress(char *data) {
-  valueMap.radioAddressWrite = data[0];
-}
-void getChannel(char *data) {
-  loadArray((uint8_t)valueMap.channelWrite);
-}
-void setChannel(char *data) {
-  debugln("------------------------------------------- setchannel called");
-  valueMap.channelWrite = data[0];
-}
-void getDestinationRadioAddress(char *data) {
-  loadArray((uint8_t)valueMap.destinationRadioAddressWrite);
-}
-void setDestinationRadioAddress(char *data) {
-  debugln("------------------------------------------- setDestinationRadioAddress called");
-  valueMap.destinationRadioAddressWrite = data[0];
-}
-
-void setMessageLength(char *data) {
-  debugln("------------------------------------------- setting message length called");
-  valueMap.messageLength = data[0];
 }
 
 void getMessage(char *data) {
@@ -115,28 +177,7 @@ void getMessage(char *data) {
   }
 }
 
-void setMessage(char *data) {
-  debug("setMessage data:");
-  debugln(data);
-//  for (byte i = 0; i < sizeof(data); i++) {
-//      ?
-//  }
-  valueMap.messageWrite = *data;
-  debug("valueMap.messageWrite:");
-  Serial.println(*valueMap.messageWrite);
-}
 
-void setAddress(char *data) {
-  debugln("SetAddress is running");
-  uint8_t tempAddress = data[0];
-
-  if (tempAddress < 0x08 || tempAddress > 0x77)
-    return;  // Command failed. This address is out of bounds.
-  valueMap.i2cAddress = tempAddress;
-
-  EEPROM.put(LOCATION_ADDRESS_TYPE, SOFTWARE_ADDRESS);
-  updateFlag = true;  // will trigger a I2C re-initalise and save custom address to EEPROM
-}
 
 // Functions to load data into the response buffer
 void loadArray(uint8_t myNumber) {

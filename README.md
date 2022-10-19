@@ -73,33 +73,36 @@ Sends a message string. This is the equivalent of send_bytes(bytes(message, 'utf
 ### `.receive()`
 
 ### `.write_reg(reg_address, value)`
+
 Writes to a specific register in the the RFM69 
 
 Works in exactly the same way as receive_bytes but returns whatever was sent.
 Currently, it’s equivalent to str(receive_bytes(), 'utf8').
 
-This library has been inspired by the [Micro:bit Radio library](https://microbit-micropython.readthedocs.io/en/v1.0.1/radio.html).
+
 
 ## Smart Module I2C Registers
 
-| Register Name    | Address   | Bytes  | Mode | Default Value    | Description
-| ---------------- | --------- | ------ | ---- | ---------------- | -----------
-| Device ID        | 0x01      | 2      | R    | 495              | I2C device ID
-| Firmware Major   | 0x02      | 1      | R    | Varies           | Major firmware version
-| Firmware Minor   | 0x03      | 1      | R    | Varies           | Minor firmware version
-| I2C Address      | 0x04      | 1      | W    | 0xA1             | Set new I2C address
-| LED              | 0x05/0x85 | 1      | R/W  | 1                | 0=OFF, 1=ON
-| Encryption       | 0x11/0x91 | 1      | R/W  | 0                | 0=OFF, 1=ON
-| Encryption Key   | 0x12/0x92 | 1      | R/W  | PiicoDev---Radio | Must be exactly 16 characters on all nodes
-| High Power       | 0x13/0x93 | 1      | R/W  | 0                | 0=OFF, 1=ON
-| RFM69 Radio      | 0x14/0x94 | 1      | R/W  | 0                | 0=OFF, 1=ON
-| RFM69 Node ID    | 0x15/0x95 | 1      | R/W  | 1                | Do not change, addressing handled by the MicroPython driver
-| RFM69 Network ID | 0x16/0x96 | 1      | R/W  | 0                | Do not change, addressing handled by the MicroPython driver
-| RFM69 To Node ID | 0x17/0x97 | 1      | R/W  | 1                | Do not change, addressing handled by the MicroPython driver
-| RFM69 Reg        | 0x18      | 1      | W    | N/A              | To read or write to a register in the RFM69, write the address of interest to this register then read or write the value to _RFM69 Value_ Register
-| RFM69 Value      | 0x19/0x99 | 1      | R/W  | N/A              | To read or write to a register in the RFM69, write the address of interest to _RFM69 Reg_ Register then read or write the value this register
-| Payload Length   | 0x21      | 1      | W    | N/A              | To send a message, write to the _Payload_ register, then write the length to this register to trigger sending of the message over the air
-| Payload          | 0x22/0xA2 | 26 Max | R/W  | N/A              | To send a message, write the payload to this register, then write the length to the _Payload Length_ register to trigger sending of the message over the air. Read this register to check for a new message.
+| Register Name     | Address   | Bytes  | Mode | Default Value    | Description
+| ----------------- | --------- | ------ | ---- | ---------------- | -----------
+| Device ID         | 0x01      | 2      | R    | 495              | I2C device ID
+| Firmware Major    | 0x02      | 1      | R    | Varies           | Major firmware version
+| Firmware Minor    | 0x03      | 1      | R    | Varies           | Minor firmware version
+| I2C Address       | 0x84      | 1      | W    | 0xA1             | Set new I2C address
+| LED               | 0x05/0x85 | 1      | R/W  | 1                | 0=OFF, 1=ON
+| Encryption        | 0x11/0x91 | 1      | R/W  | 0                | 0=OFF, 1=ON
+| Encryption Key    | 0x12/0x92 | 1      | R/W  | PiicoDev---Radio | Must be exactly 16 characters on all nodes
+| High Power        | 0x13/0x93 | 1      | R/W  | 0                | 0=OFF, 1=ON
+| RFM69 Radio State | 0x14/0x94 | 1      | R/W  | 0                | 0=OFF, 1=ON
+| RFM69 Node ID     | 0x15/0x95 | 1      | R/W  | 1                | Do not change, addressing handled by the MicroPython driver
+| RFM69 Network ID  | 0x16/0x96 | 1      | R/W  | 0                | Do not change, addressing handled by the MicroPython driver
+| RFM69 To Node ID  | 0x17/0x97 | 1      | R/W  | 1                | Do not change, addressing handled by the MicroPython driver
+| RFM69 Reg         | 0x98      | 1      | W    | N/A              | To read or write to a register in the RFM69, write the address of interest to this register then read or write the value to _RFM69 Value_ Register
+| RFM69 Value       | 0x19/0x99 | 1      | R/W  | N/A              | To read or write to a register in the RFM69, write the address of interest to _RFM69 Reg_ Register then read or write the value this register
+| Payload Length    | 0x21/0xA1 | 1      | R/W  | N/A              | To send a message, write to the _Payload_ register, then write the length to this register to trigger sending of the message over the air. Read this register to check for a new message.
+| Payload           | 0x22/0xA2 | 26 Max | R/W  | N/A              | To send a message, write the payload to this register, then write the length to the _Payload Length_ register to trigger sending of the message over the air. Read this register to check the contents of a new message.
+
+This library has been inspired by the [Micro:bit Radio library](https://microbit-micropython.readthedocs.io/en/v1.0.1/radio.html).
 
 # License
 This project is open source - please review the LICENSE.md file for further licensing information.

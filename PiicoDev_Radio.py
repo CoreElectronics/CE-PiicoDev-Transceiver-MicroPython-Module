@@ -12,7 +12,7 @@ compat_str = '\nUnified PiicoDev library out of date.  Get the latest module: ht
 _BASE_ADDRESS                  = 0xA1
 _DEVICE_ID                     = 495
 
-_REG_STATUS                    = 0x01
+_REG_WHOAMI                    = 0x01
 _REG_FIRM_MAJ                  = 0x02
 _REG_FIRM_MIN                  = 0x03
 _REG_I2C_ADDRESS               = 0x04
@@ -22,7 +22,7 @@ _REG_RADIO_ADDRESS             = 0x07
 _REG_CHANNEL                   = 0x08
 _REG_DESTINATION_RADIO_ADDRESS = 0x09
 _REG_MESSAGE_LENGTH            = 0x0A
-_REG_WHOAMI                    = 0x11
+
 _REG_MESSAGE                   = 0x21
 
 DEBUG = True

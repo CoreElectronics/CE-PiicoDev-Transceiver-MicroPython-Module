@@ -1,9 +1,9 @@
 /*
    PiicoDev Radio Firmware
    Written by Peter Johnston @ Core Electronics
-   Based off the Core Electronics Buzzer module https://github.com/CoreElectronics/CE-PiicoDev-Buzzer-MicroPython-Module
+   Based off the Core Electronics Potentiometer module https://github.com/CoreElectronics/CE-PiicoDev-Potentiometer-MicroPython-Module
    Based off work by Felix Rusu 2018, http://www.LowPowerLab.com/contact
-   Date: AUGUST 2022
+   Date: OCTOBER 2022
    An I2C based module that utilises an RFM69 radio
 
    Feel like supporting PiicoDev? Buy a module here:
@@ -72,11 +72,11 @@ const uint8_t addressPin4 = PIN_PC1;
 #endif
 
 // System global variables
-volatile bool updateFlag = true; // Goes true when new data received. Cause LEDs to update
+volatile bool updateFlag = true; // Goes true when new data received
 volatile uint32_t lastSyncTime = 0;
 
 #define LOCAL_BUFFER_SIZE 20 // bytes
-uint8_t incomingData[LOCAL_BUFFER_SIZE]; // Local buffer to record I2C bytes before committing to file, add 1 for 0 character on end
+uint8_t incomingData[LOCAL_BUFFER_SIZE]; // Local buffer to record I2C bytes
 volatile uint16_t incomingDataSpot = 0; // Keeps track of where we are in the incoming buffer
 
 uint8_t responseBuffer[I2C_BUFFER_SIZE]; // Used to pass data back to master
@@ -84,65 +84,125 @@ volatile uint8_t responseSize = 1; // Defines how many bytes of relevant data is
 
 bool radioState = false;
 
-struct memoryMap {
+struct memoryMapRegs {
+  uint8_t id;
+  uint8_t firmwareMajor;
+  uint8_t firmwareMinor;
+  uint8_t i2cAddress;
+  uint8_t ledRead;
+  uint8_t ledWrite;
+  uint8_t encryptionRead;
+  uint8_t encryptionWrite;
+  uint8_t encryptionKeyRead;
+  uint8_t encryptionKeyWrite;
+  uint8_t highPowerRead;
+  uint8_t highPowerWrite;
+  uint8_t rfm69RadioStateRead;
+  uint8_t rfm69RadioStateWrite;
+  uint8_t rfm69NodeIDRead;
+  uint8_t rfm69NodeIDWrite;
+  uint8_t rfm69NetworkIDRead;
+  uint8_t rfm69NetworkIDWrite;
+  uint8_t rfm69ToNodeIDRead;
+  uint8_t rfm69ToNodeIDWrite;
+  uint8_t rfm69Reg;
+  uint8_t rfm69ValueRead;
+  uint8_t rfm69ValueWrite;
+  uint8_t payloadLengthRead;
+  uint8_t payloadLengthWrite;
+  uint8_t payloadRead;
+  uint8_t payloadWrite;
+};
+
+struct memoryMapData {
   uint16_t id;
   uint8_t firmwareMajor;
   uint8_t firmwareMinor;
   uint8_t i2cAddress;
   uint8_t ledRead;
   uint8_t ledWrite;
-  uint8_t radioStateRead;
-  uint8_t radioStateWrite;
-  uint8_t radioAddressRead;
-  uint8_t radioAddressWrite;
-  uint8_t channelRead;
-  uint8_t channelWrite;
-  uint8_t destinationRadioAddressRead;
-  uint8_t destinationRadioAddressWrite;
-  uint16_t messageLength;
-  uint8_t *messageRead;
-  uint8_t *messageWrite;
+  uint8_t encryptionRead;
+  uint8_t encryptionWrite;
+  uint8_t encryptionKeyRead;
+  uint8_t encryptionKeyWrite;
+  uint8_t highPowerRead;
+  uint8_t highPowerWrite;
+  uint8_t rfm69RadioStateRead;
+  uint8_t rfm69RadioStateWrite;
+  uint8_t rfm69NodeIDRead;
+  uint8_t rfm69NodeIDWrite;
+  uint8_t rfm69NetworkIDRead;
+  uint8_t rfm69NetworkIDWrite;
+  uint8_t rfm69ToNodeIDRead;
+  uint8_t rfm69ToNodeIDWrite;
+  uint8_t rfm69Reg;
+  uint8_t rfm69ValueRead;
+  uint8_t rfm69ValueWrite;
+  uint8_t payloadLengthRead;
+  uint8_t payloadLengthWrite;
+  uint8_t *payloadRead;
+  uint8_t *payloadWrite;
 };
 
 // Register addresses.
-const memoryMap registerMap = {
+const memoryMapRegs registerMap = {
   .id = 0x01,
   .firmwareMajor = 0x02,
   .firmwareMinor = 0x03,
-  .i2cAddress = 0x04,
+  .i2cAddress = 0x84,
   .ledRead = 0x05,
   .ledWrite = 0x85,
-  .radioStateRead = 0x06,
-  .radioStateWrite = 0x86,
-  .radioAddressRead = 0x07,
-  .radioAddressWrite = 0x87,
-  .channelRead = 0x08,
-  .channelWrite = 0x88,
-  .destinationRadioAddressRead = 0x09,
-  .destinationRadioAddressWrite = 0x89,
-  .messageLength = 0x8A,
-  .messageRead = 0x21,
-  .messageWrite = 0xA1
+  .encryptionRead = 0x11,
+  .encryptionWrite = 0x91,
+  .encryptionKeyRead = 0x12,
+  .encryptionKeyWrite = 0x92,
+  .highPowerRead = 0x13,
+  .highPowerWrite = 0x93,
+  .rfm69RadioStateRead = 0x14,
+  .rfm69RadioStateWrite = 0x94,
+  .rfm69NodeIDRead = 0x15,
+  .rfm69NodeIDWrite = 0x95,
+  .rfm69NetworkIDRead = 0x16,
+  .rfm69NetworkIDWrite = 0x96,
+  .rfm69ToNodeIDRead = 0x17,
+  .rfm69ToNodeIDWrite = 0x97,
+  .rfm69Reg = 0x98,
+  .rfm69ValueRead = 0x19,
+  .rfm69ValueWrite = 0x99,
+  .payloadLengthRead = 0x21,
+  .payloadLengthWrite = 0xA1,
+  .payloadRead = 0x22,
+  .payloadWrite = 0xA2,
 };
 
-volatile memoryMap valueMap = {
+volatile memoryMapData valueMap = {
   .id = DEVICE_ID,
   .firmwareMajor = FIRMWARE_MAJOR,
   .firmwareMinor = FIRMWARE_MINOR,
   .i2cAddress = DEFAULT_I2C_ADDRESS,
-  .ledRead = 0x01,
-  .ledWrite = 0x01,
-  .radioStateRead = 0,
-  .radioStateWrite = 0,
-  .radioAddressRead = 0,
-  .radioAddressWrite = 0,
-  .channelRead = 0,
-  .channelWrite = 0,
-  .destinationRadioAddressRead = 0,
-  .destinationRadioAddressWrite = 0,
-  .messageLength = 0,
-  .messageRead = 0,
-  .messageWrite = 0
+  .ledRead = 1,
+  .ledWrite = 1,
+  .encryptionRead = 0,
+  .encryptionWrite = 0,
+  .encryptionKeyRead = ENCRYPTKEY,
+  .encryptionKeyWrite = ENCRYPTKEY,
+  .highPowerRead = 0,
+  .highPowerWrite = 0,
+  .rfm69RadioStateRead = 1,
+  .rfm69RadioStateWrite = 1,
+  .rfm69NodeIDRead = 1,
+  .rfm69NodeIDWrite = 1,
+  .rfm69NetworkIDRead = 0,
+  .rfm69NetworkIDWrite = 0,
+  .rfm69ToNodeIDRead = 1,
+  .rfm69ToNodeIDWrite = 1,
+  .rfm69Reg = 0,
+  .rfm69ValueRead = 0,
+  .rfm69ValueWrite = 0,
+  .payloadLengthRead = 0,
+  .payloadLengthWrite = 0,
+  .payloadRead = 0,
+  .payloadWrite = 0,
 };
 
 uint8_t currentRegisterNumber;
@@ -158,17 +218,29 @@ void firmwareMinorReturn(char *data);
 void setAddress(char *data);
 void getPowerLed(char *data);
 void setPowerLed(char *data);
-void getRadioState(char *data);
-void setRadioState(char *data);
-void getRadioAddress(char *data);
-void setRadioAddress(char *data);
-void getChannel(char *data);
-void setChannel(char *data);
-void getDestinationRadioAddress(char *data);
-void setDestinationRadioAddress(char *data);
-void setMessageLength(char *data);
-void getMessage(char *data);
-void setMessage(char *data);
+void getEncryption(char *data);
+void setEncryption(char *data);
+void getEncryption(char *data);
+void setEncryption(char *data);
+void getEncryptionKey(char *data);
+void setEncryptionKey(char *data);
+void getHighPower(char *data);
+void setHighPower(char *data);
+void getRfm69RadioState(char *data);
+void setRfm69RadioState(char *data);
+void getRfm69NodeID(char *data);
+void setRfm69NodeID(char *data);
+void getRfm69NetworkID(char *data);
+void setRfm69NetworkID(char *data);
+void getRfm69ToNodeID(char *data);
+void setRfm69ToNodeID(char *data);
+void setRfm69Reg(char *data);
+void getRfm69Value(char *data);
+void setRfm69Value(char *data);
+void receivePayloadLength(char *data);
+void sendPayloadLength(char *data);
+void receivePayload(char *data);
+void sendPayload(char *data);
 
 functionMap functions[] = {
   {registerMap.id, idReturn},
@@ -177,17 +249,25 @@ functionMap functions[] = {
   {registerMap.i2cAddress, setAddress},
   {registerMap.ledRead, getPowerLed},
   {registerMap.ledWrite, setPowerLed},
-  {registerMap.radioStateRead, getRadioState},
-  {registerMap.radioStateWrite, setRadioState},
-  {registerMap.radioAddressRead, getRadioAddress},
-  {registerMap.radioAddressWrite, setRadioAddress},
-  {registerMap.channelRead, getChannel},
-  {registerMap.channelWrite, setChannel},
-  {registerMap.destinationRadioAddressRead, getDestinationRadioAddress},
-  {registerMap.destinationRadioAddressWrite, setDestinationRadioAddress},
-  {registerMap.messageLength, setMessageLength},
-  {registerMap.messageRead, getMessage},
-  {registerMap.messageWrite, setMessage},
+  {registerMap.encryptionRead, getEncryption},
+  {registerMap.encryptionWrite, setEncryption},
+  {registerMap.encryptionKeyRead, getEncryptionKey},
+  {registerMap.encryptionKeyWrite, setEncryptionKey},
+  {registerMap.rfm69RadioStateRead, getRfm69RadioState},
+  {registerMap.rfm69RadioStateWrite, setRfm69RadioState},
+  {registerMap.rfm69NodeIDRead, getRfm69NodeID},
+  {registerMap.rfm69NodeIDWrite, setRfm69NodeID},
+  {registerMap.rfm69NetworkIDRead, getRfm69NetworkID},
+  {registerMap.rfm69NetworkIDWrite, setRfm69NetworkID},
+  {registerMap.rfm69ToNodeIDRead, getRfm69ToNodeID},
+  {registerMap.rfm69ToNodeIDWrite, setRfm69ToNodeID},
+  {registerMap.rfm69Reg, setRfm69Reg},
+  {registerMap.rfm69ValueRead, getRfm69Value},
+  {registerMap.rfm69ValueWrite, setRfm69Value},
+  {registerMap.payloadLengthRead, receivePayloadLength},
+  {registerMap.payloadLengthWrite, sendPayloadLength},
+  {registerMap.payloadRead, receivePayload},
+  {registerMap.payloadWrite, sendPayload},
 };
 
 typedef struct {
@@ -245,19 +325,19 @@ void loop() {
 
 
   //if (Serial.available() > 0)
-  if (valueMap.messageLength > 0)
+  if (valueMap.payloadLengthWrite > 0)
   {
     //debug("(char)valueMap.messageWrite ");
     //debugln((char)valueMap.messageWrite);
     //debug("*valueMap.messageWrite ");
     //Serial.println(valueMap.messageWrite);
-    if (radio.sendWithRetry(valueMap.destinationRadioAddressWrite, valueMap.messageWrite, valueMap.messageLength))
+    if (radio.sendWithRetry(valueMap.rfm69ToNodeIDWrite, valueMap.payloadWrite, valueMap.payloadLengthWrite))
     
     //if (radio.sendWithRetry(valueMap.destinationRadioAddressWrite, "asdf", 4))
       debugln("ACK received!");
     else
       debugln("no ACK received");
-    valueMap.messageLength = 0; // Don't resend the same data
+    valueMap.payloadLengthWrite = 0; // Don't resend the same data
     return;
   }
 
@@ -279,7 +359,7 @@ void loop() {
 
     for (byte i = 0; i < radio.DATALEN; i++) {
       debug((char)radio.DATA[i]);
-      valueMap.messageRead = (char)radio.DATA[i];
+      valueMap.payloadRead = (char)radio.DATA[i];
     }
     // RSSI is the "Receive Signal Strength Indicator",
     // smaller numbers mean higher power.
