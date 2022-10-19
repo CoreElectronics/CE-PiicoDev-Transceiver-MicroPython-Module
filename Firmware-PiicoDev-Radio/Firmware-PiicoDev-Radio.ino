@@ -82,7 +82,7 @@ volatile uint16_t incomingDataSpot = 0; // Keeps track of where we are in the in
 uint8_t responseBuffer[I2C_BUFFER_SIZE]; // Used to pass data back to master
 volatile uint8_t responseSize = 1; // Defines how many bytes of relevant data is contained in the responseBuffer
 
-bool radioState = false;
+bool radioState = true;
 
 struct memoryMapRegs {
   uint8_t id;

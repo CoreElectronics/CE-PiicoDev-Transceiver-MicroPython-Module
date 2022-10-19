@@ -1,8 +1,6 @@
 # 2022-08-10 https://github.com/bbcmicrobit/micropython/tree/v1.0.1
 # Peter Johnston at Core Electronics
-# 2022-08-24: Initial release
-
-
+# 2022-10-19: Initial release
 
 from PiicoDev_Unified import *
 import radio_config
@@ -17,13 +15,17 @@ _REG_FIRM_MAJ                  = 0x02
 _REG_FIRM_MIN                  = 0x03
 _REG_I2C_ADDRESS               = 0x04
 _REG_LED                       = 0x05
-_REG_RADIO_ON                  = 0x06
-_REG_RADIO_ADDRESS             = 0x07
-_REG_CHANNEL                   = 0x08
-_REG_DESTINATION_RADIO_ADDRESS = 0x09
-_REG_MESSAGE_LENGTH            = 0x0A
-
-_REG_MESSAGE                   = 0x21
+_REG_ENCRYPTION                = 0x11
+_REG_ENCRYPTION_KEY            = 0x12
+_REG_HIGH_POWER                = 0x13
+_REG_RFM69_RADIO_STATE         = 0x14
+_REG_RFM69_NODE_ID             = 0x15
+_REG_RFM69_NETWORK_ID          = 0x16
+_REG_RFM69_TO_NODE_ID          = 0x17
+_REG_RFM69_REG                 = 0x18
+_REG_RFM69_VALUE               = 0x19
+_REG_PAYLOAD_LENGTH            = 0x21
+_REG_PAYLOAD                   = 0x22
 
 DEBUG = True
 
@@ -84,10 +86,10 @@ class PiicoDev_Radio(object):
         self._write(register, int.to_bytes(integer, length, 'big'))
         
     def send_bytes(self, message):
-        self._write(_set_bit(_REG_MESSAGE, 7), message)
+        self._write(_set_bit(_REG_PAYLOAD, 7), message)
         
     def receive_bytes(self):
-        message = self._read(_REG_MESSAGE)
+        message = self._read(_REG_PAYLOAD)
         return message
     
     def on(self):
@@ -97,39 +99,39 @@ class PiicoDev_Radio(object):
         self._off = 1
     
     @property
-    def channel(self):
-        return self._read_int(_REG_CHANNEL)
+    def rfm69_network_id(self):
+        return self._read_int(_REG_RFM69_NETWORK_ID)
     
-    @channel.setter
-    def channel(self, value):
+    @rfm69_network_id.setter
+    def rfm69_network_id(self, value):
         print("channel setter called")
-        self._write_int(_set_bit(_REG_CHANNEL, 7), value)
+        self._write_int(_set_bit(_REG_RFM69_NETWORK_ID, 7), value)
     
     @property
-    def radio_address(self):
-        return self._read_int(_REG_RADIO_ADDRESS)
+    def rfm69_node_id(self):
+        return self._read_int(_REG_RFM69_NODE_ID)
     
-    @radio_address.setter
-    def radio_address(self, value):
-        self._write_int(_set_bit(_REG_RADIO_ADDRESS, 7), value)
+    @rfm69_node_id.setter
+    def rfm69_node_id(self, value):
+        self._write_int(_set_bit(_REG_RFM69_NODE_ID, 7), value)
         
     @property
-    def destination_radio_address(self):
-        return self._read_int(_REG_DESTINATION_RADIO_ADDRESS)
+    def rfm69_to_node_id(self):
+        return self._read_int(_REG_RFM69_TO_NODE_ID)
     
-    @destination_radio_address.setter
-    def destination_radio_address(self, value):
+    @rfm69_to_node_id.setter
+    def rfm69_to_node_id(self, value):
         debug("Setting destination radio address to " + str(value) + ".")
-        self._write_int(_set_bit(_REG_DESTINATION_RADIO_ADDRESS, 7), value)
+        self._write_int(_set_bit(_REG_RFM69_TO_NODE_ID, 7), value)
     
     @property
-    def messageLength(self):
+    def payload_length(self):
         return 0
     
-    @messageLength.setter
-    def messageLength(self, value):
+    @payload_length.setter
+    def payload_length(self, value):
         debug("Setting message length" + str(value) + ".")
-        self._write_int(_set_bit(_REG_MESSAGE_LENGTH, 7), value)
+        self._write_int(_set_bit(_REG_PAYLOAD_LENGTH, 7), value)
     
     @property
     def message(self):
@@ -143,24 +145,24 @@ class PiicoDev_Radio(object):
     @property
     def _on(self):
         """Checks the radio state"""
-        self._read_int(_REG_RADIO_ON, 1)
+        self._read_int(_REG_RFM69_RADIO_STATE, 1)
     
     @_on.setter
     def _on(self, val):
         """Turns the radio on"""
         print('Turning radio on')
-        self._write_int(_set_bit(_REG_RADIO_ON, 7), 1)
+        self._write_int(_set_bit(_REG_RFM69_RADIO_STATE, 7), 1)
     
     @property
     def _off(self):
         """Checks the radio state"""
         print('Turning radio off')
-        self._read_int(_REG_RADIO_ON, 0)
+        self._read_int(_REG_RFM69_RADIO_STATE, 0)
     
     @_off.setter
     def _off(self, val):
         """Turns the radio off"""
-        self._write_int(_set_bit(_REG_RADIO_ON, 7), 0)
+        self._write_int(_set_bit(_REG_RFM69_RADIO_STATE, 7), 0)
     
     @property
     def address(self):

@@ -1,3 +1,3 @@
-radio_address = 2
+radio_address = 1
 channel = 0
 destination_radio_address = 1
