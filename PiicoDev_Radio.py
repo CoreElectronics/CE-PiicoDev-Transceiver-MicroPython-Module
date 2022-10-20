@@ -36,8 +36,6 @@ def debug(text):
     if DEBUG:
         print(text)
 
-print(radio_config.radio_address)
-
 class PiicoDev_Radio(object):
     def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None, radio_address=radio_config.radio_address, channel=radio_config.channel, suppress_warnings=False):
         try:
@@ -87,6 +85,9 @@ class PiicoDev_Radio(object):
         
     def send_bytes(self, message):
         self._write(_set_bit(_REG_PAYLOAD, 7), message)
+        print('message written, now time to send the length')
+        print('message length ' + str(len(message)))
+        self._write_int(_set_bit(_REG_PAYLOAD_LENGTH, 7), len(message))
         
     def receive_bytes(self):
         message = self._read(_REG_PAYLOAD)
@@ -97,6 +98,30 @@ class PiicoDev_Radio(object):
         
     def off(self):
         self._off = 1
+    
+    @property
+    def encryption(self):
+        return self._read_int(_REG_ENCRYPTION)
+    
+    @encryption.setter
+    def encryption(self, value):
+        self._write_int(_set_bit(_REG_ENCRYPTION, 7), value)
+        
+    @property
+    def encryption_key(self):
+        return self._read(_REG_ENCRYPTION_KEY)
+    
+    @encryption_key.setter
+    def encryption_key(self, value):
+        self._write_int(_set_bit(_REG_ENCRYPTION_KEY, 7), value)
+        
+    @property
+    def high_power(self):
+        return self._read_int(_REG_HIGH_POWER)
+    
+    @high_power.setter
+    def high_power(self, value):
+        self._write_int(_set_bit(_REG_HIGH_POWER, 7), value)
     
     @property
     def rfm69_network_id(self):
@@ -135,7 +160,8 @@ class PiicoDev_Radio(object):
     
     @property
     def message(self):
-        message_string = str(self.receive_bytes(), 'utf8')
+        #message_string = str(self.receive_bytes(), 'utf8')
+        message_string = str(self.receive_bytes())
         return message_string
     
     @message.setter
@@ -150,7 +176,7 @@ class PiicoDev_Radio(object):
     @_on.setter
     def _on(self, val):
         """Turns the radio on"""
-        print('Turning radio on')
+        print('Turning radio on!')
         self._write_int(_set_bit(_REG_RFM69_RADIO_STATE, 7), 1)
     
     @property

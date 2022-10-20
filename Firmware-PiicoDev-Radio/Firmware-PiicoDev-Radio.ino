@@ -39,6 +39,7 @@
 #define SOFTWARE_ADDRESS true
 #define HARDWARE_ADDRESS false
 #define I2C_BUFFER_SIZE 32 //For ATmega328 based Arduinos, the I2C buffer is limited to 32 bytes
+#define RX_BUFFER_SIZE 256
 #define FREQUENCY RF69_915MHZ
 //#define MYNODEID      1
 //#define NETWORKID   0
@@ -82,6 +83,9 @@ volatile uint16_t incomingDataSpot = 0; // Keeps track of where we are in the in
 uint8_t responseBuffer[I2C_BUFFER_SIZE]; // Used to pass data back to master
 volatile uint8_t responseSize = 1; // Defines how many bytes of relevant data is contained in the responseBuffer
 
+uint8_t rxBuffer[RX_BUFFER_SIZE]; // The radio's received data buffer
+volatile uint8_t rxSize = 1; // Defines how many bytes of relevant data is contained in the rxBuffer
+
 bool radioState = true;
 
 struct memoryMapRegs {
@@ -121,8 +125,8 @@ struct memoryMapData {
   uint8_t i2cAddress;
   uint8_t ledRead;
   uint8_t ledWrite;
-  uint8_t encryptionRead;
-  uint8_t encryptionWrite;
+  char* encryptionRead;
+  char* encryptionWrite;
   uint8_t encryptionKeyRead;
   uint8_t encryptionKeyWrite;
   uint8_t highPowerRead;
@@ -188,14 +192,14 @@ volatile memoryMapData valueMap = {
   .encryptionKeyWrite = ENCRYPTKEY,
   .highPowerRead = 0,
   .highPowerWrite = 0,
-  .rfm69RadioStateRead = 1,
-  .rfm69RadioStateWrite = 1,
+  .rfm69RadioStateRead = 0,
+  .rfm69RadioStateWrite = 0,
   .rfm69NodeIDRead = 1,
   .rfm69NodeIDWrite = 1,
   .rfm69NetworkIDRead = 0,
   .rfm69NetworkIDWrite = 0,
-  .rfm69ToNodeIDRead = 1,
-  .rfm69ToNodeIDWrite = 1,
+  .rfm69ToNodeIDRead = 0,
+  .rfm69ToNodeIDWrite = 0,
   .rfm69Reg = 0,
   .rfm69ValueRead = 0,
   .rfm69ValueWrite = 0,
@@ -253,6 +257,8 @@ functionMap functions[] = {
   {registerMap.encryptionWrite, setEncryption},
   {registerMap.encryptionKeyRead, getEncryptionKey},
   {registerMap.encryptionKeyWrite, setEncryptionKey},
+  {registerMap.highPowerRead, getHighPower},
+  {registerMap.highPowerWrite, setHighPower},
   {registerMap.rfm69RadioStateRead, getRfm69RadioState},
   {registerMap.rfm69RadioStateWrite, setRfm69RadioState},
   {registerMap.rfm69NodeIDRead, getRfm69NodeID},
@@ -331,12 +337,12 @@ void loop() {
     //debugln((char)valueMap.messageWrite);
     //debug("*valueMap.messageWrite ");
     //Serial.println(valueMap.messageWrite);
-    if (radio.sendWithRetry(valueMap.rfm69ToNodeIDWrite, valueMap.payloadWrite, valueMap.payloadLengthWrite))
+    //if (radio.send(valueMap.rfm69ToNodeIDWrite, valueMap.payloadWrite, valueMap.payloadLengthWrite, false))
     
-    //if (radio.sendWithRetry(valueMap.destinationRadioAddressWrite, "asdf", 4))
-      debugln("ACK received!");
-    else
-      debugln("no ACK received");
+    radio.send(valueMap.rfm69ToNodeIDWrite, &valueMap.payloadWrite, valueMap.payloadLengthWrite);
+    debug("PAYLOAD");
+    debugln(*valueMap.payloadWrite);
+    // radio.send(valueMap.rfm69ToNodeIDWrite, "Hello There", valueMap.payloadLengthWrite);
     valueMap.payloadLengthWrite = 0; // Don't resend the same data
     return;
   }
@@ -350,36 +356,34 @@ void loop() {
   {
     // Print out the information:
 
-    debug("received from node ");
-    debug(radio.SENDERID);
-    debug(", message [");
+    //debug("received from node ");
+    //debug(radio.SENDERID);
+    //debug(", message [");
 
     // The actual message is contained in the DATA array,
     // and is DATALEN bytes in size:
 
+    rxSize = radio.DATALEN;
     for (byte i = 0; i < radio.DATALEN; i++) {
-      debug((char)radio.DATA[i]);
-      valueMap.payloadRead = (char)radio.DATA[i];
+      debug((int)radio.DATA[i]);
+      //valueMap.payloadRead = (char)radio.DATA[i];
+      rxBuffer[i] = radio.DATA[i];
+      //debug("Receive:");
+      //debugln(rxBuffer[i]);
     }
+
     // RSSI is the "Receive Signal Strength Indicator",
     // smaller numbers mean higher power.
 
     debug("], RSSI ");
     debugln(radio.RSSI);
-
-    if (radio.ACKRequested())
-    {
-      radio.sendACK();
-      debugln("ACK sent");
-    }
   }
   if (radioState == false) {
-    //sleep_mode();  don't use sleep mode until we have everything working
+
   }
 }
 
-// Begin listening on I2C bus as I2C slave using the global variable valueMap.i2cAddress
-// ToDo don't use globals ie. pass in value map =>  void startI2C(memoryMap *map)
+// Begin listening on I2C bus as I2C target using the global variable valueMap.i2cAddress
 void startI2C()
 {
   uint8_t address;
