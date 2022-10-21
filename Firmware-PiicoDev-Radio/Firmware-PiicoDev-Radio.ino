@@ -114,6 +114,7 @@ struct memoryMapRegs {
   uint8_t payloadLengthWrite;
   uint8_t payloadRead;
   uint8_t payloadWrite;
+  uint8_t payloadNew;
   uint8_t payloadGo;
 };
 
@@ -145,6 +146,7 @@ struct memoryMapData {
   uint8_t payloadLengthWrite;
   char *payloadRead;
   char *payloadWrite;
+  uint8_t payloadNew;
   uint8_t payloadGo;
 };
 
@@ -177,7 +179,8 @@ const memoryMapRegs registerMap = {
   .payloadLengthWrite = 0xA1,
   .payloadRead = 0x22,
   .payloadWrite = 0xA2,
-  .payloadGo = 0xA3,
+  .payloadNew = 0x23,
+  .payloadGo = 0xA4,
 };
 
 volatile char outgoingBuffer[32];
@@ -211,6 +214,7 @@ volatile memoryMapData valueMap = {
   .payloadLengthWrite = 0,
   .payloadRead = incomingBuffer,
   .payloadWrite = outgoingBuffer,
+  .payloadNew = 0,
   .payloadGo = 0,
 };
 
@@ -250,6 +254,7 @@ void receivePayloadLength(char *data);
 void sendPayloadLength(char *data);
 void receivePayload(char *data);
 void sendPayload(char *data);
+void receivePayloadNew(char *data);
 void sendPayloadGo(char *data);
 
 functionMap functions[] = {
@@ -280,6 +285,7 @@ functionMap functions[] = {
   {registerMap.payloadLengthWrite, sendPayloadLength},
   {registerMap.payloadRead, receivePayload},
   {registerMap.payloadWrite, sendPayload},
+  {registerMap.payloadNew, receivePayloadNew},
   {registerMap.payloadGo, sendPayloadGo},
 };
 
@@ -360,6 +366,7 @@ void loop() {
 
     // The actual message is contained in the DATA array,
     // and is DATALEN bytes in size:
+    valueMap.payloadNew = 1;
 
     for (byte i = 0; i < radio.DATALEN; i++) {
       debug((char)radio.DATA[i]);

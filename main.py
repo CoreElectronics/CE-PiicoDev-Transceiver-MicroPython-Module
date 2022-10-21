@@ -15,7 +15,7 @@ while True:
     print('Network ID:     ' + str(radio.rfm69_network_id))
     print('To Node ID:     ' + str(radio.rfm69_to_node_id))
     radio.led = 1
-    sleep_ms(5000)
+    sleep_ms(50)
     radio.message = 'hello world!'
     print('hello world sent')
     sleep_ms(1000)

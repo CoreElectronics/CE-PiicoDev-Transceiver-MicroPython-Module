@@ -26,7 +26,8 @@ _REG_RFM69_REG                 = 0x18
 _REG_RFM69_VALUE               = 0x19
 _REG_PAYLOAD_LENGTH            = 0x21
 _REG_PAYLOAD                   = 0x22
-_REG_PAYLOAD_GO                = 0x23
+_REG_PAYLOAD_NEW               = 0x23
+_REG_PAYLOAD_GO                = 0x24
 
 DEBUG = True
 
@@ -84,7 +85,7 @@ class PiicoDev_Radio(object):
     def _write_int(self, register, integer, length=1):
         self._write(register, int.to_bytes(integer, length, 'big'))
         
-    def send_bytes(self, message):
+    def send_payload(self, message):
         #print('message length ' + str(len(message)))
         self._write_int(_set_bit(_REG_PAYLOAD_LENGTH, 7), len(message))
         sleep_ms(1000)
@@ -93,12 +94,13 @@ class PiicoDev_Radio(object):
         #print('---')
         self._write_int(_set_bit(_REG_PAYLOAD_GO, 7), 1)
         
-    def receive_bytes(self):
-        #print('about to run payload length')
-        payload_length = self._read_int(_REG_PAYLOAD_LENGTH)
-        print('RECEIVED_PAYLOAD_LENGTH:' + str(payload_length))
-        message = self._read(_REG_PAYLOAD, length=payload_length)
-        print('RECEIVED PAYLOAD:' + str(message))
+    def receive_payload(self):
+        message = 'no new messages'
+        if self._payload_new == 1:
+            payload_length = self._read_int(_REG_PAYLOAD_LENGTH)
+            print('RECEIVED_PAYLOAD_LENGTH:' + str(payload_length))
+            message = self._read(_REG_PAYLOAD, length=payload_length)
+            print('RECEIVED PAYLOAD:' + str(message))
         return message
     
     def on(self):
@@ -165,16 +167,20 @@ class PiicoDev_Radio(object):
     def payload_length(self, value):
         debug("Setting message length" + str(value) + ".")
         self._write_int(_set_bit(_REG_PAYLOAD_LENGTH, 7), value)
+        
+    @property
+    def _payload_new(self):
+        return self._read_int(_REG_PAYLOAD_NEW)
     
     @property
     def message(self):
-        message_string = str(self.receive_bytes(), 'utf8')
+        message_string = str(self.receive_payload(), 'utf8')
         #message_string = str(self.receive_bytes())
         return message_string
     
     @message.setter
     def message(self, message_string):
-        self.send_bytes(bytes(message_string, 'utf8'))
+        self.send_payload(bytes(message_string, 'utf8'))
     
     @property
     def _on(self):

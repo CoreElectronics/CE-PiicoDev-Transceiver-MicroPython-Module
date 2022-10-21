@@ -155,6 +155,11 @@ void sendPayload(char *data) {
   memcpy(valueMap.payloadWrite, data, valueMap.payloadLengthWrite);
 }
 
+void receivePayloadNew(char *data) {
+  loadArray(valueMap.payloadNew);
+  valueMap.payloadNew = 0;
+} 
+
 void sendPayloadGo(char *data) {
   valueMap.payloadGo = data[0];
 } 
