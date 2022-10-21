@@ -142,7 +142,6 @@ void sendPayloadLength(char *data) {
 }
 
 void receivePayload(char *data) {
-  debugln("receivePayload-----------------------------------");
   debugln(valueMap.payloadLengthRead);
   debugln(valueMap.payloadRead);
   for (uint8_t i = 0; i < valueMap.payloadLengthRead; i++) {

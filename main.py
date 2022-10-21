@@ -4,7 +4,7 @@ from PiicoDev_Unified import sleep_ms
 radio = PiicoDev_Radio()   # Initialise the Radio module
 
 while True:
-    radio.on()
+    #radio.on()
     firmware = radio.firmware
     print('ID:             ' + str(radio.whoami))
     print('Firmware:       ' + str(firmware[0]) + '.' + str(firmware[1]))
@@ -16,10 +16,10 @@ while True:
     print('To Node ID:     ' + str(radio.rfm69_to_node_id))
     radio.led = 1
     sleep_ms(50)
-    radio.message = 'hello world!'
+    radio.message = '!hello world'
     print('hello world sent')
     sleep_ms(1000)
     received_message = radio.message
     print('Received Message: ' + str(received_message))
-    radio.off()
+    #radio.off()
     sleep_ms(2000)

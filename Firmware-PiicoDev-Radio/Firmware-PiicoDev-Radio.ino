@@ -314,6 +314,15 @@ void setup() {
   startI2C();          //Determine the I2C address we should be using and begin listening on I2C bus
   oldAddress = valueMap.i2cAddress;
 
+  // Turn Radio On
+   radio.initialize(FREQUENCY, valueMap.rfm69NodeIDWrite, valueMap.rfm69NetworkIDWrite);
+    radio.setHighPower();
+    //radio.encrypt(ENCRYPTKEY);
+    radioState = true;
+    debug("Radio turned on with address ");
+    debug(valueMap.rfm69NodeIDWrite);
+    debug(" and channel ");
+    debugln(valueMap.rfm69NetworkIDWrite);
 }
 
 void loop() {
@@ -346,6 +355,7 @@ void loop() {
   //if (Serial.available() > 0)
   if (valueMap.payloadGo > 0)
   {
+    debugln("SENDING-----------------------------------");
     radio.send(valueMap.rfm69ToNodeIDWrite, valueMap.payloadWrite, valueMap.payloadLengthWrite);
     valueMap.payloadGo = 0;
     return;
