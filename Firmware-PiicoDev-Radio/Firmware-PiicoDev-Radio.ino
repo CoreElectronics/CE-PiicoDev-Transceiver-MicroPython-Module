@@ -28,8 +28,6 @@
 #include <Wire.h>
 #include <EEPROM.h>
 #include <stdint.h>
-#include <avr/sleep.h> // For sleep_mode
-#include <avr/power.h> // For powering-down peripherals such as ADC and Timers
 
 #define FIRMWARE_MAJOR 0x01
 #define FIRMWARE_MINOR 0x00
@@ -83,8 +81,8 @@ volatile uint16_t incomingDataSpot = 0; // Keeps track of where we are in the in
 uint8_t responseBuffer[I2C_BUFFER_SIZE]; // Used to pass data back to master
 volatile uint8_t responseSize = 1; // Defines how many bytes of relevant data is contained in the responseBuffer
 
-uint8_t rxBuffer[RX_BUFFER_SIZE]; // The radio's received data buffer
-volatile uint8_t rxSize = 1; // Defines how many bytes of relevant data is contained in the rxBuffer
+//uint8_t rxBuffer[RX_BUFFER_SIZE]; // The radio's received data buffer
+//volatile uint8_t rxSize = 1; // Defines how many bytes of relevant data is contained in the rxBuffer
 
 bool radioState = true;
 
@@ -116,6 +114,7 @@ struct memoryMapRegs {
   uint8_t payloadLengthWrite;
   uint8_t payloadRead;
   uint8_t payloadWrite;
+  uint8_t payloadGo;
 };
 
 struct memoryMapData {
@@ -125,8 +124,8 @@ struct memoryMapData {
   uint8_t i2cAddress;
   uint8_t ledRead;
   uint8_t ledWrite;
-  char* encryptionRead;
-  char* encryptionWrite;
+  uint8_t encryptionRead;
+  uint8_t encryptionWrite;
   uint8_t encryptionKeyRead;
   uint8_t encryptionKeyWrite;
   uint8_t highPowerRead;
@@ -144,8 +143,9 @@ struct memoryMapData {
   uint8_t rfm69ValueWrite;
   uint8_t payloadLengthRead;
   uint8_t payloadLengthWrite;
-  uint8_t *payloadRead;
-  uint8_t *payloadWrite;
+  char *payloadRead;
+  char *payloadWrite;
+  uint8_t payloadGo;
 };
 
 // Register addresses.
@@ -177,7 +177,11 @@ const memoryMapRegs registerMap = {
   .payloadLengthWrite = 0xA1,
   .payloadRead = 0x22,
   .payloadWrite = 0xA2,
+  .payloadGo = 0xA3,
 };
+
+volatile char outgoingBuffer[32];
+volatile char incomingBuffer[32];
 
 volatile memoryMapData valueMap = {
   .id = DEVICE_ID,
@@ -205,8 +209,9 @@ volatile memoryMapData valueMap = {
   .rfm69ValueWrite = 0,
   .payloadLengthRead = 0,
   .payloadLengthWrite = 0,
-  .payloadRead = 0,
-  .payloadWrite = 0,
+  .payloadRead = incomingBuffer,
+  .payloadWrite = outgoingBuffer,
+  .payloadGo = 0,
 };
 
 uint8_t currentRegisterNumber;
@@ -245,6 +250,7 @@ void receivePayloadLength(char *data);
 void sendPayloadLength(char *data);
 void receivePayload(char *data);
 void sendPayload(char *data);
+void sendPayloadGo(char *data);
 
 functionMap functions[] = {
   {registerMap.id, idReturn},
@@ -274,6 +280,7 @@ functionMap functions[] = {
   {registerMap.payloadLengthWrite, sendPayloadLength},
   {registerMap.payloadRead, receivePayload},
   {registerMap.payloadWrite, sendPayload},
+  {registerMap.payloadGo, sendPayloadGo},
 };
 
 typedef struct {
@@ -295,8 +302,8 @@ void setup() {
   pinMode(addressPin4, INPUT_PULLUP);
   pinMode(powerLedPin, OUTPUT);
   powerLed(true); // enable Power LED by default on every power-up
-  set_sleep_mode(SLEEP_MODE_IDLE);
-  sleep_enable();
+  //set_sleep_mode(SLEEP_MODE_IDLE);
+  //sleep_enable();
   readSystemSettings(); //Load all system settings from EEPROM
   startI2C();          //Determine the I2C address we should be using and begin listening on I2C bus
   oldAddress = valueMap.i2cAddress;
@@ -331,19 +338,10 @@ void loop() {
 
 
   //if (Serial.available() > 0)
-  if (valueMap.payloadLengthWrite > 0)
+  if (valueMap.payloadGo > 0)
   {
-    //debug("(char)valueMap.messageWrite ");
-    //debugln((char)valueMap.messageWrite);
-    //debug("*valueMap.messageWrite ");
-    //Serial.println(valueMap.messageWrite);
-    //if (radio.send(valueMap.rfm69ToNodeIDWrite, valueMap.payloadWrite, valueMap.payloadLengthWrite, false))
-    
-    radio.send(valueMap.rfm69ToNodeIDWrite, &valueMap.payloadWrite, valueMap.payloadLengthWrite);
-    debug("PAYLOAD");
-    debugln(*valueMap.payloadWrite);
-    // radio.send(valueMap.rfm69ToNodeIDWrite, "Hello There", valueMap.payloadLengthWrite);
-    valueMap.payloadLengthWrite = 0; // Don't resend the same data
+    radio.send(valueMap.rfm69ToNodeIDWrite, valueMap.payloadWrite, valueMap.payloadLengthWrite);
+    valueMap.payloadGo = 0;
     return;
   }
 
@@ -356,21 +354,21 @@ void loop() {
   {
     // Print out the information:
 
-    //debug("received from node ");
-    //debug(radio.SENDERID);
-    //debug(", message [");
+    debug("received from node ");
+    debug(radio.SENDERID);
+    debugln("-----------------------------------");
 
     // The actual message is contained in the DATA array,
     // and is DATALEN bytes in size:
 
-    rxSize = radio.DATALEN;
     for (byte i = 0; i < radio.DATALEN; i++) {
-      debug((int)radio.DATA[i]);
-      //valueMap.payloadRead = (char)radio.DATA[i];
-      rxBuffer[i] = radio.DATA[i];
-      //debug("Receive:");
-      //debugln(rxBuffer[i]);
+      debug((char)radio.DATA[i]);
+      valueMap.payloadRead[i] = (char)radio.DATA[i];
     }
+    valueMap.payloadLengthRead = radio.DATALEN;
+    debugln("");
+    debug("Incoming Data:");
+    debugln(valueMap.payloadRead);
 
     // RSSI is the "Receive Signal Strength Indicator",
     // smaller numbers mean higher power.
@@ -428,13 +426,13 @@ void startI2C()
 
   // save new address to the register map
   valueMap.i2cAddress = address;
-  debugln("I2C Address:"); debugln(address);
+  //debugln("I2C Address:"); debugln(address);
   recordSystemSettings(); // save the new address to EEPROM
 
   // reconfigure Wire instance
   Wire.end();          //stop I2C on old address
-  debug("Address: ");
-  debugln(address);
+  //debug("Address: ");
+  //debugln(address);
   Wire.begin(address); //rejoin the I2C bus on new address
 
   // The connections to the interrupts are severed when a Wire.begin occurs, so here we reattach them

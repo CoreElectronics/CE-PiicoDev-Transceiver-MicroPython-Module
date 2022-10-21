@@ -101,6 +101,7 @@ Currently, it’s equivalent to str(receive_bytes(), 'utf8').
 | RFM69 Value       | 0x19/0x99 | 1      | R/W  | N/A              | To read or write to a register in the RFM69, write the address of interest to _RFM69 Reg_ Register then read or write the value this register
 | Payload Length    | 0x21/0xA1 | 1      | R/W  | N/A              | To send a message, write to the _Payload_ register, then write the length to this register to trigger sending of the message over the air. Read this register to check for a new message.
 | Payload           | 0x22/0xA2 | 26 Max | R/W  | N/A              | To send a message, write the payload to this register, then write the length to the _Payload Length_ register to trigger sending of the message over the air. Read this register to check the contents of a new message.
+| Payload Go        | 0xA3      | 1      | W    | 0                | To send a message, write to the length, then payload then set this to 1 to send the message
 
 This library has been inspired by the [Micro:bit Radio library](https://microbit-micropython.readthedocs.io/en/v1.0.1/radio.html).
 

@@ -26,6 +26,7 @@ _REG_RFM69_REG                 = 0x18
 _REG_RFM69_VALUE               = 0x19
 _REG_PAYLOAD_LENGTH            = 0x21
 _REG_PAYLOAD                   = 0x22
+_REG_PAYLOAD_GO                = 0x23
 
 DEBUG = True
 
@@ -84,13 +85,23 @@ class PiicoDev_Radio(object):
         self._write(register, int.to_bytes(integer, length, 'big'))
         
     def send_bytes(self, message):
-        self._write(_set_bit(_REG_PAYLOAD, 7), message)
         print('message written, now time to send the length')
         print('message length ' + str(len(message)))
         self._write_int(_set_bit(_REG_PAYLOAD_LENGTH, 7), len(message))
+        sleep_ms(1000)
+        self._write(_set_bit(_REG_PAYLOAD, 7), message)
+        sleep_ms(1000)
+        print('---')
+        self._write_int(_set_bit(_REG_PAYLOAD_GO, 7), 1)
         
     def receive_bytes(self):
-        message = self._read(_REG_PAYLOAD)
+        print('about to run payload length')
+        payload_length = self._read_int(_REG_PAYLOAD_LENGTH)
+        print('payload length' + str(payload_length))
+        print('finished running payload length')
+        message = self._read(_REG_PAYLOAD, length=payload_length)
+        print('finished receiving payload')
+        print('PAYLOAD:' + str(message))
         return message
     
     def on(self):

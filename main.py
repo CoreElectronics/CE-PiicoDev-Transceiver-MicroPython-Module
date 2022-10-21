@@ -20,6 +20,6 @@ while True:
     print('hello world sent')
     sleep_ms(1000)
     received_message = radio.message
-    print(received_message)
+    print('Received Message: ' + str(received_message))
     radio.off()
     sleep_ms(2000)

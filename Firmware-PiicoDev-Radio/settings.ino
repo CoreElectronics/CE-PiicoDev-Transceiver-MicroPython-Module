@@ -1,5 +1,6 @@
 // Reads the current system settings from EEPROM
 // Resets to default if anything is unusual
+
 void readSystemSettings(void)
 {
   //Read what I2C address we should use

@@ -44,10 +44,10 @@ void getEncryption(char *data) {
 }
 
 void setEncryption(char *data) {
-  valueMap.encryptionWrite[0] = data[0];
-  valueMap.encryptionWrite[1] = data[1];
-  valueMap.encryptionRead[0] = data[0];
-  valueMap.encryptionRead[1] = data[1];
+  // valueMap.encryptionWrite[0] = data[0];
+  // valueMap.encryptionWrite[1] = data[1];
+  // valueMap.encryptionRead[0] = data[0];
+  // valueMap.encryptionRead[1] = data[1];
 }
 
 void getEncryptionKey(char *data) {
@@ -134,36 +134,30 @@ void setRfm69Value(char *data) {
 }
 
 void receivePayloadLength(char *data) {
-  valueMap.payloadLengthRead = rxSize;
-  debug("rxSize: ");
-  debugln(rxSize);
   loadArray(valueMap.payloadLengthRead);
 }
 
 void sendPayloadLength(char *data) {
-  debugln("------------------------------------------- setting message length called");
   valueMap.payloadLengthWrite = data[0];
 }
 
 void receivePayload(char *data) {
-  for (byte i = 0; i < rxSize; i++) {
-    responseBuffer[i] = rxBuffer[i];
-    debugln(responseBuffer[i]);
-    debugln(i);
+  debugln("receivePayload-----------------------------------");
+  debugln(valueMap.payloadLengthRead);
+  debugln(valueMap.payloadRead);
+  for (uint8_t i = 0; i < valueMap.payloadLengthRead; i++) {
+    responseBuffer[i] = (valueMap.payloadRead[i] >> (((sizeof(valueMap.payloadRead[i]) - 1) - i) * 8)) & 0xFF;
   }
+  responseSize = valueMap.payloadLengthRead;
 }
 
 void sendPayload(char *data) {
-  debug("sendPayload data:");
-  debugln(data);
-  //  for (byte i = 0; i < sizeof(data); i++) {
-  //      ?
-  //  }
-  valueMap.payloadWrite = data;
   memcpy(valueMap.payloadWrite, data, valueMap.payloadLengthWrite);
-  debug("valueMap.payloadWrite:");
-  //Serial.println(valueMap.payloadWrite);
 }
+
+void sendPayloadGo(char *data) {
+  valueMap.payloadGo = data[0];
+} 
 
 // void getMessage(char *data) {
 //   debugln("getMessage Requested");
@@ -201,8 +195,8 @@ void loadArray(uint16_t myNumber) {
   responseSize = sizeof(myNumber);
 }
 
-void loadArray(char* myNumber) {
-  for (uint8_t x = 0; x < sizeof(myNumber); x++)
-    responseBuffer[x] = ((uint16_t)myNumber >> (((sizeof(myNumber) - 1) - x) * 8)) & 0xFF;
-  responseSize = sizeof(myNumber);
-}
+// void loadArray(char* myNumber) {
+//   for (uint8_t x = 0; x < sizeof(myNumber); x++)
+//     responseBuffer[x] = ((uint16_t)myNumber >> (((sizeof(myNumber) - 1) - x) * 8)) & 0xFF;
+//   responseSize = sizeof(myNumber);
+// }
