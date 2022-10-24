@@ -71,9 +71,12 @@ Turns off the radio.
 Sends a message string. This is the equivalent of send_bytes(bytes(message, 'utf8'))
 
 #### Examples
-radio.send('Hello')
-radio.send('TempC', 25.0)
-radio.send('secret', radio_address=7)
+
+`radio.send('Hello')`
+
+`radio.send('TempC', 25.0)`
+
+`radio.send('secret', radio_address=7)`
 
 ### `.receive()`
 
