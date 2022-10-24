@@ -66,9 +66,14 @@ Turns the radio on.
 
 Turns off the radio.
 
-### `.send(message)`
+### `.send(message, value, address)`
 
 Sends a message string. This is the equivalent of send_bytes(bytes(message, 'utf8'))
+
+#### Examples
+radio.send('Hello')
+radio.send('TempC', 25.0)
+radio.send('secret', radio_address=7)
 
 ### `.receive()`
 
@@ -78,8 +83,6 @@ Writes to a specific register in the the RFM69
 
 Works in exactly the same way as receive_bytes but returns whatever was sent.
 Currently, it’s equivalent to str(receive_bytes(), 'utf8').
-
-
 
 ## Smart Module I2C Registers
 
