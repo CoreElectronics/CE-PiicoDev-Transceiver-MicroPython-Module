@@ -68,7 +68,7 @@ Turns off the radio.
 
 ### `.send(message, value, address)`
 
-Sends a message string. This is the equivalent of send_bytes(bytes(message, 'utf8'))
+Sends a message string. This is the equivalent of send_bytes(bytes(message, 'utf8')).
 
 #### Examples
 
