@@ -2,3 +2,4 @@
 2022-10-27 Tried 433 MHz board (changing the module, firmware frequency and antenna)
 2022-10-27 Increased RSSI from -110 to -104 by removing antenna to PCB connectionand making straight antennas
 2022-10-27 NEXT STEP - slow down the OTA transmission rate
+2022-10-27 NEXT STEP - try without any I2C comms

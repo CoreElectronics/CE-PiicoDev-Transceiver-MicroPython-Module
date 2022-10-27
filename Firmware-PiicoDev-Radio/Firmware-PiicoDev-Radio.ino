@@ -319,18 +319,21 @@ void setup() {
   // Turn Radio On
    radio.initialize(FREQUENCY, valueMap.rfm69NodeIDWrite, valueMap.rfm69NetworkIDWrite);
     radio.setHighPower();
-    //radio.writeReg( REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF | RF_PACKET1_CRCAUTOCLEAR_OFF | RF_PACKET1_ADRSFILTERING_OFF );	// 0x37
-    //radio.writeReg( REG_BITRATEMSB, RF_BITRATEMSB_1200);
-    //radio.writeReg( REG_BITRATELSB, RF_BITRATELSB_1200);
-    //radio.writeReg( REG_FDEVMSB, RF_FDEVMSB_2000);
-    //radio.writeReg( REG_FDEVLSB, RF_FDEVLSB_2000);
-    //radio.writeReg(REG_RXBW, 0x56); //RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_20 | RF_RXBW_EXP_4);  // RF_RXBW_DCCFREQ_010 is default
+    radio.writeReg( REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF | RF_PACKET1_CRCAUTOCLEAR_OFF | RF_PACKET1_ADRSFILTERING_OFF );	// 0x37
+    radio.writeReg( REG_BITRATEMSB, RF_BITRATEMSB_1200);
+    radio.writeReg( REG_BITRATELSB, RF_BITRATELSB_1200);
+    radio.writeReg( REG_FDEVMSB, RF_FDEVMSB_20000);
+    radio.writeReg( REG_FDEVLSB, RF_FDEVLSB_20000);
+    radio.writeReg(REG_RXBW, 0x44);//RF_RXBW_DCCFREQ_000 | RF_RXBW_MANT_20 | RF_RXBW_EXP_4);  // RF_RXBW_DCCFREQ_010 is default
     radioState = true;
     debug("Radio turned on with address ");
     debug(valueMap.rfm69NodeIDWrite);
     debug(" and channel ");
     debugln(valueMap.rfm69NetworkIDWrite);
 }
+
+uint8_t counter = 0;
+long millisPrev = 0;
 
 void loop() {
   if (updateFlag) {
@@ -360,12 +363,22 @@ void loop() {
 
 
   //if (Serial.available() > 0)
+  if ((millis() - millisPrev) > 1000) {
+    valueMap.payloadGo = 1;
+    millisPrev = millis();
+  }
+  
   if (valueMap.payloadGo > 0)
   {
     debug("SENDING:");
-    debugln(valueMap.payloadWrite);
-    radio.send(valueMap.rfm69ToNodeIDWrite, valueMap.payloadWrite, valueMap.payloadLengthWrite);
+    debugln((char)valueMap.payloadWrite);
+    //radio.send(valueMap.rfm69ToNodeIDWrite, valueMap.payloadWrite, valueMap.payloadLengthWrite);
+    radio.send(valueMap.rfm69ToNodeIDWrite, (char)counter, valueMap.payloadLengthWrite);
     valueMap.payloadGo = 0;
+    if (counter == 255) {
+      counter = 0;
+    }
+    counter++;
     return;
   }
 
