@@ -4,6 +4,7 @@
 
 from PiicoDev_Unified import *
 import radio_config
+from struct import *
 
 compat_str = '\nUnified PiicoDev library out of date.  Get the latest module: https://piico.dev/unified \n'
 
@@ -85,23 +86,24 @@ class PiicoDev_Radio(object):
     def _write_int(self, register, integer, length=1):
         self._write(register, int.to_bytes(integer, length, 'big'))
         
-    def send_payload(self, message):
-        #print('message length ' + str(len(message)))
-        self._write_int(_set_bit(_REG_PAYLOAD_LENGTH, 7), len(message))
-        sleep_ms(1000)
-        self._write(_set_bit(_REG_PAYLOAD, 7), message)
-        sleep_ms(1000)
+    def send_payload(self, payload):
+#         print('payload length ' + str(len(payload)))
+        self._write_int(_set_bit(_REG_PAYLOAD_LENGTH, 7), len(payload))
+        sleep_ms(10)
+        self._write(_set_bit(_REG_PAYLOAD, 7), payload)
+        sleep_ms(10)
         #print('---')
         self._write_int(_set_bit(_REG_PAYLOAD_GO, 7), 1)
         
     def receive_payload(self):
-        message = 'no new messages'
+        payload = 0
+#         print('receive payload')
         if self._payload_new == 1:
             payload_length = self._read_int(_REG_PAYLOAD_LENGTH)
-            print('RECEIVED_PAYLOAD_LENGTH:' + str(payload_length))
-            message = self._read(_REG_PAYLOAD, length=payload_length)
-            print('RECEIVED PAYLOAD:' + str(message))
-        return message
+#             print('RECEIVED_PAYLOAD_LENGTH:' + str(payload_length))
+            payload = self._read(_REG_PAYLOAD, length=payload_length)
+#             print('RECEIVED PAYLOAD:' + str(payload))
+        return payload
     
     def on(self):
         self._on = 1
@@ -172,15 +174,31 @@ class PiicoDev_Radio(object):
     def _payload_new(self):
         return self._read_int(_REG_PAYLOAD_NEW)
     
-    @property
-    def message(self):
-        message_string = str(self.receive_payload(), 'utf8')
+    def receive(self):
+        data = 0
+        payload = self.receive_payload()
+        if payload != 0:
+#             print('--------------------------------------')
+            data = unpack('B', bytes(payload))
+#            data = unpack('BBfB13s', bytes(payload))
+#             print('received:' + str(data))
+        #message_string = str(self.receive_payload(), 'utf8')
         #message_string = str(self.receive_bytes())
-        return message_string
+        return data
     
-    @message.setter
-    def message(self, message_string):
-        self.send_payload(bytes(message_string, 'utf8'))
+    def send(self, message_string, value=0.0, destination_radio_address=0):
+        #s = Struct()
+        #print('self.radio_address:' + str(self.radio_address))
+        #print('destination_radio_address:' + str(destination_radio_address))
+        #print('value:' + str(value))
+        #print('message_length' + str(len(message_string)))
+        #print('message_string:' + str(message_string))
+        data = pack('B', int(value))
+#         data = pack('BBBB13s', self.radio_address, destination_radio_address, int(value), len(message_string), bytes(message_string, 'utf8'))
+#         print('sending message')
+#         print(data)
+        #self.send_payload(bytes(message_string, 'utf8'))
+        self.send_payload(data)
     
     @property
     def _on(self):

@@ -15,6 +15,7 @@
 //#include <RFM69_ATC.h>     //get it here: https://www.github.com/lowpowerlab/rfm69
 //#include <SPIFlash.h>      //get it here: https://www.github.com/lowpowerlab/spiflash
 #include <SPI.h>           //included with Arduino IDE install (www.arduino.cc)
+#include <RFM69registers.h>
 
 #define DEBUG true
 #if DEBUG == true
@@ -39,6 +40,7 @@
 #define I2C_BUFFER_SIZE 32 //For ATmega328 based Arduinos, the I2C buffer is limited to 32 bytes
 #define RX_BUFFER_SIZE 256
 #define FREQUENCY RF69_915MHZ
+//#define FREQUENCY   RF69_433MHZ
 //#define MYNODEID      1
 //#define NETWORKID   0
 //#define TONODEID   2
@@ -317,7 +319,12 @@ void setup() {
   // Turn Radio On
    radio.initialize(FREQUENCY, valueMap.rfm69NodeIDWrite, valueMap.rfm69NetworkIDWrite);
     radio.setHighPower();
-    //radio.encrypt(ENCRYPTKEY);
+    //radio.writeReg( REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF | RF_PACKET1_CRCAUTOCLEAR_OFF | RF_PACKET1_ADRSFILTERING_OFF );	// 0x37
+    //radio.writeReg( REG_BITRATEMSB, RF_BITRATEMSB_1200);
+    //radio.writeReg( REG_BITRATELSB, RF_BITRATELSB_1200);
+    //radio.writeReg( REG_FDEVMSB, RF_FDEVMSB_2000);
+    //radio.writeReg( REG_FDEVLSB, RF_FDEVLSB_2000);
+    //radio.writeReg(REG_RXBW, 0x56); //RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_20 | RF_RXBW_EXP_4);  // RF_RXBW_DCCFREQ_010 is default
     radioState = true;
     debug("Radio turned on with address ");
     debug(valueMap.rfm69NodeIDWrite);
@@ -355,7 +362,8 @@ void loop() {
   //if (Serial.available() > 0)
   if (valueMap.payloadGo > 0)
   {
-    debugln("SENDING-----------------------------------");
+    debug("SENDING:");
+    debugln(valueMap.payloadWrite);
     radio.send(valueMap.rfm69ToNodeIDWrite, valueMap.payloadWrite, valueMap.payloadLengthWrite);
     valueMap.payloadGo = 0;
     return;
@@ -385,6 +393,7 @@ void loop() {
     valueMap.payloadLengthRead = radio.DATALEN;
     debugln("");
     debug("Incoming Data:");
+    debugln(valueMap.payloadRead);
     debugln(valueMap.payloadRead);
 
     // RSSI is the "Receive Signal Strength Indicator",
