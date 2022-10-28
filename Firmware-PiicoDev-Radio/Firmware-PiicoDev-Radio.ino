@@ -17,7 +17,7 @@
 #include <SPI.h>           //included with Arduino IDE install (www.arduino.cc)
 #include <RFM69registers.h>
 
-#define DEBUG false
+#define DEBUG true
 #if DEBUG == true
 #define debug(x)     Serial.print(x)
 #define debugln(x)   Serial.println(x)
@@ -321,6 +321,11 @@ void setup() {
 
   radio.initialize(FREQUENCY, valueMap.rfm69NodeIDWrite, valueMap.rfm69NetworkIDWrite);
   radio.setHighPower();
+  radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_57600);
+  radio.writeReg(REG_BITRATELSB, RF_BITRATELSB_57600);
+  radio.writeReg(REG_FDEVMSB, RF_FDEVMSB_55000);
+  radio.writeReg(REG_FDEVLSB, RF_FDEVLSB_55000);
+  radio.writeReg(REG_RXBW, 0x42);
 }
 
 uint8_t counter = 0;
