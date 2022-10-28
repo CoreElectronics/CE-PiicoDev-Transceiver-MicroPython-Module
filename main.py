@@ -27,7 +27,7 @@ while True:
     incoming_datagram = radio.receive()
     if incoming_datagram != 0:
         print('incoming_datagram' + str(incoming_datagram))
-        print('value: ' + str(incoming_datagram[2]))
+        print('value: ' + str(incoming_datagram))
     if i == 255:
         i = 0
     sleep_ms(1000)

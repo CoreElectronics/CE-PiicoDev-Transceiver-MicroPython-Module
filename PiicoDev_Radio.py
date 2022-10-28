@@ -179,7 +179,8 @@ class PiicoDev_Radio(object):
         payload = self.receive_payload()
         if payload != 0:
 #             print('--------------------------------------')
-            data = unpack('B', bytes(payload))
+#             data = unpack('B', bytes(payload))
+            data = payload
 #            data = unpack('BBfB13s', bytes(payload))
 #             print('received:' + str(data))
         #message_string = str(self.receive_payload(), 'utf8')

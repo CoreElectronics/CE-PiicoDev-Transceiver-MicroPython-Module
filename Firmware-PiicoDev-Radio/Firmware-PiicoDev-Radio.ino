@@ -41,9 +41,9 @@
 #define RX_BUFFER_SIZE 256
 #define FREQUENCY RF69_915MHZ
 //#define FREQUENCY   RF69_433MHZ
-//#define MYNODEID      1
-//#define NETWORKID   0
-//#define TONODEID   2
+#define MYNODEID      1
+#define NETWORKID   0
+#define TONODEID   0
 #define ENCRYPTKEY    "PiicoDev---Radio" //has to be same 16 characters/bytes on all nodes, not more not less!
 
 RFM69 radio;
@@ -299,7 +299,7 @@ Payload theDataRead;
 Payload theDataWrite;
 
 void setup() {
-#if DEBUG
+  #if DEBUG
   Serial.begin(115200);
   Serial.println("Begin");
 #endif
@@ -310,49 +310,47 @@ void setup() {
   pinMode(addressPin4, INPUT_PULLUP);
   pinMode(powerLedPin, OUTPUT);
   powerLed(true); // enable Power LED by default on every power-up
-  //set_sleep_mode(SLEEP_MODE_IDLE);
-  //sleep_enable();
+  // Open a serial port so we can send keystrokes to the module:
+  debug("Node ");
+  debug(MYNODEID);
+  debugln(" ready");
+
   readSystemSettings(); //Load all system settings from EEPROM
   startI2C();          //Determine the I2C address we should be using and begin listening on I2C bus
   oldAddress = valueMap.i2cAddress;
 
-  // Turn Radio On
-   radio.initialize(FREQUENCY, valueMap.rfm69NodeIDWrite, valueMap.rfm69NetworkIDWrite);
-    radio.setHighPower();
-    radio.writeReg( REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF | RF_PACKET1_CRCAUTOCLEAR_OFF | RF_PACKET1_ADRSFILTERING_OFF );	// 0x37
-    radio.writeReg( REG_BITRATEMSB, RF_BITRATEMSB_1200);
-    radio.writeReg( REG_BITRATELSB, RF_BITRATELSB_1200);
-    radio.writeReg( REG_FDEVMSB, RF_FDEVMSB_20000);
-    radio.writeReg( REG_FDEVLSB, RF_FDEVLSB_20000);
-    radio.writeReg(REG_RXBW, 0x44);//RF_RXBW_DCCFREQ_000 | RF_RXBW_MANT_20 | RF_RXBW_EXP_4);  // RF_RXBW_DCCFREQ_010 is default
-    radioState = true;
-    debug("Radio turned on with address ");
-    debug(valueMap.rfm69NodeIDWrite);
-    debug(" and channel ");
-    debugln(valueMap.rfm69NetworkIDWrite);
+  radio.initialize(FREQUENCY, valueMap.rfm69NodeIDWrite, valueMap.rfm69NetworkIDWrite);
+  radio.setHighPower();
 }
 
 uint8_t counter = 0;
 long millisPrev = 0;
 
+char *payloadRead;
+char *payloadWrite;
+uint8_t rfm69ToNodeIDWrite = 0;
+uint8_t payloadLengthWrite;
+uint8_t payloadGo = 0;
+uint8_t payloadNew = 0;
+uint8_t payloadLengthRead = 0;
+int sendNow = 0;
+
+
 void loop() {
-  if (updateFlag) {
+    if (updateFlag) {
     startI2C(); // reinitialise I2C with new address, update EEPROM with custom address as necessary
     updateFlag = false;
-  }
-  if (radio.receiveDone()) {
-    debug('[');
-    debug(radio.SENDERID);
-    debug("] ");
-    debug(" [RX_RSSI:");
-    debug(radio.readRSSI());
-    debug("]");
   }
   // Set up a "buffer" for characters that we'll send:
 
   static char sendbuffer[62];
   static int sendlength = 0;
 
+
+  // if ((millis() - millisPrev) > 1000) {
+  //   // valueMap.payloadGo = 1;
+  //   millisPrev = millis();
+  // }
   // SENDING
 
   // In this section, we'll gather serial characters and
@@ -362,24 +360,23 @@ void loop() {
   // If there is any serial input, add it to the buffer:
 
 
-  //if (Serial.available() > 0)
-  if ((millis() - millisPrev) > 1000) {
-    valueMap.payloadGo = 1;
-    millisPrev = millis();
-  }
-  
+
   if (valueMap.payloadGo > 0)
   {
-    debug("SENDING:");
-    debugln((char)valueMap.payloadWrite);
-    //radio.send(valueMap.rfm69ToNodeIDWrite, valueMap.payloadWrite, valueMap.payloadLengthWrite);
-    radio.send(valueMap.rfm69ToNodeIDWrite, (char)counter, valueMap.payloadLengthWrite);
-    valueMap.payloadGo = 0;
+    // Send the packet!
+
+    debug("sending to node ");
+    debug(TONODEID);
+    debug(", message [");
+    debug(counter);
+    debugln("]");
+
+    radio.send(valueMap.rfm69ToNodeIDWrite, valueMap.payloadWrite, valueMap.payloadLengthWrite);
+    counter++;
     if (counter == 255) {
       counter = 0;
     }
-    counter++;
-    return;
+    valueMap.payloadGo = 0;
   }
 
   // RECEIVING
@@ -391,9 +388,9 @@ void loop() {
   {
     // Print out the information:
 
-    debug("received from node ");
+    debug(F("received from node "));
     debug(radio.SENDERID);
-    debugln("-----------------------------------");
+    debug(F(", message ["));
 
     // The actual message is contained in the DATA array,
     // and is DATALEN bytes in size:
@@ -404,19 +401,13 @@ void loop() {
       valueMap.payloadRead[i] = (char)radio.DATA[i];
     }
     valueMap.payloadLengthRead = radio.DATALEN;
-    debugln("");
-    debug("Incoming Data:");
-    debugln(valueMap.payloadRead);
-    debugln(valueMap.payloadRead);
-
+    debug(F("Incoming Data["));
+    debug(valueMap.payloadRead);
     // RSSI is the "Receive Signal Strength Indicator",
     // smaller numbers mean higher power.
 
     debug("], RSSI ");
     debugln(radio.RSSI);
-  }
-  if (radioState == false) {
-
   }
 }
 
