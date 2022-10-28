@@ -23,6 +23,6 @@ while True:
     incoming_datagram = radio.receive()
     if incoming_datagram != 0:
 #         print('incoming_datagram' + str(incoming_datagram))
-        print('value: ' + hex(incoming_datagram[0]))
+        print('value: ' + str(incoming_datagram[2]))
     sleep_ms(100)
     

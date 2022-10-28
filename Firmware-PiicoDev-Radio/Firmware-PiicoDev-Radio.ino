@@ -17,7 +17,7 @@
 #include <SPI.h>           //included with Arduino IDE install (www.arduino.cc)
 #include <RFM69registers.h>
 
-#define DEBUG true
+#define DEBUG false
 #if DEBUG == true
 #define debug(x)     Serial.print(x)
 #define debugln(x)   Serial.println(x)

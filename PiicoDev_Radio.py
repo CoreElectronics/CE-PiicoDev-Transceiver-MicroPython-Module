@@ -180,8 +180,8 @@ class PiicoDev_Radio(object):
         if payload != 0:
 #             print('--------------------------------------')
 #             data = unpack('B', bytes(payload))
-            data = payload
-#            data = unpack('BBfB13s', bytes(payload))
+#             data = payload
+           data = unpack('BBfB13s', bytes(payload))
 #             print('received:' + str(data))
         #message_string = str(self.receive_payload(), 'utf8')
         #message_string = str(self.receive_bytes())
@@ -194,12 +194,23 @@ class PiicoDev_Radio(object):
         #print('value:' + str(value))
         #print('message_length' + str(len(message_string)))
         #print('message_string:' + str(message_string))
-        data = pack('B', int(value))
-#         data = pack('BBBB13s', self.radio_address, destination_radio_address, int(value), len(message_string), bytes(message_string, 'utf8'))
+#         data = pack('B', int(value))
+        data = pack('BBfB13s', self.radio_address, destination_radio_address, value, len(message_string), bytes(message_string, 'utf8'))
 #         print('sending message')
 #         print(data)
         #self.send_payload(bytes(message_string, 'utf8'))
         self.send_payload(data)
+        
+    def send_byte(self, value):
+        data = pack('B', value)
+        self.send_payload(data)
+        
+    def receive_byte(self):
+        data = 0
+        payload = self.receive_payload()
+        if payload != 0:
+           data = int.from_bytes(payload,"big")
+        return data
     
     @property
     def _on(self):
