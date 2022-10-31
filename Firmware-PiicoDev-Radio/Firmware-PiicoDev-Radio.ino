@@ -76,7 +76,7 @@ const uint8_t addressPin4 = PIN_PC1;
 volatile bool updateFlag = true; // Goes true when new data received
 volatile uint32_t lastSyncTime = 0;
 
-#define LOCAL_BUFFER_SIZE 20 // bytes
+#define LOCAL_BUFFER_SIZE 32 // bytes
 uint8_t incomingData[LOCAL_BUFFER_SIZE]; // Local buffer to record I2C bytes
 volatile uint16_t incomingDataSpot = 0; // Keeps track of where we are in the incoming buffer
 
@@ -361,7 +361,7 @@ void setup() {
   radio.writeReg( REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_2BITS | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF );	// 0x3D
   radio.writeReg( REG_TESTDAGC, RF_DAGC_IMPROVED_LOWBETA0 );	// 0x6F
   
-  radio.setPowerLevel(0);
+  //radio.setPowerLevel(0);
   radio.encrypt(null);
 
 
@@ -441,16 +441,17 @@ void loop() {
     valueMap.payloadNew = 1;
 
     for (byte i = 0; i < radio.DATALEN; i++) {
-      debug((char)radio.DATA[i]);
+      //debug((char)radio.DATA[i]);
       valueMap.payloadRead[i] = (char)radio.DATA[i];
+      debug(valueMap.payloadRead[i]);
     }
     valueMap.payloadLengthRead = radio.DATALEN;
-    debug(F("Incoming Data["));
+  
     debug(valueMap.payloadRead);
     // RSSI is the "Receive Signal Strength Indicator",
     // smaller numbers mean higher power.
 
-    debug("], RSSI ");
+    debug(". RSSI ");
     debugln(radio.RSSI);
   }
 }
