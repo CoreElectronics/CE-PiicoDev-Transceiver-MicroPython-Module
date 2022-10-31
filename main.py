@@ -5,9 +5,7 @@ from PiicoDev_Unified import sleep_ms
 radio = PiicoDev_Radio()   # Initialise the Radio module
 pot = PiicoDev_Potentiometer()
 
-i=0
 while True:
-    i=i+1
     firmware = radio.firmware
 #     print('ID:             ' + str(radio.whoami))
 #     print('Firmware:       ' + str(firmware[0]) + '.' + str(firmware[1]))
@@ -21,14 +19,12 @@ while True:
     sleep_ms(50)
     value = pot.value
 #     print('value:'+str(value))
-    radio.send(str(i), value=i)
+    radio.send(str("Pot"), value=value)
 #     print('hello world sent')
     sleep_ms(50)
     incoming_datagram = radio.receive()
     if incoming_datagram != 0:
         print('incoming_datagram' + str(incoming_datagram))
         print('value: ' + str(incoming_datagram[2]))
-    if i == 255:
-        i = 0
-    sleep_ms(1000)
+    sleep_ms(100)
     
