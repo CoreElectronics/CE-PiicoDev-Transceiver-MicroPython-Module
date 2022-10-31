@@ -188,14 +188,20 @@ void sendPayloadGo(char *data) {
 
 // Functions to load data into the response buffer
 void loadArray(uint8_t myNumber) {
-  for (uint8_t x = 0; x < sizeof(myNumber); x++)
-    responseBuffer[x] = (myNumber >> (((sizeof(myNumber) - 1) - x) * 8)) & 0xFF;
+  // for (uint8_t x = 0; x < sizeof(myNumber); x++)
+  //   responseBuffer[x] = (myNumber >> (((sizeof(myNumber) - 1) - x) * 8)) & 0xFF;
+  // responseSize = sizeof(myNumber);
+  responseBuffer[0] = myNumber;
   responseSize = sizeof(myNumber);
 }
 
 void loadArray(uint16_t myNumber) {
-  for (uint8_t x = 0; x < sizeof(myNumber); x++)
-    responseBuffer[x] = (myNumber >> (((sizeof(myNumber) - 1) - x) * 8)) & 0xFF;
+  // for (uint8_t x = 0; x < sizeof(myNumber); x++)
+  //   responseBuffer[x] = (myNumber >> (((sizeof(myNumber) - 1) - x) * 8)) & 0xFF;
+  // responseSize = sizeof(myNumber);
+
+  responseBuffer[0] = (myNumber >> 8) & 0xFF;
+  responseBuffer[1] = myNumber & 0xFF;
   responseSize = sizeof(myNumber);
 }
 
