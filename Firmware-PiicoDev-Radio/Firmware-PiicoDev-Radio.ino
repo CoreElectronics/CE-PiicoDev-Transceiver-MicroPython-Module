@@ -320,12 +320,51 @@ void setup() {
   oldAddress = valueMap.i2cAddress;
 
   radio.initialize(FREQUENCY, valueMap.rfm69NodeIDWrite, valueMap.rfm69NetworkIDWrite);
-  radio.setHighPower();
-  radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_57600);
-  radio.writeReg(REG_BITRATELSB, RF_BITRATELSB_57600);
-  radio.writeReg(REG_FDEVMSB, RF_FDEVMSB_55000);
-  radio.writeReg(REG_FDEVLSB, RF_FDEVLSB_55000);
-  radio.writeReg(REG_RXBW, 0x42);
+  radio.setHighPower(true);
+  //radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_55555); // default: 4.8 KBPS
+  //radio.writeReg(REG_BITRATELSB, RF_BITRATELSB_55555);
+  //radio.writeReg(REG_FDEVMSB, RF_FDEVMSB_50000); // default: 5KHz, (FDEV + BitRate / 2 <= 500KHz)
+  //radio.writeReg(REG_FDEVLSB, RF_FDEVLSB_50000);
+
+  // radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_57600);
+  // radio.writeReg(REG_BITRATELSB, RF_BITRATELSB_57600);
+  // radio.writeReg(REG_FDEVMSB, RF_FDEVMSB_55000);
+  // radio.writeReg(REG_FDEVLSB, RF_FDEVLSB_55000);
+  //radio.writeReg(REG_RXBW, 0x42);
+  //radio.writeReg(0x37, 0b10010000); //DC=WHITENING, CRCAUTOOFF=0
+  //                ^^->DC: 00=none, 01=manchester, 10=whitening
+  //radio.writeReg( REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF | RF_PACKET1_CRCAUTOCLEAR_OFF | RF_PACKET1_ADRSFILTERING_OFF );	// 0x37
+
+
+  radio.writeReg( REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY );
+  radio.writeReg( REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_00 );	// 0x02
+  radio.writeReg( REG_BITRATEMSB, RF_BITRATEMSB_300000 );	// 0x03
+  radio.writeReg( REG_BITRATELSB, RF_BITRATELSB_300000 );	// 0x04
+  radio.writeReg( REG_FDEVMSB, RF_FDEVMSB_300000 );	// 0x05
+  radio.writeReg( REG_FDEVLSB, RF_FDEVLSB_300000 );	// 0x06
+  radio.writeReg( REG_FRFMSB, RF_FRFMSB_915 );	// 0x07
+  radio.writeReg( REG_FRFMID, RF_FRFMID_915 );	// 0x08
+  radio.writeReg( REG_FRFLSB, RF_FRFLSB_915 );	// 0x09
+  radio.writeReg( REG_RXBW, RF_RXBW_DCCFREQ_111 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0 );	// 0x19
+  radio.writeReg( REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01 );	// 0x25
+  radio.writeReg( REG_DIOMAPPING2, RF_DIOMAPPING2_CLKOUT_OFF );	//0x26
+  radio.writeReg( REG_IRQFLAGS2, RF_IRQFLAGS2_FIFOOVERRUN );	// 0x28
+  radio.writeReg( REG_RSSITHRESH, 220 );	// 0x29
+  radio.writeReg( REG_PREAMBLELSB, 6 );	// 0x2D
+  radio.writeReg( REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_AUTO | RF_SYNC_SIZE_3 | RF_SYNC_TOL_0 );	// 0x2E
+  radio.writeReg( REG_SYNCVALUE1, 0x88 );	// 0x2F
+  radio.writeReg( REG_SYNCVALUE2, NETWORKID );	// 0x30
+  radio.writeReg( REG_SYNCVALUE3, 0x88 );	// 0x2F
+  radio.writeReg( REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF | RF_PACKET1_CRCAUTOCLEAR_OFF | RF_PACKET1_ADRSFILTERING_OFF );	// 0x37
+  radio.writeReg( REG_PAYLOADLENGTH, 66 );	// 0x38
+  radio.writeReg( REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFONOTEMPTY | RF_FIFOTHRESH_VALUE );	// 0x3C
+  radio.writeReg( REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_2BITS | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF );	// 0x3D
+  radio.writeReg( REG_TESTDAGC, RF_DAGC_IMPROVED_LOWBETA0 );	// 0x6F
+  
+  radio.setPowerLevel(0);
+  radio.encrypt(null);
+
+
 }
 
 uint8_t counter = 0;

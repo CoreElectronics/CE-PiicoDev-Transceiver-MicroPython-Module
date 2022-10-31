@@ -34,7 +34,7 @@ void loop() {
   static int sendlength = 0;
 
 
-  if ((millis() - millisPrev) > 1000) {
+  if ((millis() - millisPrev) > 100) {
     sendNow = 1;
     millisPrev = millis();
   }
