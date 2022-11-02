@@ -269,4 +269,3 @@ class PiicoDev_Radio(object):
         self._address = x
         sleep_ms(5)
         return 0
-
