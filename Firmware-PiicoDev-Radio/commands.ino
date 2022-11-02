@@ -144,10 +144,10 @@ void sendPayloadLength(char *data) {
 void receivePayload(char *data) {
   debugln(valueMap.payloadLengthRead);
   debugln(valueMap.payloadRead);
-  for (uint8_t i = 0; i < valueMap.payloadLengthRead; i++) {
-    responseBuffer[i] = (valueMap.payloadRead[i] >> (((sizeof(valueMap.payloadRead[i]) - 1) - i) * 8)) & 0xFF;
-  }
+  memcpy(responseBuffer, valueMap.payloadRead, valueMap.payloadLengthRead);
   responseSize = valueMap.payloadLengthRead;
+  debug("Response Size:");
+  debugln(responseSize);
 }
 
 void sendPayload(char *data) {
@@ -188,14 +188,20 @@ void sendPayloadGo(char *data) {
 
 // Functions to load data into the response buffer
 void loadArray(uint8_t myNumber) {
-  for (uint8_t x = 0; x < sizeof(myNumber); x++)
-    responseBuffer[x] = (myNumber >> (((sizeof(myNumber) - 1) - x) * 8)) & 0xFF;
+  // for (uint8_t x = 0; x < sizeof(myNumber); x++)
+  //   responseBuffer[x] = (myNumber >> (((sizeof(myNumber) - 1) - x) * 8)) & 0xFF;
+  // responseSize = sizeof(myNumber);
+  responseBuffer[0] = myNumber;
   responseSize = sizeof(myNumber);
 }
 
 void loadArray(uint16_t myNumber) {
-  for (uint8_t x = 0; x < sizeof(myNumber); x++)
-    responseBuffer[x] = (myNumber >> (((sizeof(myNumber) - 1) - x) * 8)) & 0xFF;
+  // for (uint8_t x = 0; x < sizeof(myNumber); x++)
+  //   responseBuffer[x] = (myNumber >> (((sizeof(myNumber) - 1) - x) * 8)) & 0xFF;
+  // responseSize = sizeof(myNumber);
+
+  responseBuffer[0] = (myNumber >> 8) & 0xFF;
+  responseBuffer[1] = myNumber & 0xFF;
   responseSize = sizeof(myNumber);
 }
 
