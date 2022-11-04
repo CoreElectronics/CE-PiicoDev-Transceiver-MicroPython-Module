@@ -1,4 +1,3 @@
-_C='BBfB13s'
 _B='big'
 _A=None
 from PiicoDev_Unified import *
@@ -26,6 +25,9 @@ _REG_PAYLOAD=34
 _REG_PAYLOAD_NEW=35
 _REG_PAYLOAD_GO=36
 DEBUG=True
+_MAXIMUM_PAYLOAD_LENGTH=256
+_MAXIMUM_I2C_SIZE=32
+def truncate(n,decimals=0):multiplier=10**decimals;return int(n*multiplier)/multiplier
 def _set_bit(x,n):return x|1<<n
 def debug(text):
 	if DEBUG:print(text)
@@ -53,11 +55,17 @@ class PiicoDev_Radio:
 		if data is _A:return _A
 		else:return int.from_bytes(data,_B)
 	def _write_int(self,register,integer,length=1):self._write(register,int.to_bytes(integer,length,_B))
-	def send_payload(self,payload):self._write_int(_set_bit(_REG_PAYLOAD_LENGTH,7),len(payload));sleep_ms(10);self._write(_set_bit(_REG_PAYLOAD,7),payload);sleep_ms(10);self._write_int(_set_bit(_REG_PAYLOAD_GO,7),1)
+	def send_payload(self,payload):
+		payload_list=[payload[i:i+_MAXIMUM_I2C_SIZE-1]for i in range(0,len(payload),_MAXIMUM_I2C_SIZE-1)];self._write_int(_set_bit(_REG_PAYLOAD_LENGTH,7),len(payload));sleep_ms(10)
+		for i in range(len(payload_list)):self._write(_set_bit(_REG_PAYLOAD,7),payload_list[i]);print('payload list element:'+str(payload_list[i]));sleep_ms(10)
+		self._write_int(_set_bit(_REG_PAYLOAD_GO,7),1)
 	def receive_payload(self):
-		payload=0
-		if self._payload_new==1:payload_length=self._read_int(_REG_PAYLOAD_LENGTH);payload=self._read(_REG_PAYLOAD,length=payload_length)
-		return payload
+		payload_length=0;payload=bytes(0)
+		if self._payload_new==1:
+			payload_length=self._read_int(_REG_PAYLOAD_LENGTH);sleep_ms(5);required_range=int(truncate(payload_length/_MAXIMUM_I2C_SIZE))+1
+			for i in range(required_range):payload=payload+self._read(_REG_PAYLOAD,length=_MAXIMUM_I2C_SIZE);sleep_ms(5)
+			payload=payload[:payload_length];print('PAYLOAD:'+str(payload))
+		return payload_length,payload
 	def on(self):self._on=1
 	def off(self):self._off=1
 	@property
@@ -91,10 +99,10 @@ class PiicoDev_Radio:
 	@property
 	def _payload_new(self):return self._read_int(_REG_PAYLOAD_NEW)
 	def receive(self):
-		data=0;payload=self.receive_payload()
-		if payload!=0:data=unpack(_C,bytes(payload))
+		data=0;raw_data=0;payload_length,payload=self.receive_payload()
+		if payload_length!=0:raw_data=bytes(payload);format_characters='BBfB'+str(payload_length-9)+'s';data=unpack(format_characters,bytes(raw_data))
 		return data
-	def send(self,message_string,value=0.0,destination_radio_address=0):data=pack(_C,self.radio_address,destination_radio_address,value,len(message_string),bytes(message_string,'utf8'));self.send_payload(data)
+	def send(self,message_string,value=0.0,destination_radio_address=0):message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-9];format_characters='BBfB'+str(len(message_string))+'s';data=pack(format_characters,self.radio_address,destination_radio_address,value,len(message_string),bytes(message_string,'utf8'));self.send_payload(data)
 	def send_byte(self,value):data=pack('B',value);self.send_payload(data)
 	def receive_byte(self):
 		data=0;payload=self.receive_payload()
