@@ -32,6 +32,13 @@ _REG_PAYLOAD_GO                = 0x24
 
 DEBUG = True
 
+_MAXIMUM_PAYLOAD_LENGTH = 256
+_MAXIMUM_I2C_SIZE = 32 #For ATmega328 based Arduinos, the I2C buffer is limited to 32 bytes
+
+def truncate(n, decimals=0):
+    multiplier = 10 ** decimals
+    return int(n * multiplier) / multiplier
+
 def _set_bit(x, n):
     return x | (1 << n)
 
@@ -87,23 +94,35 @@ class PiicoDev_Radio(object):
         self._write(register, int.to_bytes(integer, length, 'big'))
         
     def send_payload(self, payload):
+#         print('payload' + str(payload))
 #         print('payload length ' + str(len(payload)))
+         # if the payload is too long, truncate it
+        payload_list = [payload[i:i+_MAXIMUM_I2C_SIZE-1] for i in range(0, len(payload), _MAXIMUM_I2C_SIZE-1)] # Split the bytes into a list
         self._write_int(_set_bit(_REG_PAYLOAD_LENGTH, 7), len(payload))
         sleep_ms(10)
-        self._write(_set_bit(_REG_PAYLOAD, 7), payload)
-        sleep_ms(10)
-        #print('---')
+        for i in range(len(payload_list)):
+            self._write(_set_bit(_REG_PAYLOAD, 7), payload_list[i])
+            print('payload list element:' + str(payload_list[i]))
+            sleep_ms(10)
         self._write_int(_set_bit(_REG_PAYLOAD_GO, 7), 1)
         
     def receive_payload(self):
-        payload = 0
+        payload_length = 0
+        payload = bytes(0)
 #         print('receive payload')
         if self._payload_new == 1:
             payload_length = self._read_int(_REG_PAYLOAD_LENGTH)
+            sleep_ms(5)
+            required_range = int(truncate(payload_length / _MAXIMUM_I2C_SIZE))+1
+            for i in range(required_range):
+                payload = payload + self._read(_REG_PAYLOAD, length=_MAXIMUM_I2C_SIZE)
+                sleep_ms(5)
+            payload = payload[:payload_length]
+            print('PAYLOAD:' + str(payload))
 #             print('RECEIVED_PAYLOAD_LENGTH:' + str(payload_length))
-            payload = self._read(_REG_PAYLOAD, length=payload_length)
+#            payload = self._read(_REG_PAYLOAD, length=payload_length)
 #             print('RECEIVED PAYLOAD:' + str(payload))
-        return payload
+        return payload_length, payload
     
     def on(self):
         self._on = 1
@@ -176,12 +195,15 @@ class PiicoDev_Radio(object):
     
     def receive(self):
         data = 0
-        payload = self.receive_payload()
-        if payload != 0:
+        raw_data = 0
+        payload_length, payload = self.receive_payload()
+        if payload_length != 0:
 #             print('--------------------------------------')
 #             data = unpack('B', bytes(payload))
 #             data = payload
-           data = unpack('BBfB13s', bytes(payload))
+            raw_data = bytes(payload)
+            format_characters = 'BBfB' + str(payload_length-9) + 's'
+            data = unpack(format_characters, bytes(raw_data))
 #             print('received:' + str(data))
         #message_string = str(self.receive_payload(), 'utf8')
         #message_string = str(self.receive_bytes())
@@ -195,9 +217,13 @@ class PiicoDev_Radio(object):
         #print('message_length' + str(len(message_string)))
         #print('message_string:' + str(message_string))
 #         data = pack('B', int(value))
-        data = pack('BBfB13s', self.radio_address, destination_radio_address, value, len(message_string), bytes(message_string, 'utf8'))
+        message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-9)]
+        format_characters = 'BBfB' + str(len(message_string)) + 's'
+#        print('format_characters' + format_characters)
+        data = pack(format_characters, self.radio_address, destination_radio_address, value, len(message_string), bytes(message_string, 'utf8'))
+#         data = data[:-1] # remove the null character
+#         print(type(data))
 #         print('sending message')
-#         print(data)
         #self.send_payload(bytes(message_string, 'utf8'))
         self.send_payload(data)
         

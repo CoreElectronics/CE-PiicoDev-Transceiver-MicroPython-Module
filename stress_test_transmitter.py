@@ -7,6 +7,6 @@ i=0
 while i < 255:
     i+=1
     sleep_ms(10)
-    radio.send_byte(i)
+    radio.send("abcdefghijklmnopqrstuvwxyz123",i)
     sleep_ms(50)
     

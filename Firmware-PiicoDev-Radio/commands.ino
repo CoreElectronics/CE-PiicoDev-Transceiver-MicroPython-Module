@@ -142,16 +142,41 @@ void sendPayloadLength(char *data) {
 }
 
 void receivePayload(char *data) {
-  debugln(valueMap.payloadLengthRead);
-  debugln(valueMap.payloadRead);
-  memcpy(responseBuffer, valueMap.payloadRead, valueMap.payloadLengthRead);
-  responseSize = valueMap.payloadLengthRead;
+  //debugln(valueMap.payloadLengthRead);
+  //debugln(valueMap.payloadRead);
+  debug("Incoming Buffer Size:");
+  debugln(payloadBufferIncoming.size());
+  debugln("------------");
+  debug("Head:");
+  debug(payloadBufferIncoming.first());
+  debugln(payloadBufferIncoming[1]);
+  for (uint8_t x = 0; x < I2C_BUFFER_SIZE ; x++){
+    if (!payloadBufferIncoming.isEmpty()) {
+      responseBuffer[x] = payloadBufferIncoming.shift();
+    } else {
+      responseBuffer[x] = 0; // pad with zeros
+    }
+    debug(responseBuffer[x]);
+    debug(",");
+  }
+  debugln("");
+  //memcpy(responseBuffer, valueMap.payloadRead, valueMap.payloadLengthRead);
+  responseSize = I2C_BUFFER_SIZE;  //valueMap.payloadLengthRead;
   debug("Response Size:");
   debugln(responseSize);
 }
 
 void sendPayload(char *data) {
-  memcpy(valueMap.payloadWrite, data, valueMap.payloadLengthWrite);
+  // debug("Incoming Data:");
+  // debugln(data);
+  //memcpy(valueMap.payloadWrite, data, valueMap.payloadLengthWrite);
+  for (uint8_t x = 0; x < I2C_BUFFER_SIZE-1; x++){// without th e-1 this there will be a null at multiples of the 32nd bit
+    // debug("Incoming Data:");
+    // debugln(data[x]);
+    //if (data[x] != 0) { // without this there will be a null at multiples of the 32nd bit, but this will also kill legitimate zeros
+    payloadBufferOutgoing.push(data[x]);
+    //}
+  }
 }
 
 void receivePayloadNew(char *data) {
@@ -161,6 +186,8 @@ void receivePayloadNew(char *data) {
 
 void sendPayloadGo(char *data) {
   valueMap.payloadGo = data[0];
+  debug("payloadBufferOutgoing.size()");
+  debugln(payloadBufferOutgoing.size());
 } 
 
 // void getMessage(char *data) {
