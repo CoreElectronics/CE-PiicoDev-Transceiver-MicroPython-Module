@@ -104,9 +104,9 @@ if radio.received_string():
 ## Payload
 
 Note that when transmitting, no RSSI is sent, so:
-```
+
 Tx Position = Rx Position - 1
-```
+
 
 | Name                      | Rx Position | Bytes | Range        | Description
 | ------------------------- | ----------- | ----- | ------------ | -----------
