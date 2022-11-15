@@ -450,13 +450,16 @@ void loop() {
     // and is DATALEN bytes in size:
     valueMap.payloadNew = 1;
     payloadBufferIncoming.clear();
+    payloadBufferIncoming.push(abs(radio.RSSI));
     for (byte i = 0; i < radio.DATALEN; i++) {
       debug((char)radio.DATA[i]);
       valueMap.payloadRead[i] = (char)radio.DATA[i];
       payloadBufferIncoming.push((char)radio.DATA[i]);
-      debug(",");
+      debug("");
     }
     valueMap.payloadLengthRead = radio.DATALEN;
+    debug("PayloadLengthRead");
+    debugln(valueMap.payloadLengthRead);
 
     //debug(valueMap.payloadRead);
     // RSSI is the "Receive Signal Strength Indicator",
