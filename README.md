@@ -94,6 +94,13 @@ if radio.received_value():
 if radio.received_string():
     print(radio.message)
 
+### Set or Get RFM69 Register Values
+
+`value = radio.get_rfm69_register(0x29)`
+
+`radio.set_rfm69_register(0x29, 221)`
+
+
 ## Payload
 
 | Name                      | Position | Bytes | Range        | Description

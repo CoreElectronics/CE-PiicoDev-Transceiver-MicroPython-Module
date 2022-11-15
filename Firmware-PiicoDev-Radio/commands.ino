@@ -124,13 +124,20 @@ void setRfm69ToNodeID(char *data) {
 }
 
 void setRfm69Reg(char *data) {
-
+  valueMap.rfm69Reg = data[0];      
 }
 
 void getRfm69Value(char *data) {
+  valueMap.rfm69ValueRead = radio.readReg(valueMap.rfm69Reg);
+  loadArray(valueMap.rfm69ValueRead);        
 }
 
 void setRfm69Value(char *data) {
+  valueMap.rfm69ValueWrite = data[0];
+  valueMap.rfm69ValueRead = data[0];
+  debug("valueMap.rfm69ValueWrite:");
+  debugln(valueMap.rfm69ValueWrite);
+  radio.writeReg(valueMap.rfm69Reg, data[0]);   
 }
 
 void receivePayloadLength(char *data) {
