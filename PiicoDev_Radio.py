@@ -88,7 +88,7 @@ class PiicoDev_Radio(object):
 
     def _write(self, register, data):
         try:
-            self.i2c.writeto_mem(self.address, register, data)
+            self.i2c.writeto_mem(self.address, _set_bit(register, 7), data)
         except:
             print(i2c_err_str.format(self.address))
 
@@ -107,12 +107,12 @@ class PiicoDev_Radio(object):
 #         print('payload length ' + str(len(payload)))
          # if the payload is too long, truncate it
         payload_list = [payload[i:i+_MAXIMUM_I2C_SIZE-1] for i in range(0, len(payload), _MAXIMUM_I2C_SIZE-1)] # Split the bytes into a list
-        self._write_int(_set_bit(_REG_PAYLOAD_LENGTH, 7), len(payload))
+        self._write_int(_REG_PAYLOAD_LENGTH, len(payload))
         sleep_ms(10)
         for i in range(len(payload_list)):
-            self._write(_set_bit(_REG_PAYLOAD, 7), payload_list[i])
+            self._write(_REG_PAYLOAD, payload_list[i])
             sleep_ms(28) #was 12
-        self._write_int(_set_bit(_REG_PAYLOAD_GO, 7), 1)
+        self._write_int(_REG_PAYLOAD_GO, 1)
         
     def receive_payload(self):
         payload_length = 0
@@ -143,7 +143,7 @@ class PiicoDev_Radio(object):
     
     @encryption.setter
     def encryption(self, value):
-        self._write_int(_set_bit(_REG_ENCRYPTION, 7), value)
+        self._write_int(_REG_ENCRYPTION, value)
         
     @property
     def encryption_key(self):
@@ -151,7 +151,7 @@ class PiicoDev_Radio(object):
     
     @encryption_key.setter
     def encryption_key(self, value):
-        self._write_int(_set_bit(_REG_ENCRYPTION_KEY, 7), value)
+        self._write_int(_REG_ENCRYPTION_KEY, value)
         
     @property
     def high_power(self):
@@ -159,7 +159,7 @@ class PiicoDev_Radio(object):
     
     @high_power.setter
     def high_power(self, value):
-        self._write_int(_set_bit(_REG_HIGH_POWER, 7), value)
+        self._write_int(_REG_HIGH_POWER, value)
     
     @property
     def rfm69_network_id(self):
@@ -168,7 +168,7 @@ class PiicoDev_Radio(object):
     @rfm69_network_id.setter
     def rfm69_network_id(self, value):
         print("channel setter called")
-        self._write_int(_set_bit(_REG_RFM69_NETWORK_ID, 7), value)
+        self._write_int(_REG_RFM69_NETWORK_ID, value)
     
     @property
     def rfm69_node_id(self):
@@ -176,7 +176,7 @@ class PiicoDev_Radio(object):
     
     @rfm69_node_id.setter
     def rfm69_node_id(self, value):
-        self._write_int(_set_bit(_REG_RFM69_NODE_ID, 7), value)
+        self._write_int(_REG_RFM69_NODE_ID, value)
         
     @property
     def rfm69_to_node_id(self):
@@ -185,7 +185,7 @@ class PiicoDev_Radio(object):
     @rfm69_to_node_id.setter
     def rfm69_to_node_id(self, value):
         debug("Setting destination radio address to " + str(value) + ".")
-        self._write_int(_set_bit(_REG_RFM69_TO_NODE_ID, 7), value)
+        self._write_int(_REG_RFM69_TO_NODE_ID, value)
     
     @property
     def payload_length(self):
@@ -194,7 +194,7 @@ class PiicoDev_Radio(object):
     @payload_length.setter
     def payload_length(self, value):
         debug("Setting message length" + str(value) + ".")
-        self._write_int(_set_bit(_REG_PAYLOAD_LENGTH, 7), value)
+        self._write_int(_REG_PAYLOAD_LENGTH, value)
         
     @property
     def _payload_new(self):
@@ -251,6 +251,14 @@ class PiicoDev_Radio(object):
            data = int.from_bytes(payload,"big")
         return data
     
+    def get_rfm69_register(self, register):
+        self._write_int(_REG_RFM69_REG, register)
+        return self._read_int(_REG_RFM69_VALUE)
+        
+    def set_rfm69_register(self, register, value):
+        self._write_int(_REG_RFM69_REG, register)
+        self._write_int(_REG_RFM69_VALUE, value)
+    
     @property
     def _on(self):
         """Checks the radio state"""
@@ -260,7 +268,7 @@ class PiicoDev_Radio(object):
     def _on(self, val):
         """Turns the radio on"""
         print('Turning radio on!')
-        self._write_int(_set_bit(_REG_RFM69_RADIO_STATE, 7), 1)
+        self._write_int(_REG_RFM69_RADIO_STATE, 1)
     
     @property
     def _off(self):
@@ -271,7 +279,7 @@ class PiicoDev_Radio(object):
     @_off.setter
     def _off(self, val):
         """Turns the radio off"""
-        self._write_int(_set_bit(_REG_RFM69_RADIO_STATE, 7), 0)
+        self._write_int(_REG_RFM69_RADIO_STATE, 0)
     
     @property
     def address(self):
@@ -286,7 +294,7 @@ class PiicoDev_Radio(object):
     @led.setter
     def led(self, x):
         """control the state onboard "Power" LED. accepts `True` / `False`"""
-        self._write_int(_set_bit(_REG_LED, 7), int(x))
+        self._write_int(_REG_LED, int(x))
 
     @property
     def whoami(self):
