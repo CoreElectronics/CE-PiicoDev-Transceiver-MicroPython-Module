@@ -103,35 +103,33 @@ if radio.received_string():
 
 ## Payload
 
-| Name                      | Position | Bytes | Range        | Description
-| ------------------------- | -------- | ----- | ------------ | -----------
-| rssi                      | 0        | 1     | 0 to 255     | RSSI (module negates the value)
-| channel                   | 1        | 1     | 0 to 255     | Channel
-| source_radio_adddress     | 2        | 1     | 1 to 255     | Source radio address
-| destination_radio_address | 3        | 1     | 0 to 255     | Destination radio address
-| type                      | 4        | 1     | 0 - 4        | Type of message (0: invalid, 1: key, int, 2: key, float, 3: message string)
+Note that when transmitting, no RSSI is sent, so:
+```
+Tx Position = Rx Position - 1
+```
+
+| Name                      | Rx Position | Bytes | Range        | Description
+| ------------------------- | ----------- | ----- | ------------ | -----------
+| rssi                      | 0           | 1     | 0 to 255     | RSSI (module negates the value)
+| channel                   | 1           | 1     | 0 to 255     | Channel
+| source_radio_adddress     | 2           | 1     | 1 to 255     | Source radio address
+| destination_radio_address | 3           | 1     | 0 to 255     | Destination radio address
+| type                      | 4           | 1     | 0 - 3        | Type of message (0: invalid, 1: key, int, 2: key, float, 3: message string)
 
 If the type is 1 or 2:
 
-| Name                      | Position | Bytes | Range        | Description
-| ------------------------- | -------- | ----- | ------------ | -----------
-| value                     | 5        | 4     |              | Value (int or float)
-| length                    | 9        | 1     |              | Key length
-| key                       | 10       |       | 52 chars max | key
+| Name                      | Rx Position | Bytes | Range        | Description
+| ------------------------- | ----------- | ----- | ------------ | -----------
+| value                     | 5           | 4     |              | Value (int or float)
+| length                    | 9           | 1     |              | Key length
+| key                       | 10          | <=52  | 52 chars max | key
 
 If the type is 3:
 
-| Name                      | Position | Bytes | Range        | Description
-| ------------------------- | -------- | ----- | ------------ | -----------
-| length                    | 5        | 1     |              | Key length
-| message                   | 6        |       | 56 chars max | Message
-
-### `.write_reg(reg_address, value)`
-
-Writes to a specific register in the the RFM69 
-
-Works in exactly the same way as receive_bytes but returns whatever was sent.
-Currently, it’s equivalent to str(receive_bytes(), 'utf8').
+| Name                      | Rx Position | Bytes | Range        | Description
+| ------------------------- | ----------- | ----- | ------------ | -----------
+| length                    | 5           | 1     |              | Key length
+| message                   | 6           | <=56  | 56 chars max | Message
 
 ## Smart Module I2C Registers
 
