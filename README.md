@@ -76,9 +76,48 @@ Sends a message string. This is the equivalent of send_bytes(bytes(message, 'utf
 
 `radio.send('TempC', 25.0)`
 
+`radio.send('Counter', 9)`
+
 `radio.send('secret', radio_address=7)`
 
 ### `.receive()`
+
+if radio.received_integer():
+    print(radio.message)
+
+if radio.received_number():
+    print(radio.number)
+    
+if radio.received_value():
+    print(radio.name, radio.value)
+    
+if radio.received_string():
+    print(radio.message)
+
+## Payload
+
+| Name                      | Position | Bytes | Range        | Description
+| ------------------------- | -------- | ----- | ------------ | -----------
+| rssi                      | 0        | 1     | 0 to 255     | RSSI (module negates the value)
+| channel                   | 1        | 1     | 0 to 255     | Channel
+| source_radio_adddress     | 2        | 1     | 1 to 255     | Source radio address
+| destination_radio_address | 3        | 1     | 0 to 255     | Destination radio address
+| type                      | 4        | 1     | 0 - 4        | Type of message (0: invalid, 1: key, int, 2: key, float, 3: message string)
+
+If the type is 1 or 2:
+
+| Name                      | Position | Bytes | Range        | Description
+| ------------------------- | -------- | ----- | ------------ | -----------
+| value                     | 5        | 4     |              | Value (int or float)
+| length                    | 9        | 1     |              | Key length
+| key                       | 10       |       | 52 chars max | key
+
+If the type is 3:
+
+| Name                      | Position | Bytes | Range        | Description
+| ------------------------- | -------- | ----- | ------------ | -----------
+| length                    | 5        | 1     |              | Key length
+| message                   | 6        |       | 56 chars max | Message
 
 ### `.write_reg(reg_address, value)`
 

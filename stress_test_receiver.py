@@ -8,13 +8,17 @@ error = 0
 value_prev = 0
 success = 0
 value = 0
-compare_string = 'abcdefghijklmnopqrstuvwxyz123'
+message = ''
+compare_string = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOP'
 while value < 250:
     sleep_ms(10)
-    data = radio.receive()
-    if data != 0:
-        value = data[2]
-        message = str(data[4],'utf8')
+    try:
+        source_radio_address, message, value = radio.receive()
+    except:
+        pass
+    if value != None:
+#         value = data[2]
+        message = str(message,'utf8')
         print('---')
         print(message)
         ascii_values = []
@@ -37,7 +41,7 @@ while value < 250:
         if value > value_prev + 1.1:
             print('number problem')
         if not message == compare_string:
-            print('pot problem')
+            print('text problem')
         value_prev = value
         print(value)
     sleep_ms(10)
