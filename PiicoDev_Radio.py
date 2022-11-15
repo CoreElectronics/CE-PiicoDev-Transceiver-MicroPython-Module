@@ -210,14 +210,17 @@ class PiicoDev_Radio(object):
                 self.rssi = -int.from_bytes(payload_bytes[:1], 'big')
                 self.source_radio_address = int.from_bytes(payload_bytes[2:3], 'big')
                 self.type = int.from_bytes(payload_bytes[4:5], 'big')
-                if self.type == 1:
-                    self.key = str(payload_bytes[10:], 'utf8')
-                    self.value = unpack('i', (payload_bytes[5:9]))[0]
-                if self.type == 2:
-                    self.key = str(payload_bytes[10:], 'utf8')
-                    self.value = unpack('f', (payload_bytes[5:9]))[0]
-                if self.type == 3:
-                    self.message = str(payload_bytes[6:], 'utf8')
+                try:
+                    if self.type == 1:
+                        self.key = str(payload_bytes[10:], 'utf8')
+                        self.value = unpack('i', (payload_bytes[5:9]))[0]
+                    if self.type == 2:
+                        self.key = str(payload_bytes[10:], 'utf8')
+                        self.value = unpack('f', (payload_bytes[5:9]))[0]
+                    if self.type == 3:
+                        self.message = str(payload_bytes[6:], 'utf8')
+                except:
+                    print('Receive error')
                 return True
         return False
     
