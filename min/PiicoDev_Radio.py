@@ -105,9 +105,11 @@ class PiicoDev_Radio:
 			payload_bytes=bytes(payload);self.rx_channel=int.from_bytes(payload_bytes[1:2],_B);self.rx_destination_radio_address=int.from_bytes(payload_bytes[3:4],_B)
 			if self.rx_channel==self.channel and(self.rx_destination_radio_address==0 or self.rx_destination_radio_address==self.radio_address):
 				self.rssi=-int.from_bytes(payload_bytes[:1],_B);self.source_radio_address=int.from_bytes(payload_bytes[2:3],_B);self.type=int.from_bytes(payload_bytes[4:5],_B)
-				if self.type==1:self.key=str(payload_bytes[10:],_C);self.value=unpack('i',payload_bytes[5:9])[0]
-				if self.type==2:self.key=str(payload_bytes[10:],_C);self.value=unpack('f',payload_bytes[5:9])[0]
-				if self.type==3:self.message=str(payload_bytes[6:],_C)
+				try:
+					if self.type==1:self.key=str(payload_bytes[10:],_C);self.value=unpack('i',payload_bytes[5:9])[0]
+					if self.type==2:self.key=str(payload_bytes[10:],_C);self.value=unpack('f',payload_bytes[5:9])[0]
+					if self.type==3:self.message=str(payload_bytes[6:],_C)
+				except:print('Receive error')
 				return True
 		return False
 	def send(self,message_string,value=_A,address=0):
