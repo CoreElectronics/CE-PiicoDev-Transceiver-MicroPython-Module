@@ -49,7 +49,7 @@ class PiicoDev_Radio:
 		try:return self.i2c.readfrom_mem(self.address,register,length)
 		except:print(i2c_err_str.format(self.address));return _A
 	def _write(self,register,data):
-		try:self.i2c.writeto_mem(self.address,register,data)
+		try:self.i2c.writeto_mem(self.address,_set_bit(register,7),data)
 		except:print(i2c_err_str.format(self.address))
 	def _read_int(self,register,length=1):
 		data=self._read(register,length)
@@ -57,9 +57,9 @@ class PiicoDev_Radio:
 		else:return int.from_bytes(data,_B)
 	def _write_int(self,register,integer,length=1):self._write(register,int.to_bytes(integer,length,_B))
 	def send_payload(self,payload):
-		payload_list=[payload[i:i+_MAXIMUM_I2C_SIZE-1]for i in range(0,len(payload),_MAXIMUM_I2C_SIZE-1)];self._write_int(_set_bit(_REG_PAYLOAD_LENGTH,7),len(payload));sleep_ms(10)
-		for i in range(len(payload_list)):self._write(_set_bit(_REG_PAYLOAD,7),payload_list[i]);sleep_ms(28)
-		self._write_int(_set_bit(_REG_PAYLOAD_GO,7),1)
+		payload_list=[payload[i:i+_MAXIMUM_I2C_SIZE-1]for i in range(0,len(payload),_MAXIMUM_I2C_SIZE-1)];self._write_int(_REG_PAYLOAD_LENGTH,len(payload));sleep_ms(10)
+		for i in range(len(payload_list)):self._write(_REG_PAYLOAD,payload_list[i]);sleep_ms(28)
+		self._write_int(_REG_PAYLOAD_GO,1)
 	def receive_payload(self):
 		payload_length=0;payload=bytes(0)
 		if self._payload_new==1:
@@ -72,31 +72,31 @@ class PiicoDev_Radio:
 	@property
 	def encryption(self):return self._read_int(_REG_ENCRYPTION)
 	@encryption.setter
-	def encryption(self,value):self._write_int(_set_bit(_REG_ENCRYPTION,7),value)
+	def encryption(self,value):self._write_int(_REG_ENCRYPTION,value)
 	@property
 	def encryption_key(self):return self._read(_REG_ENCRYPTION_KEY)
 	@encryption_key.setter
-	def encryption_key(self,value):self._write_int(_set_bit(_REG_ENCRYPTION_KEY,7),value)
+	def encryption_key(self,value):self._write_int(_REG_ENCRYPTION_KEY,value)
 	@property
 	def high_power(self):return self._read_int(_REG_HIGH_POWER)
 	@high_power.setter
-	def high_power(self,value):self._write_int(_set_bit(_REG_HIGH_POWER,7),value)
+	def high_power(self,value):self._write_int(_REG_HIGH_POWER,value)
 	@property
 	def rfm69_network_id(self):return self._read_int(_REG_RFM69_NETWORK_ID)
 	@rfm69_network_id.setter
-	def rfm69_network_id(self,value):print('channel setter called');self._write_int(_set_bit(_REG_RFM69_NETWORK_ID,7),value)
+	def rfm69_network_id(self,value):print('channel setter called');self._write_int(_REG_RFM69_NETWORK_ID,value)
 	@property
 	def rfm69_node_id(self):return self._read_int(_REG_RFM69_NODE_ID)
 	@rfm69_node_id.setter
-	def rfm69_node_id(self,value):self._write_int(_set_bit(_REG_RFM69_NODE_ID,7),value)
+	def rfm69_node_id(self,value):self._write_int(_REG_RFM69_NODE_ID,value)
 	@property
 	def rfm69_to_node_id(self):return self._read_int(_REG_RFM69_TO_NODE_ID)
 	@rfm69_to_node_id.setter
-	def rfm69_to_node_id(self,value):debug('Setting destination radio address to '+str(value)+'.');self._write_int(_set_bit(_REG_RFM69_TO_NODE_ID,7),value)
+	def rfm69_to_node_id(self,value):debug('Setting destination radio address to '+str(value)+'.');self._write_int(_REG_RFM69_TO_NODE_ID,value)
 	@property
 	def payload_length(self):return 0
 	@payload_length.setter
-	def payload_length(self,value):debug('Setting message length'+str(value)+'.');self._write_int(_set_bit(_REG_PAYLOAD_LENGTH,7),value)
+	def payload_length(self,value):debug('Setting message length'+str(value)+'.');self._write_int(_REG_PAYLOAD_LENGTH,value)
 	@property
 	def _payload_new(self):return self._read_int(_REG_PAYLOAD_NEW)
 	def receive(self):
@@ -121,20 +121,22 @@ class PiicoDev_Radio:
 		data=0;payload=self.receive_payload()
 		if payload!=0:data=int.from_bytes(payload,_B)
 		return data
+	def get_rfm69_register(self,register):self._write_int(_REG_RFM69_REG,register);return self._read_int(_REG_RFM69_VALUE)
+	def set_rfm69_register(self,register,value):self._write_int(_REG_RFM69_REG,register);self._write_int(_REG_RFM69_VALUE,value)
 	@property
 	def _on(self):'Checks the radio state';self._read_int(_REG_RFM69_RADIO_STATE,1)
 	@_on.setter
-	def _on(self,val):'Turns the radio on';print('Turning radio on!');self._write_int(_set_bit(_REG_RFM69_RADIO_STATE,7),1)
+	def _on(self,val):'Turns the radio on';print('Turning radio on!');self._write_int(_REG_RFM69_RADIO_STATE,1)
 	@property
 	def _off(self):'Checks the radio state';print('Turning radio off');self._read_int(_REG_RFM69_RADIO_STATE,0)
 	@_off.setter
-	def _off(self,val):'Turns the radio off';self._write_int(_set_bit(_REG_RFM69_RADIO_STATE,7),0)
+	def _off(self,val):'Turns the radio off';self._write_int(_REG_RFM69_RADIO_STATE,0)
 	@property
 	def address(self):'Returns the currently configured 7-bit I2C address';return self._address
 	@property
 	def led(self):'Returns the state onboard "Power" LED. `True` / `False`';return bool(self._read_int(_REG_LED))
 	@led.setter
-	def led(self,x):'control the state onboard "Power" LED. accepts `True` / `False`';self._write_int(_set_bit(_REG_LED,7),int(x))
+	def led(self,x):'control the state onboard "Power" LED. accepts `True` / `False`';self._write_int(_REG_LED,int(x))
 	@property
 	def whoami(self):'returns the device identifier';return self._read_int(_REG_WHOAMI,2)
 	@property
