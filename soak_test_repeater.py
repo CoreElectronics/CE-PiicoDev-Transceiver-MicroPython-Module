@@ -3,7 +3,14 @@ from PiicoDev_Unified import sleep_ms
 
 radio = PiicoDev_Radio()
 
+i = 0
+key = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOP'
+
 while True:
     if radio.receive():
-        radio.send(radio.key, radio.value)
-    sleep_ms(10)
+        i = i + 1
+#         print(str(radio.key) + ":" + str(radio.rssi))
+        # sleep_ms(20)
+#         radio.send(radio.key, radio.value)
+        radio.send(key, i)
+    sleep_ms(1000)

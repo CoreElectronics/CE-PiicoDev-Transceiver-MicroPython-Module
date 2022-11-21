@@ -5,12 +5,13 @@ radio = PiicoDev_Radio()
 
 i = 0
 key = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOP'
+#key = 'abcdefghijkl'
 value_prev=0
 errors=0
 successes=0
 while i < 1000:
     i += 1
-    radio.send(key,i)
+#     radio.send(key,i)
     if radio.receive():
         print(radio.key)
         print(radio.value)
@@ -20,7 +21,7 @@ while i < 1000:
         else:
             successes +=1
         value_prev = radio.value
-    sleep_ms(200)
+    sleep_ms(400)
     
 error_rate = (errors / (errors + successes)) * 100
 print('Error Rate: ' + str(error_rate) + '%')
