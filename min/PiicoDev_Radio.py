@@ -45,9 +45,7 @@ class PiicoDev_Radio:
 		try:
 			if self.whoami!=_DEVICE_ID:print('* Incorrect device found at address {}'.format(address))
 		except:print("* Couldn't find a device - check switches and wiring")
-	def _read(self,register,length=1):
-		try:return self.i2c.readfrom_mem(self.address,register,length)
-		except:print(i2c_err_str.format(self.address));return _A
+	def _read(self,register,length=1):return self.i2c.readfrom_mem(self.address,register,length)
 	def _write(self,register,data):
 		try:self.i2c.writeto_mem(self.address,_set_bit(register,7),data)
 		except:print(i2c_err_str.format(self.address))
