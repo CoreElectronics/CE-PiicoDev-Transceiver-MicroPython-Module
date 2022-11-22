@@ -5,7 +5,7 @@ from PiicoDev_Unified import *
 import radio_config
 from struct import *
 compat_str='\nUnified PiicoDev library out of date.  Get the latest module: https://piico.dev/unified \n'
-_BASE_ADDRESS=161
+_BASE_ADDRESS=26
 _DEVICE_ID=495
 _REG_WHOAMI=1
 _REG_FIRM_MAJ=2
@@ -61,9 +61,12 @@ class PiicoDev_Radio:
 	def receive_payload(self):
 		payload_length=0;payload=bytes(0)
 		if self._payload_new==1:
-			payload_length=self._read_int(_REG_PAYLOAD_LENGTH)+1;sleep_ms(5);required_range=int(truncate(payload_length/_MAXIMUM_I2C_SIZE))+1
-			for i in range(required_range):payload=payload+self._read(_REG_PAYLOAD,length=_MAXIMUM_I2C_SIZE);sleep_ms(5)
-			payload=payload[:payload_length]
+			payload_length=self._read_int(_REG_PAYLOAD_LENGTH)+1;unprocessed_payload_length=payload_length;sleep_ms(500);number_of_chunks=int(truncate(payload_length/_MAXIMUM_I2C_SIZE))+1;print('number_of_chunks:');print(number_of_chunks)
+			for i in range(number_of_chunks):
+				chunk_length=_MAXIMUM_I2C_SIZE
+				if unprocessed_payload_length<32:chunk_length=unprocessed_payload_length
+				payload=payload+self._read(_REG_PAYLOAD,length=chunk_length);print(payload);unprocessed_payload_length-=_MAXIMUM_I2C_SIZE;print('Unprocessed Payload Length');print(unprocessed_payload_length);sleep_ms(6000)
+			payload=payload[:payload_length];print('RECEIVED_PAYLOAD_LENGTH:'+str(payload_length))
 		return payload_length,payload
 	def on(self):self._on=1
 	def off(self):self._off=1
@@ -107,7 +110,7 @@ class PiicoDev_Radio:
 					if self.type==1:self.key=str(payload_bytes[10:],_C);self.value=unpack('i',payload_bytes[5:9])[0]
 					if self.type==2:self.key=str(payload_bytes[10:],_C);self.value=unpack('f',payload_bytes[5:9])[0]
 					if self.type==3:self.message=str(payload_bytes[6:],_C)
-				except:print('Receive error')
+				except:print('problem parsing payload')
 				return True
 		return False
 	def send(self,message_string,value=_A,address=0):
