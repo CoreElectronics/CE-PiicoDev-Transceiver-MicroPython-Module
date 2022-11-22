@@ -22,7 +22,7 @@ void receiveEvent(int numberOfBytesReceived)
   {
     if (functions[regNum].registerNumber == currentRegisterNumber)
     {
-      functions[regNum].handleFunction((char *)incomingData);
+      functions[regNum].handleFunction(numberOfBytesReceived, (char *)incomingData);
     }
   }
 }

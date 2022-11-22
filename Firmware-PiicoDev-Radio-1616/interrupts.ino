@@ -4,7 +4,7 @@ void receiveEvent(int numberOfBytesReceived)
 {
   lastSyncTime = millis();
   incomingDataSpot = 0;
-
+  debugln("Interrupt Function Running----------------------------------");
   memset(incomingData, 0, sizeof(incomingData));
   while (Wire.available())
   {
@@ -12,17 +12,17 @@ void receiveEvent(int numberOfBytesReceived)
     while (Wire.available())
     {
       incomingData[incomingDataSpot++] = Wire.read();
-      #if DEBUG
-      //Serial.print(char(incomingData[incomingDataSpot-1]), HEX);
+      //debug("IncomingDataI2CInterrupt:");
+      //debugln(char(incomingData[incomingDataSpot-1]));
       //incomingData is 32 bytes. We shouldn't spill over because receiveEvent can't receive more than 32 bytes
-      #endif
     }
   }
   for (uint16_t regNum = 0; regNum < (sizeof(memoryMapRegs) / sizeof(uint8_t)); regNum++)
   {
     if (functions[regNum].registerNumber == currentRegisterNumber)
     {
-      functions[regNum].handleFunction((char *)incomingData);
+      functions[regNum].handleFunction(numberOfBytesReceived, (char *)incomingData);
+      break; // guarantee only one match (first matching register number)
     }
   }
 }

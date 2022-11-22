@@ -8,7 +8,7 @@ from struct import *
 
 compat_str = '\nUnified PiicoDev library out of date.  Get the latest module: https://piico.dev/unified \n'
 
-_BASE_ADDRESS                  = 0xA1
+_BASE_ADDRESS                  = 0x1A
 _DEVICE_ID                     = 495
 
 _REG_WHOAMI                    = 0x01
@@ -121,13 +121,23 @@ class PiicoDev_Radio(object):
 #         print('receive payload')
         if self._payload_new == 1:
             payload_length = self._read_int(_REG_PAYLOAD_LENGTH) + 1 # _MAXIMUM_PAYLOAD_LENGTH + RSSI
-            sleep_ms(5)
-            required_range = int(truncate(payload_length / _MAXIMUM_I2C_SIZE))+1
-            for i in range(required_range):
-                payload = payload + self._read(_REG_PAYLOAD, length=_MAXIMUM_I2C_SIZE)
-                sleep_ms(5)
+            unprocessed_payload_length = payload_length
+            sleep_ms(500)
+            number_of_chunks = int(truncate(payload_length / _MAXIMUM_I2C_SIZE))+1
+            print('number_of_chunks:')
+            print(number_of_chunks)
+            for i in range(number_of_chunks):
+                chunk_length = _MAXIMUM_I2C_SIZE
+                if unprocessed_payload_length < 32:
+                    chunk_length = unprocessed_payload_length
+                payload = payload + self._read(_REG_PAYLOAD, length=chunk_length)
+                print(payload)
+                unprocessed_payload_length -= _MAXIMUM_I2C_SIZE
+                print('Unprocessed Payload Length')
+                print(unprocessed_payload_length)
+                sleep_ms(6000)
             payload = payload[:payload_length]
-#             print('RECEIVED_PAYLOAD_LENGTH:' + str(payload_length))
+            print('RECEIVED_PAYLOAD_LENGTH:' + str(payload_length))
 #            payload = self._read(_REG_PAYLOAD, length=payload_length)
 #             print('RECEIVED PAYLOAD:' + str(payload))
         return payload_length, payload
@@ -221,7 +231,7 @@ class PiicoDev_Radio(object):
                     if self.type == 3:
                         self.message = str(payload_bytes[6:], 'utf8')
                 except:
-                    print('Receive error')
+                    print('problem parsing payload')
                 return True
         return False
     

@@ -2,19 +2,19 @@
   User accessible functions
 */
 
-void idReturn(char *data) {
+void idReturn(uint8_t numberOfBytesReceived, char *data) {
   loadArray(valueMap.id);
 }
 
-void firmwareMajorReturn(char *data) {
+void firmwareMajorReturn(uint8_t numberOfBytesReceived, char *data) {
   loadArray(valueMap.firmwareMajor);
 }
 
-void firmwareMinorReturn(char *data) {
+void firmwareMinorReturn(uint8_t numberOfBytesReceived, char *data) {
   loadArray(valueMap.firmwareMinor);
 }
 
-void setAddress(char *data) {
+void setAddress(uint8_t numberOfBytesReceived, char *data) {
   debugln("SetAddress is running");
   uint8_t tempAddress = data[0];
 
@@ -26,12 +26,12 @@ void setAddress(char *data) {
   updateFlag = true;  // will trigger a I2C re-initalise and save custom address to EEPROM
 }
 
-void getPowerLed(char *data) {
+void getPowerLed(uint8_t numberOfBytesReceived, char *data) {
   valueMap.ledRead = digitalRead(powerLedPin);
   loadArray(valueMap.ledRead);
 }
 
-void setPowerLed(char *data) {
+void setPowerLed(uint8_t numberOfBytesReceived, char *data) {
   powerLed((data[0] == 1));
 }
 
@@ -39,42 +39,42 @@ void powerLed(bool state) {
   digitalWrite(powerLedPin, state);
 }
 
-void getEncryption(char *data) {
+void getEncryption(uint8_t numberOfBytesReceived, char *data) {
   loadArray(valueMap.encryptionRead);
 }
 
-void setEncryption(char *data) {
+void setEncryption(uint8_t numberOfBytesReceived, char *data) {
   // valueMap.encryptionWrite[0] = data[0];
   // valueMap.encryptionWrite[1] = data[1];
   // valueMap.encryptionRead[0] = data[0];
   // valueMap.encryptionRead[1] = data[1];
 }
 
-void getEncryptionKey(char *data) {
+void getEncryptionKey(uint8_t numberOfBytesReceived, char *data) {
   loadArray(valueMap.encryptionKeyRead);
   debug("encryotion key: ");
   debugln(valueMap.encryptionKeyRead);
 }
 
-void setEncryptionKey(char *data) {
+void setEncryptionKey(uint8_t numberOfBytesReceived, char *data) {
   valueMap.encryptionKeyWrite = data[0];
   valueMap.encryptionKeyRead = data[0];
 }
 
-void getHighPower(char *data) {
+void getHighPower(uint8_t numberOfBytesReceived, char *data) {
   loadArray(valueMap.highPowerRead);
 }
 
-void setHighPower(char *data) {
+void setHighPower(uint8_t numberOfBytesReceived, char *data) {
   valueMap.highPowerWrite = data[0];
   valueMap.highPowerRead =  data[0];
 }
 
-void getRfm69RadioState(char *data) {
+void getRfm69RadioState(uint8_t numberOfBytesReceived, char *data) {
   loadArray(valueMap.rfm69RadioStateRead);
 }
 
-void setRfm69RadioState(char *data) {
+void setRfm69RadioState(uint8_t numberOfBytesReceived, char *data) {
   valueMap.rfm69RadioStateWrite = data[0];
   valueMap.rfm69RadioStateRead  = data[0];
   debugln("Running setRadioState");
@@ -94,45 +94,45 @@ void setRfm69RadioState(char *data) {
   }
 }
 
-void getRfm69NodeID(char *data) {
+void getRfm69NodeID(uint8_t numberOfBytesReceived, char *data) {
   loadArray(valueMap.rfm69NodeIDRead);
 }
 
-void setRfm69NodeID(char *data) {
+void setRfm69NodeID(uint8_t numberOfBytesReceived, char *data) {
   valueMap.rfm69NodeIDWrite = data[0];
   valueMap.rfm69NodeIDRead = data[0];
 }
 
-void getRfm69NetworkID(char *data) {
+void getRfm69NetworkID(uint8_t numberOfBytesReceived, char *data) {
   loadArray(valueMap.rfm69NetworkIDRead);
 }
 
-void setRfm69NetworkID(char *data) {
+void setRfm69NetworkID(uint8_t numberOfBytesReceived, char *data) {
   debugln("------------------------------------------- setchannel called");
   valueMap.rfm69NetworkIDWrite = data[0];
   valueMap.rfm69NetworkIDRead = data[0];
 }
 
-void getRfm69ToNodeID(char *data) {
+void getRfm69ToNodeID(uint8_t numberOfBytesReceived, char *data) {
   loadArray(valueMap.rfm69ToNodeIDRead);
 }
 
-void setRfm69ToNodeID(char *data) {
+void setRfm69ToNodeID(uint8_t numberOfBytesReceived, char *data) {
   debugln("------------------------------------------- setDestinationRadioAddress called");
   valueMap.rfm69NodeIDWrite = data[0];
   valueMap.rfm69NodeIDRead = data[0];
 }
 
-void setRfm69Reg(char *data) {
+void setRfm69Reg(uint8_t numberOfBytesReceived, char *data) {
   valueMap.rfm69Reg = data[0];      
 }
 
-void getRfm69Value(char *data) {
+void getRfm69Value(uint8_t numberOfBytesReceived, char *data) {
   valueMap.rfm69ValueRead = radio.readReg(valueMap.rfm69Reg);
   loadArray(valueMap.rfm69ValueRead);        
 }
 
-void setRfm69Value(char *data) {
+void setRfm69Value(uint8_t numberOfBytesReceived, char *data) {
   valueMap.rfm69ValueWrite = data[0];
   valueMap.rfm69ValueRead = data[0];
   debug("valueMap.rfm69ValueWrite:");
@@ -140,15 +140,15 @@ void setRfm69Value(char *data) {
   radio.writeReg(valueMap.rfm69Reg, data[0]);   
 }
 
-void receivePayloadLength(char *data) {
+void receivePayloadLength(uint8_t numberOfBytesReceived, char *data) {
   loadArray(valueMap.payloadLengthRead);
 }
 
-void sendPayloadLength(char *data) {
+void sendPayloadLength(uint8_t numberOfBytesReceived, char *data) {
   valueMap.payloadLengthWrite = data[0];
 }
 
-void receivePayload(char *data) {
+void receivePayload(uint8_t numberOfBytesReceived, char *data) {
   //debugln(valueMap.payloadLengthRead);
   //debugln(valueMap.payloadRead);
   debug("Incoming Buffer Size:");
@@ -173,25 +173,22 @@ void receivePayload(char *data) {
   debugln(responseSize);
 }
 
-void sendPayload(char *data) {
-  // debug("Incoming Data:");
-  // debugln(data);
-  //memcpy(valueMap.payloadWrite, data, valueMap.payloadLengthWrite);
-  for (uint8_t x = 0; x < I2C_BUFFER_SIZE-1; x++){// without th e-1 this there will be a null at multiples of the 32nd bit
-    // debug("Incoming Data:");
-    // debugln(data[x]);
-    //if (data[x] != 0) { // without this there will be a null at multiples of the 32nd bit, but this will also kill legitimate zeros
+void sendPayload(uint8_t numberOfBytesReceived, char *data) {
+  debug("Incoming Data:");
+  for (uint8_t x = 0; x < numberOfBytesReceived-1; x++){// without the -1 there will be a null at multiples of the 32nd bit
+    debug(data[x]);
+    debug(",");
     payloadBufferOutgoing.push(data[x]);
-    //}
   }
+  debugln("");
 }
 
-void receivePayloadNew(char *data) {
+void receivePayloadNew(uint8_t numberOfBytesReceived, char *data) {
   loadArray(valueMap.payloadNew);
   valueMap.payloadNew = 0;
 } 
 
-void sendPayloadGo(char *data) {
+void sendPayloadGo(uint8_t numberOfBytesReceived, char *data) {
   valueMap.payloadGo = data[0];
   debug("payloadBufferOutgoing.size()");
   debugln(payloadBufferOutgoing.size());

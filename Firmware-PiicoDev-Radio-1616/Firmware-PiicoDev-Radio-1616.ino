@@ -35,7 +35,7 @@
 #define FIRMWARE_MAJOR 0x01
 #define FIRMWARE_MINOR 0x00
 #define DEVICE_ID 495
-#define DEFAULT_I2C_ADDRESS 0xA1     // The default address when all switches are off
+#define DEFAULT_I2C_ADDRESS 0x1A     // The default address when all switches are off
 #define I2C_ADDRESS_POOL_START 0x08  // The start of the 'smart module address pool' minus 1 - addresses settable by switches
 #define SOFTWARE_ADDRESS true
 #define HARDWARE_ADDRESS false
@@ -238,40 +238,40 @@ uint8_t currentRegisterNumber;
 
 struct functionMap {
   uint8_t registerNumber;
-  void (*handleFunction)(char *myData);
+  void (*handleFunction)(int numberOfBytesReceived, char *myData);
 };
 
-void idReturn(char *data);
-void firmwareMajorReturn(char *data);
-void firmwareMinorReturn(char *data);
-void setAddress(char *data);
-void getPowerLed(char *data);
-void setPowerLed(char *data);
-void getEncryption(char *data);
-void setEncryption(char *data);
-void getEncryption(char *data);
-void setEncryption(char *data);
-void getEncryptionKey(char *data);
-void setEncryptionKey(char *data);
-void getHighPower(char *data);
-void setHighPower(char *data);
-void getRfm69RadioState(char *data);
-void setRfm69RadioState(char *data);
-void getRfm69NodeID(char *data);
-void setRfm69NodeID(char *data);
-void getRfm69NetworkID(char *data);
-void setRfm69NetworkID(char *data);
-void getRfm69ToNodeID(char *data);
-void setRfm69ToNodeID(char *data);
-void setRfm69Reg(char *data);
-void getRfm69Value(char *data);
-void setRfm69Value(char *data);
-void receivePayloadLength(char *data);
-void sendPayloadLength(char *data);
-void receivePayload(char *data);
-void sendPayload(char *data);
-void receivePayloadNew(char *data);
-void sendPayloadGo(char *data);
+void idReturn(int numberOfBytesReceived, char *data);
+void firmwareMajorReturn(int numberOfBytesReceived, char *data);
+void firmwareMinorReturn(int numberOfBytesReceived, char *data);
+void setAddress(int numberOfBytesReceived, char *data);
+void getPowerLed(int numberOfBytesReceived, char *data);
+void setPowerLed(int numberOfBytesReceived, char *data);
+void getEncryption(int numberOfBytesReceived, char *data);
+void setEncryption(int numberOfBytesReceived, char *data);
+void getEncryption(int numberOfBytesReceived, char *data);
+void setEncryption(int numberOfBytesReceived, char *data);
+void getEncryptionKey(int numberOfBytesReceived, char *data);
+void setEncryptionKey(int numberOfBytesReceived, char *data);
+void getHighPower(int numberOfBytesReceived, char *data);
+void setHighPower(int numberOfBytesReceived, char *data);
+void getRfm69RadioState(int numberOfBytesReceived, char *data);
+void setRfm69RadioState(int numberOfBytesReceived, char *data);
+void getRfm69NodeID(int numberOfBytesReceived, char *data);
+void setRfm69NodeID(int numberOfBytesReceived, char *data);
+void getRfm69NetworkID(int numberOfBytesReceived, char *data);
+void setRfm69NetworkID(int numberOfBytesReceived, char *data);
+void getRfm69ToNodeID(int numberOfBytesReceived, char *data);
+void setRfm69ToNodeID(int numberOfBytesReceived, char *data);
+void setRfm69Reg(int numberOfBytesReceived, char *data);
+void getRfm69Value(int numberOfBytesReceived, char *data);
+void setRfm69Value(int numberOfBytesReceived, char *data);
+void receivePayloadLength(int numberOfBytesReceived, char *data);
+void sendPayloadLength(int numberOfBytesReceived, char *data);
+void receivePayload(int numberOfBytesReceived, char *data);
+void sendPayload(int numberOfBytesReceived, char *data);
+void receivePayloadNew(int numberOfBytesReceived, char *data);
+void sendPayloadGo(int numberOfBytesReceived, char *data);
 
 functionMap functions[] = {
   { registerMap.id, idReturn },
@@ -438,7 +438,7 @@ void loop() {
   if (radio.receiveDone())  // Got one!
   {
     // Print out the information:
-
+    debugln(F("-------------------"));
     debug(F("received from node "));
     debug(radio.SENDERID);
     debug(F(", message ["));
@@ -454,15 +454,16 @@ void loop() {
       payloadBufferIncoming.push((char)radio.DATA[i]);
       debug("");
     }
+    debug(F("]"));
     valueMap.payloadLengthRead = radio.DATALEN;
-    debug("PayloadLengthRead");
-    debugln(valueMap.payloadLengthRead);
+    debug("PayloadLengthRead:");
+    debug(valueMap.payloadLengthRead);
 
     //debug(valueMap.payloadRead);
     // RSSI is the "Receive Signal Strength Indicator",
     // smaller numbers mean higher power.
 
-    debug(". RSSI ");
+    debug(" RSSI:");
     debugln(radio.RSSI);
   }
 }
