@@ -12,8 +12,6 @@ _REG_FIRM_MAJ=2
 _REG_FIRM_MIN=3
 _REG_I2C_ADDRESS=4
 _REG_LED=5
-_REG_ENCRYPTION=17
-_REG_ENCRYPTION_KEY=18
 _REG_HIGH_POWER=19
 _REG_RFM69_RADIO_STATE=20
 _REG_RFM69_NODE_ID=21
@@ -28,6 +26,7 @@ _REG_PAYLOAD_GO=36
 DEBUG=True
 _MAXIMUM_PAYLOAD_LENGTH=61
 _MAXIMUM_I2C_SIZE=32
+def tempdebug(text):print(str(ticks_ms()-start_time)+':'+str(value))
 def truncate(n,decimals=0):multiplier=10**decimals;return int(n*multiplier)/multiplier
 def _set_bit(x,n):return x|1<<n
 def debug(text):
@@ -45,7 +44,9 @@ class PiicoDev_Radio:
 		try:
 			if self.whoami!=_DEVICE_ID:print('* Incorrect device found at address {}'.format(address))
 		except:print("* Couldn't find a device - check switches and wiring")
-	def _read(self,register,length=1):return self.i2c.readfrom_mem(self.address,register,length)
+	def _read(self,register,length=1):
+		try:return self.i2c.readfrom_mem(self.address,register,length)
+		except:print(i2c_err_str.format(self.address));return _A
 	def _write(self,register,data):
 		try:self.i2c.writeto_mem(self.address,_set_bit(register,7),data)
 		except:print(i2c_err_str.format(self.address))
@@ -55,29 +56,21 @@ class PiicoDev_Radio:
 		else:return int.from_bytes(data,_B)
 	def _write_int(self,register,integer,length=1):self._write(register,int.to_bytes(integer,length,_B))
 	def send_payload(self,payload):
-		payload_list=[payload[i:i+_MAXIMUM_I2C_SIZE-1]for i in range(0,len(payload),_MAXIMUM_I2C_SIZE-1)];self._write_int(_REG_PAYLOAD_LENGTH,len(payload));sleep_ms(10)
-		for i in range(len(payload_list)):self._write(_REG_PAYLOAD,payload_list[i]);sleep_ms(28)
+		payload_list=[payload[i:i+_MAXIMUM_I2C_SIZE-1]for i in range(0,len(payload),_MAXIMUM_I2C_SIZE-1)];self._write_int(_REG_PAYLOAD_LENGTH,len(payload));sleep_ms(5)
+		for i in range(len(payload_list)):self._write(_REG_PAYLOAD,payload_list[i]);sleep_ms(5)
 		self._write_int(_REG_PAYLOAD_GO,1)
 	def receive_payload(self):
 		payload_length=0;payload=bytes(0)
 		if self._payload_new==1:
-			payload_length=self._read_int(_REG_PAYLOAD_LENGTH)+1;unprocessed_payload_length=payload_length;sleep_ms(500);number_of_chunks=int(truncate(payload_length/_MAXIMUM_I2C_SIZE))+1;print('number_of_chunks:');print(number_of_chunks)
+			payload_length=self._read_int(_REG_PAYLOAD_LENGTH)+1;unprocessed_payload_length=payload_length;sleep_ms(5);number_of_chunks=int(truncate(payload_length/_MAXIMUM_I2C_SIZE))+1
 			for i in range(number_of_chunks):
 				chunk_length=_MAXIMUM_I2C_SIZE
 				if unprocessed_payload_length<32:chunk_length=unprocessed_payload_length
-				payload=payload+self._read(_REG_PAYLOAD,length=chunk_length);print(payload);unprocessed_payload_length-=_MAXIMUM_I2C_SIZE;print('Unprocessed Payload Length');print(unprocessed_payload_length);sleep_ms(6000)
-			payload=payload[:payload_length];print('RECEIVED_PAYLOAD_LENGTH:'+str(payload_length))
+				payload=payload+self._read(_REG_PAYLOAD,length=chunk_length);unprocessed_payload_length-=_MAXIMUM_I2C_SIZE;sleep_ms(5)
+			payload=payload[:payload_length]
 		return payload_length,payload
 	def on(self):self._on=1
 	def off(self):self._off=1
-	@property
-	def encryption(self):return self._read_int(_REG_ENCRYPTION)
-	@encryption.setter
-	def encryption(self,value):self._write_int(_REG_ENCRYPTION,value)
-	@property
-	def encryption_key(self):return self._read(_REG_ENCRYPTION_KEY)
-	@encryption_key.setter
-	def encryption_key(self,value):self._write_int(_REG_ENCRYPTION_KEY,value)
 	@property
 	def high_power(self):return self._read_int(_REG_HIGH_POWER)
 	@high_power.setter
@@ -110,7 +103,7 @@ class PiicoDev_Radio:
 					if self.type==1:self.key=str(payload_bytes[10:],_C);self.value=unpack('i',payload_bytes[5:9])[0]
 					if self.type==2:self.key=str(payload_bytes[10:],_C);self.value=unpack('f',payload_bytes[5:9])[0]
 					if self.type==3:self.message=str(payload_bytes[6:],_C)
-				except:print('problem parsing payload')
+				except:print('* error parsing payload')
 				return True
 		return False
 	def send(self,message_string,value=_A,address=0):
