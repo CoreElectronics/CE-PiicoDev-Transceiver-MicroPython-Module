@@ -140,8 +140,6 @@ If the type is 3:
 | Firmware Minor    | 0x03      | 1      | R    | Varies           | Minor firmware version
 | I2C Address       | 0x84      | 1      | W    | 0xA1             | Set new I2C address
 | LED               | 0x05/0x85 | 1      | R/W  | 1                | 0=OFF, 1=ON
-| Encryption        | 0x11/0x91 | 1      | R/W  | 0                | 0=OFF, 1=ON
-| Encryption Key    | 0x12/0x92 | 2      | R/W  | PiicoDev---Radio | Must be exactly 16 characters on all nodes
 | High Power        | 0x13/0x93 | 1      | R/W  | 0                | 0=OFF, 1=ON
 | RFM69 Radio State | 0x14/0x94 | 1      | R/W  | 0                | 0=OFF, 1=ON
 | RFM69 Node ID     | 0x15/0x95 | 1      | R/W  | 1                | Do not change, addressing handled by the MicroPython driver
