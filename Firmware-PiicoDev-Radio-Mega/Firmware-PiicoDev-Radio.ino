@@ -11,18 +11,18 @@
 
 */
 
-#include <RFM69.h>  //get it here: https://www.github.com/lowpowerlab/rfm69
+#include <RFM69.h> // by LowPowerLab version 1.5.2 get it here: https://www.github.com/lowpowerlab/rfm69
 //#include <RFM69_ATC.h>     //get it here: https://www.github.com/lowpowerlab/rfm69
 //#include <SPIFlash.h>      //get it here: https://www.github.com/lowpowerlab/spiflash
 #include <SPI.h>  //included with Arduino IDE install (www.arduino.cc)
 #include <RFM69registers.h>
-#include <CircularBuffer.h>
-#include <SoftwareSerial.h>
+#include <CircularBuffer.h> // by AgileWare version 1.3.3
 
-#define DEBUG true
+
+#define DEBUG false // If true, expect I2C bus to hang for 1s for I2C transactions
 #if DEBUG == true
-#define debug(x) swsri.print(x)
-#define debugln(x) swsri.println(x)
+#define debug(x) Serial.print(x)
+#define debugln(x) Serial.println(x)
 #else
 #define debug(x)
 #define debugln(x)
@@ -46,14 +46,10 @@
 #define MYNODEID 1
 #define NETWORKID 0
 #define TONODEID 0
-// check with michael - can we remove encryption?
-//#define ENCRYPTKEY "PiicoDev---Radio"  //has to be same 16 characters/bytes on all nodes, not more not less!
-#define ENCRYPTKEY 7
 
 RFM69 radio;
 CircularBuffer<byte, RX_BUFFER_SIZE> payloadBufferIncoming;
 CircularBuffer<byte, RX_BUFFER_SIZE> payloadBufferOutgoing;
-SoftwareSerial swsri(5,6);
 
 enum eepromLocations {
   LOCATION_I2C_ADDRESS = 0x00,   // Device's address
@@ -69,15 +65,14 @@ const uint8_t powerLedPin = 3;
 const uint16_t addressPin1 = 8;
 const uint16_t addressPin2 = 7;
 const uint16_t addressPin3 = 6;
-const uint16_t addressPin4 = 4;
+const uint16_t addressPin4 = 5;
 #else
 // ATTINY 8x6 or 16x6
-const uint8_t powerLedPin = PIN_PA5;
-const uint8_t addressPin1 = PIN_PC3;
-const uint8_t addressPin2 = PIN_PC2;
-const uint8_t addressPin3 = PIN_PC1;
-const uint8_t addressPin4 = PIN_PC0;
-
+const uint8_t powerLedPin = PIN_PA3;
+const uint8_t addressPin1 = PIN_PA1;
+const uint8_t addressPin2 = PIN_PC3;
+const uint8_t addressPin3 = PIN_PC2;
+const uint8_t addressPin4 = PIN_PC1;
 #endif
 
 // System global variables
@@ -91,9 +86,6 @@ volatile uint16_t incomingDataSpot = 0;   // Keeps track of where we are in the 
 uint8_t responseBuffer[I2C_BUFFER_SIZE];  // Used to pass data back to master
 volatile uint8_t responseSize = 1;        // Defines how many bytes of relevant data is contained in the responseBuffer
 
-//uint8_t rxBuffer[RX_BUFFER_SIZE]; // The radio's received data buffer
-//volatile uint8_t rxSize = 1; // Defines how many bytes of relevant data is contained in the rxBuffer
-
 bool radioState = true;
 
 struct memoryMapRegs {
@@ -103,10 +95,6 @@ struct memoryMapRegs {
   uint8_t i2cAddress;
   uint8_t ledRead;
   uint8_t ledWrite;
-  uint8_t encryptionRead;
-  uint8_t encryptionWrite;
-  uint8_t encryptionKeyRead;
-  uint8_t encryptionKeyWrite;
   uint8_t highPowerRead;
   uint8_t highPowerWrite;
   uint8_t rfm69RadioStateRead;
@@ -135,10 +123,6 @@ struct memoryMapData {
   uint8_t i2cAddress;
   uint8_t ledRead;
   uint8_t ledWrite;
-  uint8_t encryptionRead;
-  uint8_t encryptionWrite;
-  uint8_t encryptionKeyRead;
-  uint8_t encryptionKeyWrite;
   uint8_t highPowerRead;
   uint8_t highPowerWrite;
   uint8_t rfm69RadioStateRead;
@@ -154,11 +138,8 @@ struct memoryMapData {
   uint8_t rfm69ValueWrite;
   uint8_t payloadLengthRead;
   uint8_t payloadLengthWrite;
-  //char *payloadRead;
-  //char *payloadWrite;
-  // check with michael
-  char *payloadRead;
-  char *payloadWrite;
+  uint8_t payloadRead;  // Dummy - CircularBuffer payloadBufferIncoming used instead
+  uint8_t payloadWrite; // Dummy - CircularBuffer payloadBufferOutgoing used instead
   uint8_t payloadNew;
   uint8_t payloadGo;
 };
@@ -171,10 +152,6 @@ const memoryMapRegs registerMap = {
   .i2cAddress = 0x84,
   .ledRead = 0x05,
   .ledWrite = 0x85,
-  .encryptionRead = 0x11,
-  .encryptionWrite = 0x91,
-  .encryptionKeyRead = 0x12,
-  .encryptionKeyWrite = 0x92,
   .highPowerRead = 0x13,
   .highPowerWrite = 0x93,
   .rfm69RadioStateRead = 0x14,
@@ -196,12 +173,6 @@ const memoryMapRegs registerMap = {
   .payloadGo = 0xA4,
 };
 
-//volatile char outgoingBuffer[32];
-//volatile char incomingBuffer[32];
-//CHeck with michael about how I changed volitile to non-volatile
-char outgoingBuffer[32];
-char incomingBuffer[32];
-
 volatile memoryMapData valueMap = {
   .id = DEVICE_ID,
   .firmwareMajor = FIRMWARE_MAJOR,
@@ -209,10 +180,6 @@ volatile memoryMapData valueMap = {
   .i2cAddress = DEFAULT_I2C_ADDRESS,
   .ledRead = 1,
   .ledWrite = 1,
-  .encryptionRead = 0,
-  .encryptionWrite = 0,
-  .encryptionKeyRead = ENCRYPTKEY,
-  .encryptionKeyWrite = ENCRYPTKEY,
   .highPowerRead = 0,
   .highPowerWrite = 0,
   .rfm69RadioStateRead = 0,
@@ -228,8 +195,8 @@ volatile memoryMapData valueMap = {
   .rfm69ValueWrite = 0,
   .payloadLengthRead = 0,
   .payloadLengthWrite = 0,
-  .payloadRead = incomingBuffer,
-  .payloadWrite = outgoingBuffer,
+  .payloadRead = 0,
+  .payloadWrite = 0,
   .payloadNew = 0,
   .payloadGo = 0,
 };
@@ -247,12 +214,6 @@ void firmwareMinorReturn(int numberOfBytesReceived, char *data);
 void setAddress(int numberOfBytesReceived, char *data);
 void getPowerLed(int numberOfBytesReceived, char *data);
 void setPowerLed(int numberOfBytesReceived, char *data);
-void getEncryption(int numberOfBytesReceived, char *data);
-void setEncryption(int numberOfBytesReceived, char *data);
-void getEncryption(int numberOfBytesReceived, char *data);
-void setEncryption(int numberOfBytesReceived, char *data);
-void getEncryptionKey(int numberOfBytesReceived, char *data);
-void setEncryptionKey(int numberOfBytesReceived, char *data);
 void getHighPower(int numberOfBytesReceived, char *data);
 void setHighPower(int numberOfBytesReceived, char *data);
 void getRfm69RadioState(int numberOfBytesReceived, char *data);
@@ -280,10 +241,6 @@ functionMap functions[] = {
   { registerMap.i2cAddress, setAddress },
   { registerMap.ledRead, getPowerLed },
   { registerMap.ledWrite, setPowerLed },
-  { registerMap.encryptionRead, getEncryption },
-  { registerMap.encryptionWrite, setEncryption },
-  { registerMap.encryptionKeyRead, getEncryptionKey },
-  { registerMap.encryptionKeyWrite, setEncryptionKey },
   { registerMap.highPowerRead, getHighPower },
   { registerMap.highPowerWrite, setHighPower },
   { registerMap.rfm69RadioStateRead, getRfm69RadioState },
@@ -312,12 +269,9 @@ typedef struct {
 Payload theDataRead;
 Payload theDataWrite;
 
-
-
 void setup() {
 #if DEBUG
-  swsri.begin(9600);
-  //Serial.begin(115200);
+  Serial.begin(115200);
   Serial.println("Begin");
 #endif
   // Pull up address pins
@@ -327,7 +281,6 @@ void setup() {
   pinMode(addressPin4, INPUT_PULLUP);
   pinMode(powerLedPin, OUTPUT);
   powerLed(true);  // enable Power LED by default on every power-up
-  
   // Open a serial port so we can send keystrokes to the module:
   debug("Node ");
   debug(MYNODEID);
@@ -339,21 +292,6 @@ void setup() {
 
   radio.initialize(FREQUENCY, valueMap.rfm69NodeIDWrite, valueMap.rfm69NetworkIDWrite);
   radio.setHighPower(true);
-  //radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_55555); // default: 4.8 KBPS
-  //radio.writeReg(REG_BITRATELSB, RF_BITRATELSB_55555);
-  //radio.writeReg(REG_FDEVMSB, RF_FDEVMSB_50000); // default: 5KHz, (FDEV + BitRate / 2 <= 500KHz)
-  //radio.writeReg(REG_FDEVLSB, RF_FDEVLSB_50000);
-
-  // radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_57600);
-  // radio.writeReg(REG_BITRATELSB, RF_BITRATELSB_57600);
-  // radio.writeReg(REG_FDEVMSB, RF_FDEVMSB_55000);
-  // radio.writeReg(REG_FDEVLSB, RF_FDEVLSB_55000);
-  //radio.writeReg(REG_RXBW, 0x42);
-  //radio.writeReg(0x37, 0b10010000); //DC=WHITENING, CRCAUTOOFF=0
-  //                ^^->DC: 00=none, 01=manchester, 10=whitening
-  //radio.writeReg( REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF | RF_PACKET1_CRCAUTOCLEAR_OFF | RF_PACKET1_ADRSFILTERING_OFF );	// 0x37
-
-
   radio.writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY);
   radio.writeReg(REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_00);                                        // 0x02
   radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_300000);                                                                                                                     // 0x03
@@ -435,7 +373,7 @@ void loop() {
   // In this section, we'll check with the RFM69HCW to see
   // if it has received any packets:
 
-  if (radio.receiveDone())  // Got one!
+  if (radio.receiveDone())  // Got one
   {
     // Print out the information:
     debugln(F("-------------------"));
@@ -443,14 +381,11 @@ void loop() {
     debug(radio.SENDERID);
     debug(F(", message ["));
 
-    // The actual message is contained in the DATA array,
-    // and is DATALEN bytes in size:
     valueMap.payloadNew = 1;
     payloadBufferIncoming.clear();
     payloadBufferIncoming.push(abs(radio.RSSI));
     for (byte i = 0; i < radio.DATALEN; i++) {
       debug((char)radio.DATA[i]);
-//      valueMap.payloadRead[i] = (char)radio.DATA[i];
       payloadBufferIncoming.push((char)radio.DATA[i]);
       debug("");
     }
@@ -458,11 +393,6 @@ void loop() {
     valueMap.payloadLengthRead = radio.DATALEN;
     debug("PayloadLengthRead:");
     debug(valueMap.payloadLengthRead);
-
-    //debug(valueMap.payloadRead);
-    // RSSI is the "Receive Signal Strength Indicator",
-    // smaller numbers mean higher power.
-
     debug(" RSSI:");
     debugln(radio.RSSI);
   }

@@ -39,28 +39,6 @@ void powerLed(bool state) {
   digitalWrite(powerLedPin, state);
 }
 
-void getEncryption(int numberOfBytesReceived, char *data) {
-  loadArray(valueMap.encryptionRead);
-}
-
-void setEncryption(int numberOfBytesReceived, char *data) {
-  // valueMap.encryptionWrite[0] = data[0];
-  // valueMap.encryptionWrite[1] = data[1];
-  // valueMap.encryptionRead[0] = data[0];
-  // valueMap.encryptionRead[1] = data[1];
-}
-
-void getEncryptionKey(int numberOfBytesReceived, char *data) {
-  loadArray(valueMap.encryptionKeyRead);
-  debug("encryotion key: ");
-  debugln(valueMap.encryptionKeyRead);
-}
-
-void setEncryptionKey(int numberOfBytesReceived, char *data) {
-  valueMap.encryptionKeyWrite = data[0];
-  valueMap.encryptionKeyRead = data[0];
-}
-
 void getHighPower(int numberOfBytesReceived, char *data) {
   loadArray(valueMap.highPowerRead);
 }
@@ -151,26 +129,18 @@ void sendPayloadLength(int numberOfBytesReceived, char *data) {
 }
 
 void receivePayload(int numberOfBytesReceived, char *data) {
-  //debugln(valueMap.payloadLengthRead);
-  //debugln(valueMap.payloadRead);
   debug("Incoming Buffer Size:");
   debugln(payloadBufferIncoming.size());
-  //debug("Head:");
-  //debug(payloadBufferIncoming.first());
   debugln(payloadBufferIncoming[1]);
   for (uint8_t x = 0; x < I2C_BUFFER_SIZE ; x++){
     if (!payloadBufferIncoming.isEmpty()) {
       responseBuffer[x] = payloadBufferIncoming.shift();
-      //debug(responseBuffer[x]); 
-    } //else {
-    //  responseBuffer[x] = 0; // pad with zeros
-    //}
+    }
     debug(responseBuffer[x]);
     debug(",");
   }
   debugln("");
-  //memcpy(responseBuffer, valueMap.payloadRead, valueMap.payloadLengthRead);
-  responseSize = I2C_BUFFER_SIZE;  //valueMap.payloadLengthRead;
+  responseSize = I2C_BUFFER_SIZE;
   debug("Response Size:");
   debugln(responseSize);
 }
@@ -194,52 +164,16 @@ void sendPayloadGo(int numberOfBytesReceived, char *data) {
   valueMap.payloadGo = data[0];
   debug("payloadBufferOutgoing.size()");
   debugln(payloadBufferOutgoing.size());
-} 
-
-// void getMessage(char *data) {
-//   debugln("getMessage Requested");
-//   if (radio.receiveDone()) {
-//     debug('[');
-//     debug(radio.SENDERID);
-//     debug("] ");
-//     debug(" [RX_RSSI:");
-//     debug(radio.readRSSI());
-//     debug("]");
-//     //if (spy) Serial.print("to [");Serial.print(radio.TARGETID, DEC);Serial.print("] ");
-
-//     if (radio.DATALEN != sizeof(Payload)) {
-//       debug("Invalid payload received, not matching Payload struct!");
-//     } else {
-//       theDataRead = *(Payload *)radio.DATA;  //assume radio.DATA actually contains our struct and not something else
-//       debug("nodeId=");
-//       debugln(theDataRead.nodeId);
-//       debug("message: ");
-//       debugln(theDataRead.message);
-//     }
-//   }
-// }
+}
 
 // Functions to load data into the response buffer
 void loadArray(uint8_t myNumber) {
-  // for (uint8_t x = 0; x < sizeof(myNumber); x++)
-  //   responseBuffer[x] = (myNumber >> (((sizeof(myNumber) - 1) - x) * 8)) & 0xFF;
-  // responseSize = sizeof(myNumber);
   responseBuffer[0] = myNumber;
   responseSize = sizeof(myNumber);
 }
 
 void loadArray(uint16_t myNumber) {
-  // for (uint8_t x = 0; x < sizeof(myNumber); x++)
-  //   responseBuffer[x] = (myNumber >> (((sizeof(myNumber) - 1) - x) * 8)) & 0xFF;
-  // responseSize = sizeof(myNumber);
-
   responseBuffer[0] = (myNumber >> 8) & 0xFF;
   responseBuffer[1] = myNumber & 0xFF;
   responseSize = sizeof(myNumber);
 }
-
-// void loadArray(char* myNumber) {
-//   for (uint8_t x = 0; x < sizeof(myNumber); x++)
-//     responseBuffer[x] = ((uint16_t)myNumber >> (((sizeof(myNumber) - 1) - x) * 8)) & 0xFF;
-//   responseSize = sizeof(myNumber);
-// }
