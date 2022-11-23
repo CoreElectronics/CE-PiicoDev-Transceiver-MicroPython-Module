@@ -16,8 +16,6 @@ _REG_FIRM_MAJ                  = 0x02
 _REG_FIRM_MIN                  = 0x03
 _REG_I2C_ADDRESS               = 0x04
 _REG_LED                       = 0x05
-_REG_ENCRYPTION                = 0x11
-_REG_ENCRYPTION_KEY            = 0x12
 _REG_HIGH_POWER                = 0x13
 _REG_RFM69_RADIO_STATE         = 0x14
 _REG_RFM69_NODE_ID             = 0x15
@@ -34,6 +32,9 @@ DEBUG = True
 
 _MAXIMUM_PAYLOAD_LENGTH = 61 # The Low Power Labs Arduino library is limited to 65 bytes total payload including a 4 header bytes
 _MAXIMUM_I2C_SIZE = 32 #For ATmega328 based Arduinos, the I2C buffer is limited to 32 bytes
+
+def tempdebug(text):
+    print(str(ticks_ms() - start_time) + ':' + str(value))
 
 def truncate(n, decimals=0):
     multiplier = 10 ** decimals
@@ -80,12 +81,11 @@ class PiicoDev_Radio(object):
             print("* Couldn't find a device - check switches and wiring")
     
     def _read(self, register, length=1):
-        return self.i2c.readfrom_mem(self.address, register, length)
-#         try:
-#             return self.i2c.readfrom_mem(self.address, register, length)
-#         except:
-#             print(i2c_err_str.format(self.address))
-#             return None
+        try:
+            return self.i2c.readfrom_mem(self.address, register, length)
+        except:
+            print(i2c_err_str.format(self.address))
+            return None
 
     def _write(self, register, data):
         try:
@@ -104,42 +104,31 @@ class PiicoDev_Radio(object):
         self._write(register, int.to_bytes(integer, length, 'big'))
         
     def send_payload(self, payload):
-#         print('payload' + str(payload))
-#         print('payload length ' + str(len(payload)))
          # if the payload is too long, truncate it
         payload_list = [payload[i:i+_MAXIMUM_I2C_SIZE-1] for i in range(0, len(payload), _MAXIMUM_I2C_SIZE-1)] # Split the bytes into a list
         self._write_int(_REG_PAYLOAD_LENGTH, len(payload))
-        sleep_ms(10)
+        sleep_ms(5)
         for i in range(len(payload_list)):
             self._write(_REG_PAYLOAD, payload_list[i])
-            sleep_ms(28) #was 12
+            sleep_ms(5) #was 12
         self._write_int(_REG_PAYLOAD_GO, 1)
         
     def receive_payload(self):
         payload_length = 0
         payload = bytes(0)
-#         print('receive payload')
         if self._payload_new == 1:
             payload_length = self._read_int(_REG_PAYLOAD_LENGTH) + 1 # _MAXIMUM_PAYLOAD_LENGTH + RSSI
             unprocessed_payload_length = payload_length
-            sleep_ms(500)
+            sleep_ms(5)
             number_of_chunks = int(truncate(payload_length / _MAXIMUM_I2C_SIZE))+1
-            print('number_of_chunks:')
-            print(number_of_chunks)
             for i in range(number_of_chunks):
                 chunk_length = _MAXIMUM_I2C_SIZE
                 if unprocessed_payload_length < 32:
                     chunk_length = unprocessed_payload_length
                 payload = payload + self._read(_REG_PAYLOAD, length=chunk_length)
-                print(payload)
                 unprocessed_payload_length -= _MAXIMUM_I2C_SIZE
-                print('Unprocessed Payload Length')
-                print(unprocessed_payload_length)
-                sleep_ms(6000)
+                sleep_ms(5)
             payload = payload[:payload_length]
-            print('RECEIVED_PAYLOAD_LENGTH:' + str(payload_length))
-#            payload = self._read(_REG_PAYLOAD, length=payload_length)
-#             print('RECEIVED PAYLOAD:' + str(payload))
         return payload_length, payload
     
     def on(self):
@@ -147,22 +136,6 @@ class PiicoDev_Radio(object):
         
     def off(self):
         self._off = 1
-    
-    @property
-    def encryption(self):
-        return self._read_int(_REG_ENCRYPTION)
-    
-    @encryption.setter
-    def encryption(self, value):
-        self._write_int(_REG_ENCRYPTION, value)
-        
-    @property
-    def encryption_key(self):
-        return self._read(_REG_ENCRYPTION_KEY)
-    
-    @encryption_key.setter
-    def encryption_key(self, value):
-        self._write_int(_REG_ENCRYPTION_KEY, value)
         
     @property
     def high_power(self):
@@ -231,7 +204,7 @@ class PiicoDev_Radio(object):
                     if self.type == 3:
                         self.message = str(payload_bytes[6:], 'utf8')
                 except:
-                    print('problem parsing payload')
+                    print('* error parsing payload')
                 return True
         return False
     
