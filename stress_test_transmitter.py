@@ -5,18 +5,18 @@ radio = PiicoDev_Radio()   # Initialise the Radio module
 
 
 
-i=-400000000
+i=0
 
-radio.set_rfm69_register(0x29, 228)
+#radio.set_rfm69_register(0x29, 228)
 sleep_ms(50)
 
-while i > -4000000000:
-    i-=1
+while i < 1000:
+    i+=1
     sleep_ms(10)
 #     radio.send('abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOP',i) # biggest length before problems
-    radio.send('abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRST', address=0)
+    radio.send('abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRST', i, address=0)
 #     radio.send('abcdefghijklmnopqrstuvwxyz01234',i)
 #     radio.send('abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWQYZabcdefghijklmnopqrstuvwxyz0123456789',i)
     print('RFM_REG:' + str(radio.get_rfm69_register(0x29)))
-    sleep_ms(50)
+    sleep_ms(3000)
     

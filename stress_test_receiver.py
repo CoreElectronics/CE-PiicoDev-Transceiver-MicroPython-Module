@@ -8,43 +8,45 @@ error = 0
 value_prev = 0
 success = 0
 value = 0
-message = ''
 compare_string = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOP'
+radio_state = True
 while value < 250:
     sleep_ms(10)
-    try:
-        source_radio_address, message, value = radio.receive()
-    except:
-        pass
-    if value != None:
+    print('radio state:'+str(radio_state))
+    if radio.receive():
 #         value = data[2]
-        message = str(message,'utf8')
-        print('---')
-        print(message)
+        print('radio received message')
+        print(radio.value)
+        key = radio.key
         ascii_values = []
-        for character in message:
+        for character in key:
             ascii_values.append(ord(character))
-        print(ascii_values)
-        print('--')
+#         print(ascii_values)
         print(compare_string)
         ascii_values_compare = []
         for character_compare in compare_string:
             ascii_values_compare.append(ord(character_compare))
-        print(ascii_values_compare)
+#         print(ascii_values_compare)
         print('-')
         i=i+1
-        if value > value_prev + 1.1 or not message == compare_string:
+        if value > value_prev + 1.1 or not key == compare_string:
             error += 1
             print('error')
         else:
             success += 1
         if value > value_prev + 1.1:
             print('number problem')
-        if not message == compare_string:
+        if not key == compare_string:
             print('text problem')
         value_prev = value
         print(value)
-    sleep_ms(10)
+    if radio_state == True:
+        radio.off()
+        radio_state = False
+    else:
+        radio.on()
+        radio_state = True
+    sleep_ms(3000)
 
 error_rate = (error / (error + success)) * 100
 
