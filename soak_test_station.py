@@ -9,9 +9,9 @@ key = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOP'
 value_prev=0
 errors=0
 successes=0
-radio.rfm69_node_id = 7
+radio.rfm69_node_id = 1
 radio.rfm69_network_id = 0
-radio.rfm69_to_node_id = 11
+radio.rfm69_to_node_id = 1
 radio_tx_power = -3
 radio.tx_power = radio_tx_power
 firmware = radio.firmware
@@ -48,6 +48,8 @@ while i < 1000:
     radio_tx_power = radio_tx_power + 1
     radio.tx_power = radio_tx_power
     print(str(i+1) + ': Radio power:' + str(radio.tx_power))
+    sleep_ms(10000)
+    radio.rfm69_reset()
         
 error_rate = (errors / (errors + successes)) * 100
 print('Error Rate: ' + str(error_rate) + '%')
