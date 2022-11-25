@@ -19,7 +19,7 @@
 #include <CircularBuffer.h> // by AgileWare version 1.3.3
 #include <SoftwareSerial.h>
 
-#define DEBUG false // If true, expect I2C bus to hang for 1s for I2C transactions
+#define DEBUG true // If true, expect I2C bus to hang for 1s for I2C transactions
 #if DEBUG == true
 #define debug(x) swsri.print(x)
 #define debugln(x) swsri.println(x)
@@ -90,7 +90,9 @@ volatile uint16_t incomingDataSpot = 0;   // Keeps track of where we are in the 
 uint8_t responseBuffer[I2C_BUFFER_SIZE];  // Used to pass data back to master
 volatile uint8_t responseSize = 1;        // Defines how many bytes of relevant data is contained in the responseBuffer
 
+bool radioInitialise = true;
 bool radioState = true;
+bool radioSetPower = true;
 
 struct memoryMapRegs {
   uint8_t id;
@@ -99,8 +101,8 @@ struct memoryMapRegs {
   uint8_t i2cAddress;
   uint8_t ledRead;
   uint8_t ledWrite;
-  uint8_t highPowerRead;
-  uint8_t highPowerWrite;
+  uint8_t txPowerRead;
+  uint8_t txPowerWrite;
   uint8_t rfm69RadioStateRead;
   uint8_t rfm69RadioStateWrite;
   uint8_t rfm69NodeIDRead;
@@ -127,8 +129,8 @@ struct memoryMapData {
   uint8_t i2cAddress;
   uint8_t ledRead;
   uint8_t ledWrite;
-  uint8_t highPowerRead;
-  uint8_t highPowerWrite;
+  int8_t txPowerRead;
+  int8_t txPowerWrite;
   uint8_t rfm69RadioStateRead;
   uint8_t rfm69RadioStateWrite;
   uint8_t rfm69NodeIDRead;
@@ -156,8 +158,8 @@ const memoryMapRegs registerMap = {
   .i2cAddress = 0x84,
   .ledRead = 0x05,
   .ledWrite = 0x85,
-  .highPowerRead = 0x13,
-  .highPowerWrite = 0x93,
+  .txPowerRead = 0x13,
+  .txPowerWrite = 0x93,
   .rfm69RadioStateRead = 0x14,
   .rfm69RadioStateWrite = 0x94,
   .rfm69NodeIDRead = 0x15,
@@ -184,8 +186,8 @@ volatile memoryMapData valueMap = {
   .i2cAddress = DEFAULT_I2C_ADDRESS,
   .ledRead = 1,
   .ledWrite = 1,
-  .highPowerRead = 0,
-  .highPowerWrite = 0,
+  .txPowerRead = 0,
+  .txPowerWrite = 0,
   .rfm69RadioStateRead = 0,
   .rfm69RadioStateWrite = 0,
   .rfm69NodeIDRead = 1,
@@ -218,8 +220,8 @@ void firmwareMinorReturn(int numberOfBytesReceived, char *data);
 void setAddress(int numberOfBytesReceived, char *data);
 void getPowerLed(int numberOfBytesReceived, char *data);
 void setPowerLed(int numberOfBytesReceived, char *data);
-void getHighPower(int numberOfBytesReceived, char *data);
-void setHighPower(int numberOfBytesReceived, char *data);
+void getTxPower(int numberOfBytesReceived, char *data);
+void setTxPower(int numberOfBytesReceived, char *data);
 void getRfm69RadioState(int numberOfBytesReceived, char *data);
 void setRfm69RadioState(int numberOfBytesReceived, char *data);
 void getRfm69NodeID(int numberOfBytesReceived, char *data);
@@ -245,8 +247,8 @@ functionMap functions[] = {
   { registerMap.i2cAddress, setAddress },
   { registerMap.ledRead, getPowerLed },
   { registerMap.ledWrite, setPowerLed },
-  { registerMap.highPowerRead, getHighPower },
-  { registerMap.highPowerWrite, setHighPower },
+  { registerMap.txPowerRead, getTxPower },
+  { registerMap.txPowerWrite, setTxPower },
   { registerMap.rfm69RadioStateRead, getRfm69RadioState },
   { registerMap.rfm69RadioStateWrite, setRfm69RadioState },
   { registerMap.rfm69NodeIDRead, getRfm69NodeID },
@@ -276,7 +278,7 @@ Payload theDataWrite;
 void setup() {
 #if DEBUG
   swsri.begin(9600);
-  Serial.println("Begin");
+  debugln("Begin");
 #endif
   // Pull up address pins
   pinMode(addressPin1, INPUT_PULLUP);
@@ -293,43 +295,13 @@ void setup() {
   readSystemSettings();  //Load all system settings from EEPROM
   startI2C();            //Determine the I2C address we should be using and begin listening on I2C bus
   oldAddress = valueMap.i2cAddress;
-
-  radio.initialize(FREQUENCY, valueMap.rfm69NodeIDWrite, valueMap.rfm69NetworkIDWrite);
-  radio.setHighPower(true);
-  radio.writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY);
-  radio.writeReg(REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_00);                                        // 0x02
-  radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_300000);                                                                                                                     // 0x03
-  radio.writeReg(REG_BITRATELSB, RF_BITRATELSB_300000);                                                                                                                     // 0x04
-  radio.writeReg(REG_FDEVMSB, RF_FDEVMSB_300000);                                                                                                                           // 0x05
-  radio.writeReg(REG_FDEVLSB, RF_FDEVLSB_300000);                                                                                                                           // 0x06
-  radio.writeReg(REG_FRFMSB, RF_FRFMSB_915);                                                                                                                                // 0x07
-  radio.writeReg(REG_FRFMID, RF_FRFMID_915);                                                                                                                                // 0x08
-  radio.writeReg(REG_FRFLSB, RF_FRFLSB_915);                                                                                                                                // 0x09
-  radio.writeReg(REG_RXBW, RF_RXBW_DCCFREQ_111 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0);                                                                                          // 0x19
-  radio.writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01);                                                                                                                  // 0x25
-  radio.writeReg(REG_DIOMAPPING2, RF_DIOMAPPING2_CLKOUT_OFF);                                                                                                               //0x26
-  radio.writeReg(REG_IRQFLAGS2, RF_IRQFLAGS2_FIFOOVERRUN);                                                                                                                  // 0x28
-  radio.writeReg(REG_RSSITHRESH, 220);                                                                                                                                      // 0x29
-  radio.writeReg(REG_PREAMBLELSB, 6);                                                                                                                                       // 0x2D
-  radio.writeReg(REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_AUTO | RF_SYNC_SIZE_3 | RF_SYNC_TOL_0);                                                                      // 0x2E
-  radio.writeReg(REG_SYNCVALUE1, 0x88);                                                                                                                                     // 0x2F
-  radio.writeReg(REG_SYNCVALUE2, NETWORKID);                                                                                                                                // 0x30
-  radio.writeReg(REG_SYNCVALUE3, 0x88);                                                                                                                                     // 0x2F
-  radio.writeReg(REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF | RF_PACKET1_CRCAUTOCLEAR_OFF | RF_PACKET1_ADRSFILTERING_OFF);  // 0x37
-  radio.writeReg(REG_PAYLOADLENGTH, 66);                                                                                                                                    // 0x38
-  radio.writeReg(REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFONOTEMPTY | RF_FIFOTHRESH_VALUE);                                                                                 // 0x3C
-  radio.writeReg(REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_2BITS | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF);                                                    // 0x3D
-  radio.writeReg(REG_TESTDAGC, RF_DAGC_IMPROVED_LOWBETA0);                                                                                                                  // 0x6F
-
-  //radio.setPowerLevel(0);
-  radio.encrypt(null);
 }
 
 uint8_t counter = 0;
 long millisPrev = 0;
 
-char *payloadRead;
-char *payloadWrite;
+//char *payloadRead;
+//char *payloadWrite;
 uint8_t rfm69ToNodeIDWrite = 0;
 uint8_t payloadLengthWrite;
 uint8_t payloadGo = 0;
@@ -342,6 +314,78 @@ void loop() {
   if (updateFlag) {
     startI2C();  // reinitialise I2C with new address, update EEPROM with custom address as necessary
     updateFlag = false;
+  }
+
+  if (radioInitialise) {
+    debugln("Initialising Radio");
+    radio.initialize(FREQUENCY, valueMap.rfm69NodeIDWrite, valueMap.rfm69NetworkIDWrite);
+    debug("Node ID set to:");
+    debugln(valueMap.rfm69NodeIDWrite);
+    debug("Network ID set to:");
+    debugln(valueMap.rfm69NetworkIDWrite);
+    radio.setHighPower(true);
+    radio.writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY);
+    radio.writeReg(REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_00);                                        // 0x02
+    radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_300000);                                                                                                                     // 0x03
+    radio.writeReg(REG_BITRATELSB, RF_BITRATELSB_300000);                                                                                                                     // 0x04
+    radio.writeReg(REG_FDEVMSB, RF_FDEVMSB_300000);                                                                                                                           // 0x05
+    radio.writeReg(REG_FDEVLSB, RF_FDEVLSB_300000);                                                                                                                           // 0x06
+    radio.writeReg(REG_FRFMSB, RF_FRFMSB_915);                                                                                                                                // 0x07
+    radio.writeReg(REG_FRFMID, RF_FRFMID_915);                                                                                                                                // 0x08
+    radio.writeReg(REG_FRFLSB, RF_FRFLSB_915);                                                                                                                                // 0x09
+    radio.writeReg(REG_RXBW, RF_RXBW_DCCFREQ_111 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0);                                                                                          // 0x19
+    radio.writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01);                                                                                                                  // 0x25
+    radio.writeReg(REG_DIOMAPPING2, RF_DIOMAPPING2_CLKOUT_OFF);                                                                                                               //0x26
+    radio.writeReg(REG_IRQFLAGS2, RF_IRQFLAGS2_FIFOOVERRUN);                                                                                                                  // 0x28
+    radio.writeReg(REG_RSSITHRESH, 220);                                                                                                                                      // 0x29
+    radio.writeReg(REG_PREAMBLELSB, 6);                                                                                                                                       // 0x2D
+    radio.writeReg(REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_AUTO | RF_SYNC_SIZE_3 | RF_SYNC_TOL_0);                                                                      // 0x2E
+    radio.writeReg(REG_SYNCVALUE1, 0x88);                                                                                                                                     // 0x2F
+    radio.writeReg(REG_SYNCVALUE2, valueMap.rfm69NetworkIDWrite);                                                                                                                                // 0x30
+    radio.writeReg(REG_SYNCVALUE3, 0x88);                                                                                                                                     // 0x2F
+    radio.writeReg(REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF | RF_PACKET1_CRCAUTOCLEAR_OFF | RF_PACKET1_ADRSFILTERING_OFF);  // 0x37
+    radio.writeReg(REG_PAYLOADLENGTH, 66);                                                                                                                                    // 0x38
+    radio.writeReg(REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFONOTEMPTY | RF_FIFOTHRESH_VALUE);                                                                                 // 0x3C
+    radio.writeReg(REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_2BITS | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF);                                                    // 0x3D
+    radio.writeReg(REG_TESTDAGC, RF_DAGC_IMPROVED_LOWBETA0);                                                                                                                  // 0x6F
+
+    //radio.setPowerLevel(0);
+    radio.encrypt(null);
+    radioInitialise = false;
+    radio.readAllRegsCompact();
+    //updateFlag = true;
+  }
+
+  if (radioSetPower) {
+    radio.setPowerDBm(valueMap.txPowerWrite);
+    debug("TxPower:");
+    debugln(valueMap.txPowerWrite);
+    radioSetPower = false;
+//---------------------
+    // Print the header row and first register entry
+    debugln(); debug("     ");
+    for ( uint8_t reg = 0x00; reg < 0x10; reg++ ) {
+      swsri.print(reg, HEX);
+      debug("  ");
+    }
+    debugln();
+    debug("00: -- ");
+
+    // Loop over the registers from 0x01 to 0x7F and print their values
+    for ( uint8_t reg = 0x01; reg < 0x80; reg++ ) {
+      if ( reg % 16 == 0 ) {    // Print the header column entries
+        debugln();
+        swsri.print( reg, HEX );
+        debug(": ");
+      }
+
+      // Print the actual register values
+      uint8_t ret = radio.readReg( reg );
+      if ( ret < 0x10 ) debug("0");  // Handle values less than 10
+      swsri.print( ret, HEX);
+      debug(" ");
+    }
+//---------------------
   }
 
   if (valueMap.payloadGo > 0) {
@@ -377,28 +421,30 @@ void loop() {
   // In this section, we'll check with the RFM69HCW to see
   // if it has received any packets:
 
-  if (radio.receiveDone())  // Got one
-  {
-    // Print out the information:
-    debugln(F("-------------------"));
-    debug(F("received from node "));
-    debug(radio.SENDERID);
-    debug(F(", message ["));
+  if (radioState) { // If the radio is off, don't run receiveDone() as this wakes the radio
+    if (radio.receiveDone())  // Got one
+    {
+      // Print out the information:
+      debugln(F("-------------------"));
+      debug(F("received from node "));
+      debug(radio.SENDERID);
+      debug(F(", message ["));
 
-    valueMap.payloadNew = 1;
-    payloadBufferIncoming.clear();
-    payloadBufferIncoming.push(abs(radio.RSSI));
-    for (byte i = 0; i < radio.DATALEN; i++) {
-      debug((char)radio.DATA[i]);
-      payloadBufferIncoming.push((char)radio.DATA[i]);
-      debug("");
+      valueMap.payloadNew = 1;
+      payloadBufferIncoming.clear();
+      payloadBufferIncoming.push(abs(radio.RSSI));
+      for (byte i = 0; i < radio.DATALEN; i++) {
+        debug((char)radio.DATA[i]);
+        payloadBufferIncoming.push((char)radio.DATA[i]);
+        debug("");
+      }
+      debug(F("]"));
+      valueMap.payloadLengthRead = radio.DATALEN;
+      debug("PayloadLengthRead:");
+      debug(valueMap.payloadLengthRead);
+      debug(" RSSI:");
+      debugln(radio.RSSI);
     }
-    debug(F("]"));
-    valueMap.payloadLengthRead = radio.DATALEN;
-    debug("PayloadLengthRead:");
-    debug(valueMap.payloadLengthRead);
-    debug(" RSSI:");
-    debugln(radio.RSSI);
   }
 }
 
