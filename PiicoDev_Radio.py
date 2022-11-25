@@ -23,6 +23,7 @@ _REG_RFM69_NETWORK_ID          = 0x16
 _REG_RFM69_TO_NODE_ID          = 0x17
 _REG_RFM69_REG                 = 0x18
 _REG_RFM69_VALUE               = 0x19
+_REG_RFM69_RESET               = 0x20
 _REG_PAYLOAD_LENGTH            = 0x21
 _REG_PAYLOAD                   = 0x22
 _REG_PAYLOAD_NEW               = 0x23
@@ -177,6 +178,10 @@ class PiicoDev_Radio(object):
     def rfm69_to_node_id(self, value):
         debug("Setting destination radio address to " + str(value) + ".")
         self._write_int(_REG_RFM69_TO_NODE_ID, value)
+    
+    def rfm69_reset(self):
+        debug("Resetting RFM69")
+        self._write_int(_REG_RFM69_RESET, 1)
     
     @property
     def payload_length(self):
