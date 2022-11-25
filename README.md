@@ -42,7 +42,7 @@ This module has been tested on:
 
 ### `.channel`
 
-(default=0) can be an integer value from 0 to 255 (inclusive) that defines an arbitrary "channel" to which the radio is tuned. Messages will be sent via this channel and only messages received via this channel will be put onto the incoming message queue.  If the channel is set to 0, all channels will be received and messages sent will be received by all radios regardless of what channel they are set to.
+(default=0) can be an integer value from 0 to 255 (inclusive) that defines an arbitrary "channel" to which the radio is tuned. Messages will be sent via this channel and only messages received via this channel will shown.
 
 ### `.queue`
 
@@ -140,13 +140,14 @@ If the type is 3:
 | Firmware Minor    | 0x03      | 1      | R    | Varies           | Minor firmware version
 | I2C Address       | 0x84      | 1      | W    | 0xA1             | Set new I2C address
 | LED               | 0x05/0x85 | 1      | R/W  | 1                | 0=OFF, 1=ON
-| High Power        | 0x13/0x93 | 1      | R/W  | 0                | 0=OFF, 1=ON
+| Tx Power          | 0x13/0x93 | 1      | R/W  |                  | -2 to +20 dBm
 | RFM69 Radio State | 0x14/0x94 | 1      | R/W  | 0                | 0=OFF, 1=ON
 | RFM69 Node ID     | 0x15/0x95 | 1      | R/W  | 1                | Do not change, addressing handled by the MicroPython driver
 | RFM69 Network ID  | 0x16/0x96 | 1      | R/W  | 0                | Do not change, addressing handled by the MicroPython driver
 | RFM69 To Node ID  | 0x17/0x97 | 1      | R/W  | 0                | Do not change, addressing handled by the MicroPython driver
 | RFM69 Reg         | 0x98      | 1      | W    | N/A              | To read or write to a register in the RFM69, write the address of interest to this register then read or write the value to _RFM69 Value_ Register
 | RFM69 Value       | 0x19/0x99 | 1      | R/W  | N/A              | To read or write to a register in the RFM69, write the address of interest to _RFM69 Reg_ Register then read or write the value this register
+| RFM69 Reset       | 0xA0      | 1      | W    | 0                | Set to 1 to reset
 | Payload Length    | 0x21/0xA1 | 1      | R/W  | N/A              | To send a message, write to the _Payload_ register, then write the length to this register to trigger sending of the message over the air. Read this register to check for a new message.
 | Payload           | 0x22/0xA2 | 26 Max | R/W  | N/A              | To send a message, write the payload to this register, then write the length to the _Payload Length_ register to trigger sending of the message over the air. Read this register to check the contents of a new message.
 | Payload New       | 0x23      | 1      | R    | 0                | A 1 indicates a new message has been received
