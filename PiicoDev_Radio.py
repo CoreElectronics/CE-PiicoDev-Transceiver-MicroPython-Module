@@ -16,7 +16,7 @@ _REG_FIRM_MAJ                  = 0x02
 _REG_FIRM_MIN                  = 0x03
 _REG_I2C_ADDRESS               = 0x04
 _REG_LED                       = 0x05
-_REG_HIGH_POWER                = 0x13
+_REG_TX_POWER                  = 0x13
 _REG_RFM69_RADIO_STATE         = 0x14
 _REG_RFM69_NODE_ID             = 0x15
 _REG_RFM69_NETWORK_ID          = 0x16
@@ -138,12 +138,17 @@ class PiicoDev_Radio(object):
         self._off = 1
         
     @property
-    def high_power(self):
-        return self._read_int(_REG_HIGH_POWER)
+    def tx_power(self):
+        value = unpack('b', self._read(_REG_TX_POWER))
+        return value[0]
     
-    @high_power.setter
-    def high_power(self, value):
-        self._write_int(_REG_HIGH_POWER, value)
+    @tx_power.setter
+    def tx_power(self, value):
+        if value < -2:
+            value = -2
+        if value > 20:
+            value = 20
+        self._write(_REG_TX_POWER, pack('b',value))
     
     @property
     def rfm69_network_id(self):
@@ -157,10 +162,12 @@ class PiicoDev_Radio(object):
     @property
     def rfm69_node_id(self):
         return self._read_int(_REG_RFM69_NODE_ID)
+        print("Node ID Called")
     
     @rfm69_node_id.setter
     def rfm69_node_id(self, value):
         self._write_int(_REG_RFM69_NODE_ID, value)
+        print("Set Node ID Called")
         
     @property
     def rfm69_to_node_id(self):
@@ -260,12 +267,12 @@ class PiicoDev_Radio(object):
     @property
     def _off(self):
         """Checks the radio state"""
-        print('Turning radio off')
         self._read_int(_REG_RFM69_RADIO_STATE, 0)
     
     @_off.setter
     def _off(self, val):
         """Turns the radio off"""
+        print('Turning radio off')
         self._write_int(_REG_RFM69_RADIO_STATE, 0)
     
     @property
