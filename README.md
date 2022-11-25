@@ -161,3 +161,6 @@ This project is open source - please review the LICENSE.md file for further lice
 If you have any technical questions, or concerns about licensing, please contact technical support on the [Core Electronics forums](https://forum.core-electronics.com.au/).
 
 *\"PiicoDev\" and the PiicoDev logo are trademarks of Core Electronics Pty Ltd.*
+
+Outstanding Issues:
+Tx Power doesn't seem to make any difference
