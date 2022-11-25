@@ -126,6 +126,11 @@ void setRfm69Value(int numberOfBytesReceived, char *data) {
   radio.writeReg(valueMap.rfm69Reg, data[0]);   
 }
 
+void setRfm69Reset(int numberOfBytesReceived, char *data) {
+  debugln("Resetting Radio ---------------------------------------------------");
+  radioReset = true;
+}
+
 void receivePayloadLength(int numberOfBytesReceived, char *data) {
   debugln("Running Receive Payload Length");
   loadArray(valueMap.payloadLengthRead);

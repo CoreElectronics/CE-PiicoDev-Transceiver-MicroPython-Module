@@ -76,6 +76,7 @@ const uint8_t addressPin1 = PIN_PC3;
 const uint8_t addressPin2 = PIN_PC2;
 const uint8_t addressPin3 = PIN_PC1;
 const uint8_t addressPin4 = PIN_PC0;
+const uint8_t rfm69ResetPin = PIN_PA7;
 
 #endif
 
@@ -93,6 +94,7 @@ volatile uint8_t responseSize = 1;        // Defines how many bytes of relevant 
 bool radioInitialise = true;
 bool radioState = true;
 bool radioSetPower = true;
+bool radioReset = false;
 
 struct memoryMapRegs {
   uint8_t id;
@@ -114,6 +116,7 @@ struct memoryMapRegs {
   uint8_t rfm69Reg;
   uint8_t rfm69ValueRead;
   uint8_t rfm69ValueWrite;
+  uint8_t rfm69Reset;
   uint8_t payloadLengthRead;
   uint8_t payloadLengthWrite;
   uint8_t payloadRead;
@@ -142,6 +145,7 @@ struct memoryMapData {
   uint8_t rfm69Reg;
   uint8_t rfm69ValueRead;
   uint8_t rfm69ValueWrite;
+  uint8_t rfm69Reset;
   uint8_t payloadLengthRead;
   uint8_t payloadLengthWrite;
   uint8_t payloadRead;  // Dummy - CircularBuffer payloadBufferIncoming used instead
@@ -171,6 +175,7 @@ const memoryMapRegs registerMap = {
   .rfm69Reg = 0x98,
   .rfm69ValueRead = 0x19,
   .rfm69ValueWrite = 0x99,
+  .rfm69Reset = 0xA0,
   .payloadLengthRead = 0x21,
   .payloadLengthWrite = 0xA1,
   .payloadRead = 0x22,
@@ -199,6 +204,7 @@ volatile memoryMapData valueMap = {
   .rfm69Reg = 0,
   .rfm69ValueRead = 0,
   .rfm69ValueWrite = 0,
+  .rfm69Reset = 0,
   .payloadLengthRead = 0,
   .payloadLengthWrite = 0,
   .payloadRead = 0,
@@ -233,6 +239,7 @@ void setRfm69ToNodeID(int numberOfBytesReceived, char *data);
 void setRfm69Reg(int numberOfBytesReceived, char *data);
 void getRfm69Value(int numberOfBytesReceived, char *data);
 void setRfm69Value(int numberOfBytesReceived, char *data);
+void setRfm69Reset(int numberOfBytesReceived, char *data);
 void receivePayloadLength(int numberOfBytesReceived, char *data);
 void sendPayloadLength(int numberOfBytesReceived, char *data);
 void receivePayload(int numberOfBytesReceived, char *data);
@@ -260,6 +267,7 @@ functionMap functions[] = {
   { registerMap.rfm69Reg, setRfm69Reg },
   { registerMap.rfm69ValueRead, getRfm69Value },
   { registerMap.rfm69ValueWrite, setRfm69Value },
+  { registerMap.rfm69Reset, setRfm69Reset },
   { registerMap.payloadLengthRead, receivePayloadLength },
   { registerMap.payloadLengthWrite, sendPayloadLength },
   { registerMap.payloadRead, receivePayload },
@@ -285,6 +293,7 @@ void setup() {
   pinMode(addressPin2, INPUT_PULLUP);
   pinMode(addressPin3, INPUT_PULLUP);
   pinMode(addressPin4, INPUT_PULLUP);
+  pinMode(rfm69ResetPin, INPUT);
   pinMode(powerLedPin, OUTPUT);
   powerLed(true);  // enable Power LED by default on every power-up
   // Open a serial port so we can send keystrokes to the module:
@@ -314,6 +323,15 @@ void loop() {
   if (updateFlag) {
     startI2C();  // reinitialise I2C with new address, update EEPROM with custom address as necessary
     updateFlag = false;
+  }
+
+  if (radioReset) {
+    pinMode(rfm69ResetPin, OUTPUT);
+    digitalWrite(rfm69ResetPin, HIGH);
+    delay(5);
+    pinMode(rfm69ResetPin, INPUT);
+    radioInitialise = true;
+    radioReset = false;
   }
 
   if (radioInitialise) {
@@ -387,7 +405,7 @@ void loop() {
     }
 //---------------------
   }
-
+  
   if (valueMap.payloadGo > 0) {
     // Send the packet!
     uint8_t transmitBuffer[RX_BUFFER_SIZE];
