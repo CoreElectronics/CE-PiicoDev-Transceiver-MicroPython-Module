@@ -12,7 +12,7 @@ _REG_FIRM_MAJ=2
 _REG_FIRM_MIN=3
 _REG_I2C_ADDRESS=4
 _REG_LED=5
-_REG_HIGH_POWER=19
+_REG_TX_POWER=19
 _REG_RFM69_RADIO_STATE=20
 _REG_RFM69_NODE_ID=21
 _REG_RFM69_NETWORK_ID=22
@@ -72,17 +72,20 @@ class PiicoDev_Radio:
 	def on(self):self._on=1
 	def off(self):self._off=1
 	@property
-	def high_power(self):return self._read_int(_REG_HIGH_POWER)
-	@high_power.setter
-	def high_power(self,value):self._write_int(_REG_HIGH_POWER,value)
+	def tx_power(self):value=unpack('b',self._read(_REG_TX_POWER));return value[0]
+	@tx_power.setter
+	def tx_power(self,value):
+		if value<-2:value=-2
+		if value>20:value=20
+		self._write(_REG_TX_POWER,pack('b',value))
 	@property
 	def rfm69_network_id(self):return self._read_int(_REG_RFM69_NETWORK_ID)
 	@rfm69_network_id.setter
 	def rfm69_network_id(self,value):print('channel setter called');self._write_int(_REG_RFM69_NETWORK_ID,value)
 	@property
-	def rfm69_node_id(self):return self._read_int(_REG_RFM69_NODE_ID)
+	def rfm69_node_id(self):return self._read_int(_REG_RFM69_NODE_ID);print('Node ID Called')
 	@rfm69_node_id.setter
-	def rfm69_node_id(self,value):self._write_int(_REG_RFM69_NODE_ID,value)
+	def rfm69_node_id(self,value):self._write_int(_REG_RFM69_NODE_ID,value);print('Set Node ID Called')
 	@property
 	def rfm69_to_node_id(self):return self._read_int(_REG_RFM69_TO_NODE_ID)
 	@rfm69_to_node_id.setter
@@ -124,9 +127,9 @@ class PiicoDev_Radio:
 	@_on.setter
 	def _on(self,val):'Turns the radio on';print('Turning radio on!');self._write_int(_REG_RFM69_RADIO_STATE,1)
 	@property
-	def _off(self):'Checks the radio state';print('Turning radio off');self._read_int(_REG_RFM69_RADIO_STATE,0)
+	def _off(self):'Checks the radio state';self._read_int(_REG_RFM69_RADIO_STATE,0)
 	@_off.setter
-	def _off(self,val):'Turns the radio off';self._write_int(_REG_RFM69_RADIO_STATE,0)
+	def _off(self,val):'Turns the radio off';print('Turning radio off');self._write_int(_REG_RFM69_RADIO_STATE,0)
 	@property
 	def address(self):'Returns the currently configured 7-bit I2C address';return self._address
 	@property
