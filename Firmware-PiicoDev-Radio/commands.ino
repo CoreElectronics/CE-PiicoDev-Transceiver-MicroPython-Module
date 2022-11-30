@@ -152,12 +152,27 @@ void receivePayload(int numberOfBytesReceived, char *data) {
 
 void sendPayload(int numberOfBytesReceived, char *data) {
   debug("Incoming Data:");
-  for (uint8_t x = 0; x < numberOfBytesReceived-1; x++){// without the -1 there will be a null at multiples of the 32nd bit
+  uint8_t lengthToProcess;
+  if (numberOfBytesReceived == I2C_BUFFER_SIZE){
+    lengthToProcess = I2C_BUFFER_SIZE - 1;
+  } else {
+    lengthToProcess = numberOfBytesReceived;
+  }
+  for (uint8_t x = 0; x < lengthToProcess; x++){// without the -1 there will be a null at multiples of the 32nd bit
     debug(data[x]);
     debug(",");
     payloadBufferOutgoing.push(data[x]);
   }
   debugln("");
+  // What does our buffer look like?
+  debug("Reading back buffer");
+  for (uint8_t i = 0; i < payloadBufferOutgoing.size()-1; i++) {
+    debug(payloadBufferOutgoing[i]);
+    debug(",");
+  }
+  debugln("Buffer Read");
+  debug("Payload Size:");
+  debugln(payloadBufferOutgoing.size());
 }
 
 void receivePayloadNew(int numberOfBytesReceived, char *data) {

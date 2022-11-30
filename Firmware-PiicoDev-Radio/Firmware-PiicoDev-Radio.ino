@@ -69,6 +69,7 @@ const uint16_t addressPin1 = 8;
 const uint16_t addressPin2 = 7;
 const uint16_t addressPin3 = 6;
 const uint16_t addressPin4 = 4;
+const uint8_t rfm69ResetPin = 3;
 #else
 // ATTINY 8x6 or 16x6
 const uint8_t powerLedPin = PIN_PA5;
@@ -379,7 +380,7 @@ void loop() {
     debug("TxPower:");
     debugln(valueMap.txPowerWrite);
     radioSetPower = false;
-//---------------------
+    //---------------------
     // Print the header row and first register entry
     debugln(); debug("     ");
     for ( uint8_t reg = 0x00; reg < 0x10; reg++ ) {
@@ -403,13 +404,13 @@ void loop() {
       swsri.print( ret, HEX);
       debug(" ");
     }
-//---------------------
+    //---------------------
   }
-  
+
   if (valueMap.payloadGo > 0) {
     // Send the packet!
-    uint8_t transmitBuffer[RX_BUFFER_SIZE];
-    for (byte i = 0; i < RX_BUFFER_SIZE; i++) {
+    uint8_t transmitBuffer[payloadBufferOutgoing.size()];
+    for (byte i = 0; i < payloadBufferOutgoing.size(); i++) {
       transmitBuffer[i] = 0;
     }
 
@@ -418,14 +419,24 @@ void loop() {
     debug(", message [");
     debug(counter);
     debugln("]");
-    uint8_t i = 0;
-    while (!payloadBufferOutgoing.isEmpty()) {
-      transmitBuffer[i] = payloadBufferOutgoing.shift();
-      debug((char)transmitBuffer[i]);
-      i++;
+    //uint8_t i = 0;
+    //    while (!payloadBufferOutgoing.isEmpty()) {
+    //      transmitBuffer[i] = payloadBufferOutgoing.shift();
+    //      debug((char)transmitBuffer[i]);
+    //      i++;
+    //    }
+
+    for (uint8_t i = 0; i < payloadBufferOutgoing.size() - 1; i++) {
+      transmitBuffer[i] = payloadBufferOutgoing[i];
     }
     radio.send(valueMap.rfm69ToNodeIDWrite, transmitBuffer, valueMap.payloadLengthWrite);  //radio.send(valueMap.rfm69ToNodeIDWrite, valueMap.payloadWrite, valueMap.payloadLengthWrite);
-    debugln("sent");
+    // What does our outgoing buffer look like?
+    debug("Reading back transmitbuffer");
+    for (uint8_t i = 0; i < sizeof(transmitBuffer) - 1; i++) {
+      debug(transmitBuffer[i]);
+      debug(",");
+    }
+    debugln("Transmit Buffer Read");
     counter++;
     if (counter == 255) {
       counter = 0;
@@ -451,6 +462,7 @@ void loop() {
       valueMap.payloadNew = 1;
       payloadBufferIncoming.clear();
       payloadBufferIncoming.push(abs(radio.RSSI));
+      payloadBufferIncoming.push(radio.SENDERID);
       for (byte i = 0; i < radio.DATALEN; i++) {
         debug((char)radio.DATA[i]);
         payloadBufferIncoming.push((char)radio.DATA[i]);

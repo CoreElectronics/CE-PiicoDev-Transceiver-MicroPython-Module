@@ -49,7 +49,7 @@ def debug(text):
         print(text)
 
 class PiicoDev_Radio(object):
-    def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None, radio_address=radio_config.radio_address, channel=radio_config.channel, suppress_warnings=False):
+    def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None, radio_address=1, channel=0, suppress_warnings=False):
         try:
             if compat_ind >= 1:
                 pass
@@ -62,19 +62,16 @@ class PiicoDev_Radio(object):
         if type(id) is list and not all(v == 0 for v in id): # preference using the ID argument. ignore id if all elements zero
             assert max(id) <= 1 and min(id) >= 0 and len(id) == 4, "id must be a list of 1/0, length=4"
             self._address=8+id[0]+2*id[1]+4*id[2]+8*id[3] # select address from pool
-        else: self._address = address # accept an integer
-        self.radio_address = radio_address
-        self.channel = channel
-        self.destination_radio_address = radio_config.destination_radio_address
+        else: self._address = address # accept an integer  
+        self._write_int(_REG_RFM69_NODE_ID, radio_address)
+        self._write_int(_REG_RFM69_NETWORK_ID, channel)
+#         self.destination_radio_address = radio_config.destination_radio_address
         self.rssi = 0
         self.type = 0
         self.message = ''
         self.key = ''
         self.value = None
-        self.radio_source_address = 0
-        self.destination_radio_address = 0
-        self.rx_channel = 0
-        self.rx_destination_radio_address = 0
+        self.source_radio_address = 0
         try:
             if self.whoami != _DEVICE_ID:
                 print("* Incorrect device found at address {}".format(address))   
@@ -108,17 +105,20 @@ class PiicoDev_Radio(object):
          # if the payload is too long, truncate it
         payload_list = [payload[i:i+_MAXIMUM_I2C_SIZE-1] for i in range(0, len(payload), _MAXIMUM_I2C_SIZE-1)] # Split the bytes into a list
         self._write_int(_REG_PAYLOAD_LENGTH, len(payload))
+        print("Payload Length:" + str(len(payload)))
         sleep_ms(5)
         for i in range(len(payload_list)):
             self._write(_REG_PAYLOAD, payload_list[i])
             sleep_ms(5) #was 12
+            print('payload' + str(payload_list[i]))
         self._write_int(_REG_PAYLOAD_GO, 1)
         
     def receive_payload(self):
         payload_length = 0
         payload = bytes(0)
         if self._payload_new == 1:
-            payload_length = self._read_int(_REG_PAYLOAD_LENGTH) + 1 # _MAXIMUM_PAYLOAD_LENGTH + RSSI
+            sleep_ms(100) # for debug mode
+            payload_length = self._read_int(_REG_PAYLOAD_LENGTH) + 2 # _MAXIMUM_PAYLOAD_LENGTH + RSSI + source_radio_address
             unprocessed_payload_length = payload_length
             sleep_ms(5)
             number_of_chunks = int(truncate(payload_length / _MAXIMUM_I2C_SIZE))+1
@@ -152,30 +152,22 @@ class PiicoDev_Radio(object):
         self._write(_REG_TX_POWER, pack('b',value))
     
     @property
-    def rfm69_network_id(self):
+    def channel(self):
+        """ There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino"""
         return self._read_int(_REG_RFM69_NETWORK_ID)
     
-    @rfm69_network_id.setter
-    def rfm69_network_id(self, value):
-        print("channel setter called")
-        self._write_int(_REG_RFM69_NETWORK_ID, value)
-    
     @property
-    def rfm69_node_id(self):
+    def radio_address(self):
+        """ There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino"""
         return self._read_int(_REG_RFM69_NODE_ID)
         print("Node ID Called")
-    
-    @rfm69_node_id.setter
-    def rfm69_node_id(self, value):
-        self._write_int(_REG_RFM69_NODE_ID, value)
-        print("Set Node ID Called")
         
     @property
-    def rfm69_to_node_id(self):
+    def destination_radio_address(self):
         return self._read_int(_REG_RFM69_TO_NODE_ID)
     
-    @rfm69_to_node_id.setter
-    def rfm69_to_node_id(self, value):
+    @destination_radio_address.setter
+    def destination_radio_address(self, value):
         debug("Setting destination radio address to " + str(value) + ".")
         self._write_int(_REG_RFM69_TO_NODE_ID, value)
     
@@ -200,43 +192,49 @@ class PiicoDev_Radio(object):
         payload_length, payload = self.receive_payload()
         if payload_length != 0:
             payload_bytes = bytes(payload)
-            self.rx_channel = int.from_bytes(payload_bytes[1:2], 'big')
-            self.rx_destination_radio_address = int.from_bytes(payload_bytes[3:4], 'big')
-            if self.rx_channel == self.channel and (self.rx_destination_radio_address == 0 or self.rx_destination_radio_address == self.radio_address):
-                self.rssi = -int.from_bytes(payload_bytes[:1], 'big')
-                self.source_radio_address = int.from_bytes(payload_bytes[2:3], 'big')
-                self.type = int.from_bytes(payload_bytes[4:5], 'big')
-                try:
-                    if self.type == 1:
-                        self.key = str(payload_bytes[10:], 'utf8')
-                        self.value = unpack('i', (payload_bytes[5:9]))[0]
-                    if self.type == 2:
-                        self.key = str(payload_bytes[10:], 'utf8')
-                        self.value = unpack('f', (payload_bytes[5:9]))[0]
-                    if self.type == 3:
-                        self.message = str(payload_bytes[6:], 'utf8')
-                except:
-                    print('* error parsing payload')
-                return True
+            print(payload_bytes)
+#             self.rx_channel = int.from_bytes(payload_bytes[1:2], 'big')
+#             self.rx_destination_radio_address = int.from_bytes(payload_bytes[3:4], 'big')
+#             if self.rx_channel == self.channel and (self.rx_destination_radio_address == 0 or self.rx_destination_radio_address == self.radio_address):
+            self.rssi = -int.from_bytes(payload_bytes[:1], 'big')
+            self.source_radio_address = int.from_bytes(payload_bytes[1:2], 'big')
+            self.type = int.from_bytes(payload_bytes[2:3], 'big')
+            try:
+                if self.type == 1:
+                    self.key = str(payload_bytes[8:], 'utf8')
+                    self.value = unpack('>i', (payload_bytes[3:7]))[0]
+                if self.type == 2:
+                    self.key = str(payload_bytes[8:], 'utf8')
+                    self.value = unpack('>f', (payload_bytes[3:7]))[0]
+                if self.type == 3:
+                    self.message = str(payload_bytes[3:], 'utf8')
+            except:
+                print('* error parsing payload')
+            return True
         return False
     
     def send(self, message_string, value=None, address=0):
-        destination_radio_address = address
+        debug('sending stuff')
+        self.destination_radio_address = address
         if isinstance(value, int):
             type = 1
-            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-9)]
-            format_characters = 'BBBBiB' + str(len(message_string)) + 's'
-            data = pack(format_characters, self.channel, self.radio_address, destination_radio_address, type, value, len(message_string), bytes(message_string, 'utf8'))
+            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-6)]
+            format_characters = '>BiB' + str(len(message_string)) + 's'
+            #sformat_characters = '>BiB'
+            #print('len(message_string)' + str(len(message_string)))
+            #data = pack(format_characters, type, 2)
+            data = pack(format_characters, type, value, len(message_string), bytes(message_string, 'utf8'))
+#             print("payload:", data)
         if isinstance(value, float):
             type = 2
-            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-9)]
-            format_characters = 'BBBBfB' + str(len(message_string)) + 's'
-            data = pack(format_characters, self.channel, self.radio_address, destination_radio_address, type, value, len(message_string), bytes(message_string, 'utf8'))
+            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-6)]
+            format_characters = '>BfB' + str(len(message_string)) + 's'
+            data = pack(format_characters, type, value, len(message_string), bytes(message_string, 'utf8'))
         if value is None:
             type = 3
-            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-5)]
-            format_characters = 'BBBBB' + str(len(message_string)) + 's'
-            data = pack(format_characters, self.channel, self.radio_address, destination_radio_address, type, len(message_string), bytes(message_string, 'utf8'))
+            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-2)]
+            format_characters = '>BB' + str(len(message_string)) + 's'
+            data = pack(format_characters, type, len(message_string), bytes(message_string, 'utf8'))
         self.send_payload(data)
         
     def send_byte(self, value):

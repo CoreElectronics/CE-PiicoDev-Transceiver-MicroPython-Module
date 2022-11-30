@@ -100,36 +100,38 @@ if radio.received_string():
 
 `radio.set_rfm69_register(0x29, 221)`
 
+| channel                   |             | 1     | 0 to 255     | Channel
+| source_radio_adddress     |             | 1     | 1 to 255     | Source radio address
+| destination_radio_address |             | 1     | 0 to 255     | Destination radio address
+
 
 ## Payload
 
-Note that when transmitting, no RSSI is sent, so:
+Note that when transmitting, no RSSI or from_radio_address from is sent, so:
 
-Tx Position = Rx Position - 1
+Tx Position = Rx Position - 2
 
 
 | Name                      | Rx Position | Bytes | Range        | Description
 | ------------------------- | ----------- | ----- | ------------ | -----------
 | rssi                      | 0           | 1     | 0 to 255     | RSSI (module negates the value)
-| channel                   | 1           | 1     | 0 to 255     | Channel
-| source_radio_adddress     | 2           | 1     | 1 to 255     | Source radio address
-| destination_radio_address | 3           | 1     | 0 to 255     | Destination radio address
-| type                      | 4           | 1     | 0 - 3        | Type of message (0: invalid, 1: key, int, 2: key, float, 3: message string)
+| source_radio_address        | 1           | 1     | 0 to 255     | Source Radio Address
+| type                      | 2           | 1     | 0 - 3        | Type of message (0: invalid, 1: key, int, 2: key, float, 3: message string)
 
 If the type is 1 or 2:
 
 | Name                      | Rx Position | Bytes | Range        | Description
 | ------------------------- | ----------- | ----- | ------------ | -----------
-| value                     | 5           | 4     |              | Value (int or float)
-| length                    | 9           | 1     |              | Key length
-| key                       | 10          | <=52  | 52 chars max | key
+| value                     | 3           | 4     |              | Value (int or float)
+| length                    | 7           | 1     |              | Key length
+| key                       | 8           | <=55  | 55 chars max | key
 
 If the type is 3:
 
 | Name                      | Rx Position | Bytes | Range        | Description
 | ------------------------- | ----------- | ----- | ------------ | -----------
-| length                    | 5           | 1     |              | Key length
-| message                   | 6           | <=56  | 56 chars max | Message
+| length                    | 3           | 1     |              | Key length
+| message                   | 4           | <=58  | 59 chars max | Message
 
 ## Smart Module I2C Registers
 
@@ -164,3 +166,4 @@ If you have any technical questions, or concerns about licensing, please contact
 
 Outstanding Issues:
 Tx Power doesn't seem to make any difference
+Now that we are using the radio's built-in addressing scheme, need to make it so that we send the from 
