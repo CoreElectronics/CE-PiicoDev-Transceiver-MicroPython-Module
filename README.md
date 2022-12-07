@@ -19,7 +19,7 @@ This module has been tested on:
 
 ## Initialisation
 
-### `PiicoDev_Radio(bus=, freq=, sda=, scl=, address=0x1A, id=, frequency=None, radio_address=0, channel=0, queue=3)`
+### `PiicoDev_Radio(bus=, freq=, sda=, scl=, address=0x1A, id=, frequency=None, radio_address=0, channel=0, queue=3, debug=False)`
 
 | Parameter      | Type                     | Range             | Default                               | Description
 | -------------- | ------------------------ | ----------------- | ------------------------------------- | -----------
@@ -32,7 +32,7 @@ This module has been tested on:
 | radio_adddress | int                      | 0 - 255           | 0                                     | See the `.radio_address` property for more information
 | channel        | int                      | 0 - 255           | 0                                     | See the `.channel` property for more information
 | queue          | int                      | 0 - 255           | 3                                     | See the `.queue` property for more information
-
+| debug          | bool                     |                   | False                                 | Debug mode slows down transactions so it works better with Arduino software serial
 
 ## Properties
 
@@ -154,6 +154,7 @@ If the type is 3:
 | Payload           | 0x22/0xA2 | 26 Max | R/W  | N/A              | To send a message, write the payload to this register, then write the length to the _Payload Length_ register to trigger sending of the message over the air. Read this register to check the contents of a new message.
 | Payload New       | 0x23      | 1      | R    | 0                | A 1 indicates a new message has been received
 | Payload Go        | 0xA4      | 1      | W    | 0                | To send a message, write to the length, then payload then set this to 1 to send the message
+| Transceiver Ready | 0x25      | 1      | R    | 0                | Wait for the tranceiver to be ready before sending the next command
 
 This library has been inspired by the [Micro:bit Radio library](https://microbit-micropython.readthedocs.io/en/v1.0.1/radio.html).
 
