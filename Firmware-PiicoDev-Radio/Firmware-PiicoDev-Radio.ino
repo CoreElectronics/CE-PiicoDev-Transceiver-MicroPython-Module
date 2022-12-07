@@ -19,8 +19,10 @@
 #include <CircularBuffer.h> // by AgileWare version 1.3.3
 #include <SoftwareSerial.h>
 
-#define DEBUG true // If true, expect I2C bus to hang for 1s for I2C transactions
+#define DEBUG falsee  // If true, expect I2C bus to hang for 1s for I2C transactions
 #if DEBUG == true
+//#define debug(x) Serial.print(x)
+//#define debugln(x) Serial.println(x)
 #define debug(x) swsri.print(x)
 #define debugln(x) swsri.println(x)
 #else
@@ -124,6 +126,7 @@ struct memoryMapRegs {
   uint8_t payloadWrite;
   uint8_t payloadNew;
   uint8_t payloadGo;
+  uint8_t transceiverReady;
 };
 
 struct memoryMapData {
@@ -153,6 +156,7 @@ struct memoryMapData {
   uint8_t payloadWrite; // Dummy - CircularBuffer payloadBufferOutgoing used instead
   uint8_t payloadNew;
   uint8_t payloadGo;
+  uint8_t transceiverReady;
 };
 
 // Register addresses.
@@ -183,6 +187,7 @@ const memoryMapRegs registerMap = {
   .payloadWrite = 0xA2,
   .payloadNew = 0x23,
   .payloadGo = 0xA4,
+  .transceiverReady = 0x25,
 };
 
 volatile memoryMapData valueMap = {
@@ -212,6 +217,7 @@ volatile memoryMapData valueMap = {
   .payloadWrite = 0,
   .payloadNew = 0,
   .payloadGo = 0,
+  .transceiverReady = 0,
 };
 
 uint8_t currentRegisterNumber;
@@ -247,6 +253,7 @@ void receivePayload(int numberOfBytesReceived, char *data);
 void sendPayload(int numberOfBytesReceived, char *data);
 void receivePayloadNew(int numberOfBytesReceived, char *data);
 void sendPayloadGo(int numberOfBytesReceived, char *data);
+void getTransceiverReady(int numberOfBytesReceived, char *data);
 
 functionMap functions[] = {
   { registerMap.id, idReturn },
@@ -275,6 +282,7 @@ functionMap functions[] = {
   { registerMap.payloadWrite, sendPayload },
   { registerMap.payloadNew, receivePayloadNew },
   { registerMap.payloadGo, sendPayloadGo },
+  { registerMap.transceiverReady, getTransceiverReady },
 };
 
 typedef struct {
@@ -285,8 +293,9 @@ Payload theDataRead;
 Payload theDataWrite;
 
 void setup() {
-#if DEBUG
-  swsri.begin(9600);
+    #if DEBUG
+  //swsri.begin(9600);
+  swsri.begin(115200);
   debugln("Begin");
 #endif
   // Pull up address pins
@@ -298,13 +307,14 @@ void setup() {
   pinMode(powerLedPin, OUTPUT);
   powerLed(true);  // enable Power LED by default on every power-up
   // Open a serial port so we can send keystrokes to the module:
-  debug("Node ");
-  debug(MYNODEID);
-  debugln(" ready");
+  //debug("Node ");
+  //debug(MYNODEID);
+  //debugln(" ready");
 
   readSystemSettings();  //Load all system settings from EEPROM
   startI2C();            //Determine the I2C address we should be using and begin listening on I2C bus
   oldAddress = valueMap.i2cAddress;
+  valueMap.transceiverReady = 1;
 }
 
 uint8_t counter = 0;
@@ -327,6 +337,7 @@ void loop() {
   }
 
   if (radioReset) {
+    valueMap.transceiverReady = 0;
     pinMode(rfm69ResetPin, OUTPUT);
     digitalWrite(rfm69ResetPin, HIGH);
     delay(5);
@@ -336,22 +347,25 @@ void loop() {
   }
 
   if (radioInitialise) {
+    valueMap.transceiverReady = 0;
     debugln("Initialising Radio");
     radio.initialize(FREQUENCY, valueMap.rfm69NodeIDWrite, valueMap.rfm69NetworkIDWrite);
     debug("Node ID set to:");
     debugln(valueMap.rfm69NodeIDWrite);
     debug("Network ID set to:");
     debugln(valueMap.rfm69NetworkIDWrite);
-    radio.setHighPower(true);
+    radio.setHighPower(true); // Must do for HCW
     radio.writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY);
     radio.writeReg(REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_00);                                        // 0x02
-    radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_300000);                                                                                                                     // 0x03
-    radio.writeReg(REG_BITRATELSB, RF_BITRATELSB_300000);                                                                                                                     // 0x04
+    //radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_300000);                                                                                                                     // 0x03
+    //radio.writeReg(REG_BITRATELSB, RF_BITRATELSB_300000);                                                                                                                     // 0x04
+    radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_115200);                                                                                                                     // 0x03
+    radio.writeReg(REG_BITRATELSB, RF_BITRATELSB_115200);                                                                                                                     // 0x04
     radio.writeReg(REG_FDEVMSB, RF_FDEVMSB_300000);                                                                                                                           // 0x05
     radio.writeReg(REG_FDEVLSB, RF_FDEVLSB_300000);                                                                                                                           // 0x06
-    radio.writeReg(REG_FRFMSB, RF_FRFMSB_915);                                                                                                                                // 0x07
-    radio.writeReg(REG_FRFMID, RF_FRFMID_915);                                                                                                                                // 0x08
-    radio.writeReg(REG_FRFLSB, RF_FRFLSB_915);                                                                                                                                // 0x09
+    radio.writeReg(REG_FRFMSB, RF_FRFMSB_922);                                                                                                                                // 0x07
+    radio.writeReg(REG_FRFMID, RF_FRFMID_922);                                                                                                                                // 0x08
+    radio.writeReg(REG_FRFLSB, RF_FRFLSB_922);                                                                                                                                // 0x09
     radio.writeReg(REG_RXBW, RF_RXBW_DCCFREQ_111 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0);                                                                                          // 0x19
     radio.writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01);                                                                                                                  // 0x25
     radio.writeReg(REG_DIOMAPPING2, RF_DIOMAPPING2_CLKOUT_OFF);                                                                                                               //0x26
@@ -373,9 +387,11 @@ void loop() {
     radioInitialise = false;
     radio.readAllRegsCompact();
     //updateFlag = true;
+    valueMap.transceiverReady = 1;
   }
 
   if (radioSetPower) {
+    valueMap.transceiverReady = 0;
     radio.setPowerDBm(valueMap.txPowerWrite);
     debug("TxPower:");
     debugln(valueMap.txPowerWrite);
@@ -384,7 +400,7 @@ void loop() {
     // Print the header row and first register entry
     debugln(); debug("     ");
     for ( uint8_t reg = 0x00; reg < 0x10; reg++ ) {
-      swsri.print(reg, HEX);
+      //swsri.print(reg, HEX);
       debug("  ");
     }
     debugln();
@@ -394,17 +410,18 @@ void loop() {
     for ( uint8_t reg = 0x01; reg < 0x80; reg++ ) {
       if ( reg % 16 == 0 ) {    // Print the header column entries
         debugln();
-        swsri.print( reg, HEX );
+        //swsri.print( reg, HEX );
         debug(": ");
       }
 
       // Print the actual register values
       uint8_t ret = radio.readReg( reg );
       if ( ret < 0x10 ) debug("0");  // Handle values less than 10
-      swsri.print( ret, HEX);
+      //swsri.print( ret, HEX);
       debug(" ");
     }
     //---------------------
+    valueMap.transceiverReady = 1;
   }
 
   if (valueMap.payloadGo > 0) {

@@ -154,11 +154,11 @@ void sendPayload(int numberOfBytesReceived, char *data) {
   debug("Incoming Data:");
   uint8_t lengthToProcess;
   if (numberOfBytesReceived == I2C_BUFFER_SIZE){
-    lengthToProcess = I2C_BUFFER_SIZE - 1;
+    lengthToProcess = I2C_BUFFER_SIZE - 1; // without the -1 there will be a null at multiples of the 32nd bit
   } else {
     lengthToProcess = numberOfBytesReceived;
   }
-  for (uint8_t x = 0; x < lengthToProcess; x++){// without the -1 there will be a null at multiples of the 32nd bit
+  for (uint8_t x = 0; x < lengthToProcess; x++){
     debug(data[x]);
     debug(",");
     payloadBufferOutgoing.push(data[x]);
@@ -184,6 +184,10 @@ void sendPayloadGo(int numberOfBytesReceived, char *data) {
   valueMap.payloadGo = data[0];
   debug("payloadBufferOutgoing.size()");
   debugln(payloadBufferOutgoing.size());
+}
+
+void getTransceiverReady(int numberOfBytesReceived, char *data) {
+  loadArray(valueMap.transceiverReady);
 }
 
 // Functions to load data into the response buffer

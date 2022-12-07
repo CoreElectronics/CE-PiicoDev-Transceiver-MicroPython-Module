@@ -28,8 +28,11 @@ _REG_PAYLOAD_LENGTH            = 0x21
 _REG_PAYLOAD                   = 0x22
 _REG_PAYLOAD_NEW               = 0x23
 _REG_PAYLOAD_GO                = 0x24
+_REG_TRANSCEIVER_READY         = 0x25
 
-DEBUG = True
+_RFM69_REG_FRFMSB = 0x07
+_RFM69_REG_FRFMID = 0x08
+_RFM69_REG_FRFLSB = 0x09
 
 _MAXIMUM_PAYLOAD_LENGTH = 61 # The Low Power Labs Arduino library is limited to 65 bytes total payload including a 4 header bytes
 _MAXIMUM_I2C_SIZE = 32 #For ATmega328 based Arduinos, the I2C buffer is limited to 32 bytes
@@ -44,12 +47,8 @@ def truncate(n, decimals=0):
 def _set_bit(x, n):
     return x | (1 << n)
 
-def debug(text):
-    if DEBUG:
-        print(text)
-
 class PiicoDev_Radio(object):
-    def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None, radio_address=1, channel=0, suppress_warnings=False):
+    def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None, radio_address=1, channel=0, suppress_warnings=False, debug=False):
         try:
             if compat_ind >= 1:
                 pass
@@ -62,7 +61,8 @@ class PiicoDev_Radio(object):
         if type(id) is list and not all(v == 0 for v in id): # preference using the ID argument. ignore id if all elements zero
             assert max(id) <= 1 and min(id) >= 0 and len(id) == 4, "id must be a list of 1/0, length=4"
             self._address=8+id[0]+2*id[1]+4*id[2]+8*id[3] # select address from pool
-        else: self._address = address # accept an integer  
+        else: self._address = address # accept an integer
+        self.debug=debug
         self._write_int(_REG_RFM69_NODE_ID, radio_address)
         self._write_int(_REG_RFM69_NETWORK_ID, channel)
 #         self.destination_radio_address = radio_config.destination_radio_address
@@ -105,19 +105,19 @@ class PiicoDev_Radio(object):
          # if the payload is too long, truncate it
         payload_list = [payload[i:i+_MAXIMUM_I2C_SIZE-1] for i in range(0, len(payload), _MAXIMUM_I2C_SIZE-1)] # Split the bytes into a list
         self._write_int(_REG_PAYLOAD_LENGTH, len(payload))
-        print("Payload Length:" + str(len(payload)))
         sleep_ms(5)
         for i in range(len(payload_list)):
             self._write(_REG_PAYLOAD, payload_list[i])
             sleep_ms(5) #was 12
-            print('payload' + str(payload_list[i]))
         self._write_int(_REG_PAYLOAD_GO, 1)
         
     def receive_payload(self):
         payload_length = 0
         payload = bytes(0)
         if self._payload_new == 1:
-            sleep_ms(100) # for debug mode
+            if self.debug:
+                sleep_ms(100) # for debug mode
+                print('delay')
             payload_length = self._read_int(_REG_PAYLOAD_LENGTH) + 2 # _MAXIMUM_PAYLOAD_LENGTH + RSSI + source_radio_address
             unprocessed_payload_length = payload_length
             sleep_ms(5)
@@ -140,6 +140,8 @@ class PiicoDev_Radio(object):
         
     @property
     def tx_power(self):
+        while self.transceiver_ready == False:
+            sleep_ms(10)
         value = unpack('b', self._read(_REG_TX_POWER))
         return value[0]
     
@@ -149,6 +151,8 @@ class PiicoDev_Radio(object):
             value = -2
         if value > 20:
             value = 20
+        while self.transceiver_ready == False:
+            sleep_ms(10)
         self._write(_REG_TX_POWER, pack('b',value))
     
     @property
@@ -168,7 +172,6 @@ class PiicoDev_Radio(object):
     
     @destination_radio_address.setter
     def destination_radio_address(self, value):
-        debug("Setting destination radio address to " + str(value) + ".")
         self._write_int(_REG_RFM69_TO_NODE_ID, value)
     
     def rfm69_reset(self):
@@ -181,7 +184,6 @@ class PiicoDev_Radio(object):
     
     @payload_length.setter
     def payload_length(self, value):
-        debug("Setting message length" + str(value) + ".")
         self._write_int(_REG_PAYLOAD_LENGTH, value)
         
     @property
@@ -192,10 +194,6 @@ class PiicoDev_Radio(object):
         payload_length, payload = self.receive_payload()
         if payload_length != 0:
             payload_bytes = bytes(payload)
-            print(payload_bytes)
-#             self.rx_channel = int.from_bytes(payload_bytes[1:2], 'big')
-#             self.rx_destination_radio_address = int.from_bytes(payload_bytes[3:4], 'big')
-#             if self.rx_channel == self.channel and (self.rx_destination_radio_address == 0 or self.rx_destination_radio_address == self.radio_address):
             self.rssi = -int.from_bytes(payload_bytes[:1], 'big')
             self.source_radio_address = int.from_bytes(payload_bytes[1:2], 'big')
             self.type = int.from_bytes(payload_bytes[2:3], 'big')
@@ -214,17 +212,12 @@ class PiicoDev_Radio(object):
         return False
     
     def send(self, message_string, value=None, address=0):
-        debug('sending stuff')
         self.destination_radio_address = address
         if isinstance(value, int):
             type = 1
             message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-6)]
             format_characters = '>BiB' + str(len(message_string)) + 's'
-            #sformat_characters = '>BiB'
-            #print('len(message_string)' + str(len(message_string)))
-            #data = pack(format_characters, type, 2)
             data = pack(format_characters, type, value, len(message_string), bytes(message_string, 'utf8'))
-#             print("payload:", data)
         if isinstance(value, float):
             type = 2
             message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-6)]
@@ -255,6 +248,43 @@ class PiicoDev_Radio(object):
     def set_rfm69_register(self, register, value):
         self._write_int(_REG_RFM69_REG, register)
         self._write_int(_REG_RFM69_VALUE, value)
+    
+    def set_frequency(self, frequency):
+        while self.transceiver_ready == False:
+            sleep_ms(10)
+        if frequency == 915:
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFMSB,0xE4)
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFMID,0xC0)
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFLSB,0x00)
+            sleep_ms(5)
+            print('frequency set to 915')
+        elif frequency == 922:
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFMSB,0xE6)
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFMID,0x80)
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFLSB,0x00)
+            sleep_ms(5)
+            print('frequency set to 922')
+        elif frequency == 928:
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFMSB,0xE8)
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFMID,0x00)
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFLSB,0x00)
+            sleep_ms(5)
+        else:
+            print(' * frequency not supported')
+            
+    def get_frequency(self):
+        print(self.get_rfm69_register(_RFM69_REG_FRFMSB))
+        print(self.get_rfm69_register(_RFM69_REG_FRFMID))
+        print(self.get_rfm69_register(_RFM69_REG_FRFLSB))
     
     @property
     def _on(self):
@@ -313,3 +343,7 @@ class PiicoDev_Radio(object):
         self._address = x
         sleep_ms(5)
         return 0
+    
+    @property
+    def transceiver_ready(self):
+        return bool(self._read_int(_REG_TRANSCEIVER_READY))
