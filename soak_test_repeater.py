@@ -10,6 +10,8 @@ print('Tx Power:       ' + str(int(radio.tx_power)))
 print('Radio Address   ' + str(radio.radio_address))
 print('Channel:        ' + str(radio.channel))
 
+radio.tx_power = 20
+
 while True:
     if radio.receive():
 #         print(" RSSI:" + str(radio.rssi))
