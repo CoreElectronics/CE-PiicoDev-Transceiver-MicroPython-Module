@@ -29,7 +29,6 @@ _REG_PAYLOAD_NEW       = 0x23
 _REG_PAYLOAD_GO        = 0x24
 _REG_TRANSCEIVER_READY = 0x25
 
-
 _RFM69_REG_BITRATEMSB  = 0x03
 _RFM69_REG_BITRATELSB  = 0x04
 _RFM69_REG_FRFMSB      = 0x07
@@ -50,7 +49,7 @@ def _set_bit(x, n):
     return x | (1 << n)
 
 class PiicoDev_Radio(object):
-    def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None, channel=0, radio_address=1, speed=2, radio_frequency=922, suppress_warnings=False, debug=False):
+    def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None, channel=0, radio_address=1, speed=2, radio_frequency=922, tx_power=20, suppress_warnings=False, debug=False):
         try:
             if compat_ind >= 1:
                 pass
@@ -76,6 +75,7 @@ class PiicoDev_Radio(object):
         self.source_radio_address = 0
         self.radio_frequency = radio_frequency
         self.speed = speed
+        self.tx_power = tx_power
         try:
             if self.whoami != _DEVICE_ID:
                 print("* Incorrect device found at address {}".format(address))   
