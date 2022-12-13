@@ -3,7 +3,6 @@ _C='big'
 _B=False
 _A=None
 from PiicoDev_Unified import *
-import radio_config
 from struct import *
 compat_str='\nUnified PiicoDev library out of date.  Get the latest module: https://piico.dev/unified \n'
 _BASE_ADDRESS=26
@@ -26,6 +25,8 @@ _REG_PAYLOAD=34
 _REG_PAYLOAD_NEW=35
 _REG_PAYLOAD_GO=36
 _REG_TRANSCEIVER_READY=37
+_RFM69_REG_BITRATEMSB=3
+_RFM69_REG_BITRATELSB=4
 _RFM69_REG_FRFMSB=7
 _RFM69_REG_FRFMID=8
 _RFM69_REG_FRFLSB=9
@@ -43,7 +44,7 @@ class PiicoDev_Radio:
 		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl,suppress_warnings=suppress_warnings);self._address=address
 		if type(id)is list and not all((v==0 for v in id)):assert max(id)<=1 and min(id)>=0 and len(id)==4,'id must be a list of 1/0, length=4';self._address=8+id[0]+2*id[1]+4*id[2]+8*id[3]
 		else:self._address=address
-		self.debug=debug;self._write_int(_REG_RFM69_NODE_ID,radio_address);self._write_int(_REG_RFM69_NETWORK_ID,channel);self.rssi=0;self.type=0;self.message='';self.key='';self.value=_A;self.source_radio_address=0
+		self.debug=debug;self._write_int(_REG_RFM69_NODE_ID,radio_address);self._write_int(_REG_RFM69_NETWORK_ID,channel);self.rssi=0;self.type=0;self.message='';self.key='';self.value=_A;self.source_radio_address=0;self._speed=2
 		try:
 			if self.whoami!=_DEVICE_ID:print('* Incorrect device found at address {}'.format(address))
 		except:print("* Couldn't find a device - check switches and wiring")
@@ -131,6 +132,14 @@ class PiicoDev_Radio:
 		elif frequency==928:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,232);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,0);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5)
 		else:print(' * frequency not supported')
 	def get_frequency(self):print(self.get_rfm69_register(_RFM69_REG_FRFMSB));print(self.get_rfm69_register(_RFM69_REG_FRFMID));print(self.get_rfm69_register(_RFM69_REG_FRFLSB))
+	@property
+	def speed(self):return self._speed
+	@speed.setter
+	def speed(self,speed):
+		if speed==1:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,13);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,5);sleep_ms(10);_speed=1
+		elif speed==2:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,1);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,22);sleep_ms(10);_speed=2
+		elif speed==3:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,107);sleep_ms(10);_speed=3
+		else:print('* speed not valid')
 	@property
 	def _on(self):'Checks the radio state';self._read_int(_REG_RFM69_RADIO_STATE,1)
 	@_on.setter
