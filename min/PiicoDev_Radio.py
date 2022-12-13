@@ -36,7 +36,7 @@ def tempdebug(text):print(str(ticks_ms()-start_time)+':'+str(value))
 def truncate(n,decimals=0):multiplier=10**decimals;return int(n*multiplier)/multiplier
 def _set_bit(x,n):return x|1<<n
 class PiicoDev_Radio:
-	def __init__(self,bus=_A,freq=_A,sda=_A,scl=_A,address=_BASE_ADDRESS,id=_A,radio_address=1,channel=0,suppress_warnings=_B,debug=_B):
+	def __init__(self,bus=_A,freq=_A,sda=_A,scl=_A,address=_BASE_ADDRESS,id=_A,channel=0,radio_address=1,speed=2,radio_frequency=922,suppress_warnings=_B,debug=_B):
 		try:
 			if compat_ind>=1:0
 			else:print(compat_str)
@@ -44,7 +44,7 @@ class PiicoDev_Radio:
 		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl,suppress_warnings=suppress_warnings);self._address=address
 		if type(id)is list and not all((v==0 for v in id)):assert max(id)<=1 and min(id)>=0 and len(id)==4,'id must be a list of 1/0, length=4';self._address=8+id[0]+2*id[1]+4*id[2]+8*id[3]
 		else:self._address=address
-		self.debug=debug;self._write_int(_REG_RFM69_NODE_ID,radio_address);self._write_int(_REG_RFM69_NETWORK_ID,channel);self.rssi=0;self.type=0;self.message='';self.key='';self.value=_A;self.source_radio_address=0;self._speed=2
+		self.debug=debug;self._write_int(_REG_RFM69_NODE_ID,radio_address);self._write_int(_REG_RFM69_NETWORK_ID,channel);self.rssi=0;self.type=0;self.message='';self.key='';self.value=_A;self.source_radio_address=0;self.radio_frequency=radio_frequency;self.speed=speed
 		try:
 			if self.whoami!=_DEVICE_ID:print('* Incorrect device found at address {}'.format(address))
 		except:print("* Couldn't find a device - check switches and wiring")
@@ -125,20 +125,24 @@ class PiicoDev_Radio:
 		return data
 	def get_rfm69_register(self,register):self._write_int(_REG_RFM69_REG,register);return self._read_int(_REG_RFM69_VALUE)
 	def set_rfm69_register(self,register,value):self._write_int(_REG_RFM69_REG,register);self._write_int(_REG_RFM69_VALUE,value)
-	def set_frequency(self,frequency):
+	@property
+	def radio_frequency(self):return self._radio_frequency
+	@radio_frequency.setter
+	def radio_frequency(self,frequency):
 		while self.transceiver_ready==_B:sleep_ms(10)
-		if frequency==915:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,228);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,192);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);print('frequency set to 915')
-		elif frequency==922:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,230);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,128);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);print('frequency set to 922')
-		elif frequency==928:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,232);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,0);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5)
+		if frequency==915:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,228);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,192);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=915;print('frequency set to 915')
+		elif frequency==918:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,229);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,128);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=918;print('frequency set to 918')
+		elif frequency==922:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,230);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,128);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=922;print('frequency set to 922')
+		elif frequency==925:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,231);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,64);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=925;print('frequency set to 925')
+		elif frequency==928:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,232);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,0);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=928;print('frequency set to 928')
 		else:print(' * frequency not supported')
-	def get_frequency(self):print(self.get_rfm69_register(_RFM69_REG_FRFMSB));print(self.get_rfm69_register(_RFM69_REG_FRFMID));print(self.get_rfm69_register(_RFM69_REG_FRFLSB))
 	@property
 	def speed(self):return self._speed
 	@speed.setter
 	def speed(self,speed):
-		if speed==1:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,13);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,5);sleep_ms(10);_speed=1
-		elif speed==2:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,1);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,22);sleep_ms(10);_speed=2
-		elif speed==3:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,107);sleep_ms(10);_speed=3
+		if speed==1:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,13);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,5);sleep_ms(10);self._speed=1
+		elif speed==2:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,1);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,22);sleep_ms(10);self._speed=2
+		elif speed==3:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,107);sleep_ms(10);self._speed=3
 		else:print('* speed not valid')
 	@property
 	def _on(self):'Checks the radio state';self._read_int(_REG_RFM69_RADIO_STATE,1)
