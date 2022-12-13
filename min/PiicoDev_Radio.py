@@ -36,7 +36,7 @@ def tempdebug(text):print(str(ticks_ms()-start_time)+':'+str(value))
 def truncate(n,decimals=0):multiplier=10**decimals;return int(n*multiplier)/multiplier
 def _set_bit(x,n):return x|1<<n
 class PiicoDev_Radio:
-	def __init__(self,bus=_A,freq=_A,sda=_A,scl=_A,address=_BASE_ADDRESS,id=_A,channel=0,radio_address=1,speed=2,radio_frequency=922,suppress_warnings=_B,debug=_B):
+	def __init__(self,bus=_A,freq=_A,sda=_A,scl=_A,address=_BASE_ADDRESS,id=_A,channel=0,radio_address=1,speed=2,radio_frequency=922,tx_power=20,suppress_warnings=_B,debug=_B):
 		try:
 			if compat_ind>=1:0
 			else:print(compat_str)
@@ -44,7 +44,7 @@ class PiicoDev_Radio:
 		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl,suppress_warnings=suppress_warnings);self._address=address
 		if type(id)is list and not all((v==0 for v in id)):assert max(id)<=1 and min(id)>=0 and len(id)==4,'id must be a list of 1/0, length=4';self._address=8+id[0]+2*id[1]+4*id[2]+8*id[3]
 		else:self._address=address
-		self.debug=debug;self._write_int(_REG_RFM69_NODE_ID,radio_address);self._write_int(_REG_RFM69_NETWORK_ID,channel);self.rssi=0;self.type=0;self.message='';self.key='';self.value=_A;self.source_radio_address=0;self.radio_frequency=radio_frequency;self.speed=speed
+		self.debug=debug;self._write_int(_REG_RFM69_NODE_ID,radio_address);self._write_int(_REG_RFM69_NETWORK_ID,channel);self.rssi=0;self.type=0;self.message='';self.key='';self.value=_A;self.source_radio_address=0;self.radio_frequency=radio_frequency;self.speed=speed;self.tx_power=tx_power
 		try:
 			if self.whoami!=_DEVICE_ID:print('* Incorrect device found at address {}'.format(address))
 		except:print("* Couldn't find a device - check switches and wiring")
