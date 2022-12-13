@@ -11,6 +11,7 @@ print('Radio Address   ' + str(radio.radio_address))
 print('Channel:        ' + str(radio.channel))
 
 radio.tx_power = 20
+radio.speed = 1
 
 while True:
     if radio.receive():

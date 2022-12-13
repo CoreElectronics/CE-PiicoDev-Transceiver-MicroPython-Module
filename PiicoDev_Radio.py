@@ -3,36 +3,38 @@
 # 2022-10-19: Initial release
 
 from PiicoDev_Unified import *
-import radio_config
 from struct import *
 
 compat_str = '\nUnified PiicoDev library out of date.  Get the latest module: https://piico.dev/unified \n'
 
-_BASE_ADDRESS                  = 0x1A
-_DEVICE_ID                     = 495
+_BASE_ADDRESS          = 0x1A
+_DEVICE_ID             = 495
 
-_REG_WHOAMI                    = 0x01
-_REG_FIRM_MAJ                  = 0x02
-_REG_FIRM_MIN                  = 0x03
-_REG_I2C_ADDRESS               = 0x04
-_REG_LED                       = 0x05
-_REG_TX_POWER                  = 0x13
-_REG_RFM69_RADIO_STATE         = 0x14
-_REG_RFM69_NODE_ID             = 0x15
-_REG_RFM69_NETWORK_ID          = 0x16
-_REG_RFM69_TO_NODE_ID          = 0x17
-_REG_RFM69_REG                 = 0x18
-_REG_RFM69_VALUE               = 0x19
-_REG_RFM69_RESET               = 0x20
-_REG_PAYLOAD_LENGTH            = 0x21
-_REG_PAYLOAD                   = 0x22
-_REG_PAYLOAD_NEW               = 0x23
-_REG_PAYLOAD_GO                = 0x24
-_REG_TRANSCEIVER_READY         = 0x25
+_REG_WHOAMI            = 0x01
+_REG_FIRM_MAJ          = 0x02
+_REG_FIRM_MIN          = 0x03
+_REG_I2C_ADDRESS       = 0x04
+_REG_LED               = 0x05
+_REG_TX_POWER          = 0x13
+_REG_RFM69_RADIO_STATE = 0x14
+_REG_RFM69_NODE_ID     = 0x15
+_REG_RFM69_NETWORK_ID  = 0x16
+_REG_RFM69_TO_NODE_ID  = 0x17
+_REG_RFM69_REG         = 0x18
+_REG_RFM69_VALUE       = 0x19
+_REG_RFM69_RESET       = 0x20
+_REG_PAYLOAD_LENGTH    = 0x21
+_REG_PAYLOAD           = 0x22
+_REG_PAYLOAD_NEW       = 0x23
+_REG_PAYLOAD_GO        = 0x24
+_REG_TRANSCEIVER_READY = 0x25
 
-_RFM69_REG_FRFMSB = 0x07
-_RFM69_REG_FRFMID = 0x08
-_RFM69_REG_FRFLSB = 0x09
+
+_RFM69_REG_BITRATEMSB  = 0x03
+_RFM69_REG_BITRATELSB  = 0x04
+_RFM69_REG_FRFMSB      = 0x07
+_RFM69_REG_FRFMID      = 0x08
+_RFM69_REG_FRFLSB      = 0x09
 
 _MAXIMUM_PAYLOAD_LENGTH = 61 # The Low Power Labs Arduino library is limited to 65 bytes total payload including a 4 header bytes
 _MAXIMUM_I2C_SIZE = 32 #For ATmega328 based Arduinos, the I2C buffer is limited to 32 bytes
@@ -72,6 +74,7 @@ class PiicoDev_Radio(object):
         self.key = ''
         self.value = None
         self.source_radio_address = 0
+        self._speed = 2
         try:
             if self.whoami != _DEVICE_ID:
                 print("* Incorrect device found at address {}".format(address))   
@@ -285,6 +288,45 @@ class PiicoDev_Radio(object):
         print(self.get_rfm69_register(_RFM69_REG_FRFMSB))
         print(self.get_rfm69_register(_RFM69_REG_FRFMID))
         print(self.get_rfm69_register(_RFM69_REG_FRFLSB))
+    
+#define RF_BITRATEMSB_9600            0x0D
+#define RF_BITRATELSB_9600            0x05
+#define RF_BITRATEMSB_115200          0x01
+#define RF_BITRATELSB_115200          0x16
+#define RF_BITRATEMSB_300000          0x00
+#define RF_BITRATELSB_300000          0x6B
+#define REG_BITRATEMSB    0x03
+#define REG_BITRATELSB    0x04
+    
+    @property
+    def speed(self):
+        return self._speed
+    
+    @speed.setter
+    def speed(self, speed):
+        if speed == 1: # 9600
+            sleep_ms(10)
+            self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0x0D)
+            sleep_ms(10)
+            self.set_rfm69_register(_RFM69_REG_BITRATELSB,0x05)
+            sleep_ms(10)
+            _speed = 1
+        elif speed == 2: # 115200
+            sleep_ms(10)
+            self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0x01)
+            sleep_ms(10)
+            self.set_rfm69_register(_RFM69_REG_BITRATELSB,0x16)
+            sleep_ms(10)
+            _speed = 2
+        elif speed == 3: # 300000
+            sleep_ms(10)
+            self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0x00)
+            sleep_ms(10)
+            self.set_rfm69_register(_RFM69_REG_BITRATELSB,0x6B)
+            sleep_ms(10)
+            _speed = 3
+        else:
+            print('* speed not valid')
     
     @property
     def _on(self):

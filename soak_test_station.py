@@ -27,8 +27,9 @@ print('radio.tx_power:' + str(radio.tx_power))
 #radio.get_frequency()
 #sleep_ms(1000)
 radio.get_frequency()
+radio.speed = 1
 
-while i < 100000:
+while i < 10000:
     i += 1
     radio.send(key,i,address=0)
     sleep_ms(1000)
