@@ -19,34 +19,37 @@ This module has been tested on:
 
 ## Initialisation
 
-### `PiicoDev_Radio(bus=, freq=, sda=, scl=, address=0x1A, id=, frequency=None, radio_address=0, channel=0, queue=3, debug=False)`
+### `PiicoDev_Radio(bus=, freq=, sda=, scl=, address=0x1A, id=, channel=0, radio_address=1, speed=2, radio_frequency=922, suppress_warnings=False)`
 
-| Parameter      | Type                     | Range             | Default                               | Description
-| -------------- | ------------------------ | ----------------- | ------------------------------------- | -----------
-| bus            | int                      | 0,1               | Raspberry Pi Pico: 0, Raspberry Pi: 1 | I2C Bus. Ignored on Micro:bit.
-| freq           | int                      | 100 to 1000000    | Device dependent                      | I2C Bus frequency (Hz). Ignored on Raspberry Pi.
-| sda            | Pin                      | Device Dependent  | Device Dependent                      | I2C SDA Pin. Implemented on Raspberry Pi Pico only.
-| scl            | Pin                      | Device Dependent  | Device Dependent                      | I2C SCL Pin. Implemented on Raspberry Pi Pico only.
-| address        | int                      | 0x1A, 0x08 - 0x77 | 0x1A                                  | Manually specify the address of the connected device. For when a software address is set on the device.
-| id             | List[int, int, int, int] | 1=ON, 0=OFF       | [0,0,0,0]                             | Hardware switches change the device address - Abstracts the need for user to look up an address, simply input the switch positions. Alternatively, use `address` for explicit address.
-| radio_adddress | int                      | 0 - 255           | 0                                     | See the `.radio_address` property for more information
-| channel        | int                      | 0 - 255           | 0                                     | See the `.channel` property for more information
-| queue          | int                      | 0 - 255           | 3                                     | See the `.queue` property for more information
-| debug          | bool                     |                   | False                                 | Debug mode slows down transactions so it works better with Arduino software serial
+| Parameter         | Type                     | Range             | Default                               | Description
+| ----------------- | ------------------------ | ----------------- | ------------------------------------- | -----------
+| bus               | int                      | 0,1               | Raspberry Pi Pico: 0, Raspberry Pi: 1 | I2C Bus. Ignored on Micro:bit.
+| freq              | int                      | 100 to 1000000    | Device dependent                      | I2C Bus frequency (Hz). Ignored on Raspberry Pi.
+| sda               | Pin                      | Device Dependent  | Device Dependent                      | I2C SDA Pin. Implemented on Raspberry Pi Pico only.
+| scl               | Pin                      | Device Dependent  | Device Dependent                      | I2C SCL Pin. Implemented on Raspberry Pi Pico only.
+| address           | int                      | 0x1A, 0x08 - 0x77 | 0x1A                                  | Manually specify the address of the connected device. For when a software address is set on the device.
+| id                | List[int, int, int, int] | 1=ON, 0=OFF       | [0,0,0,0]                             | Hardware switches change the device address - Abstracts the need for user to look up an address, simply input the switch positions. Alternatively, use `address` for explicit address.
+| channel           | int                      | 0 - 255           | 0                                     | Defines an arbitrary "channel" to which the radio is tuned. Messages will be sent via this channel and only messages received via this channel will shown.
+| radio_adddress    | int                      | 0 - 255           | 1                                     | Used to filter incoming packets, keeping only those that match the address you set.
+| speed             | int                      | 1, 2, 3           | 2                                     | See `.speed` property for more information.
+| radio_frequency   | int                      | 915, 918, 922, 925, 228 | 922                             | Chose what frequency the radio will operate at. All radios must be tuned to the same frequency to communicate.
+| suppress_warnings | bool                     |                   | False                                 | If True, warnings will be suppressed
 
 ## Properties
 
-### `.radio_address`
 
-(default=0) is an arbitrary name, expressed as an integer value from 0 to 255 (inclusive), that's used to filter incoming packets, keeping only those that match the address you set.
 
-### `.channel`
-
-(default=0) can be an integer value from 0 to 255 (inclusive) that defines an arbitrary "channel" to which the radio is tuned. Messages will be sent via this channel and only messages received via this channel will shown.
-
-### `.queue`
-
-(default=3) specifies the number of messages that can be stored on the incoming message queue. If there are no spaces left on the queue for incoming messages, then the incoming message is dropped.
+### `.speed`
+| Number | Baudrate (kbps) | Useage
+| ------ | --------------- | ------
+| 1      | 9.6             | Slower, longer range
+| 2      | 115.2           | Balanced speed and range (default)
+| 3      | 300             | Fastest, short range.
+Example Usage:
+```
+radio.speed = 1 # I want long range
+print(radio.speed)
+```
 
 ### `.power`
 
