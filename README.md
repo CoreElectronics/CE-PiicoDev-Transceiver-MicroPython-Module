@@ -15,7 +15,7 @@ This module has been tested on:
 
 ## Initialisation
 
-### `PiicoDev_Radio(bus=, freq=, sda=, scl=, address=0x1A, id=, channel=0, radio_address=1, speed=2, radio_frequency=922, suppress_warnings=False)`
+### `PiicoDev_Radio(bus=, freq=, sda=, scl=, address=0x1A, id=, channel=0, radio_address=1, speed=2, , radio_frequency=922, tx_power=20, suppress_warnings=False)`
 
 | Parameter         | Type                     | Range             | Default                               | Description
 | ----------------- | ------------------------ | ----------------- | ------------------------------------- | -----------
@@ -28,7 +28,8 @@ This module has been tested on:
 | channel           | int                      | 0 - 255           | 0                                     | Defines an arbitrary "channel" to which the radio is tuned. Messages will be sent via this channel and only messages received via this channel will shown.
 | radio_adddress    | int                      | 0 - 255           | 1                                     | Used to filter incoming packets, keeping only those that match the address you set.
 | speed             | int                      | 1, 2, 3           | 2                                     | See `.speed` property for more information.
-| radio_frequency   | int                      | 915, 918, 922, 925, 228 | 922                             | Chose what frequency the radio will operate at. All radios must be tuned to the same frequency to communicate.
+| radio_frequency   | int                      | 915, 918, 922, 925, 228 | 922                             | See `.radio_frequency` property for more information.
+| tx_power          | int                      | -2 to 20 dB       | 20                                    | See `.tx_power` property for more information.
 | suppress_warnings | bool                     |                   | False                                 | If True, warnings will be suppressed
 
 ## Properties
@@ -48,27 +49,36 @@ radio.speed = 1 # I want long range
 print(radio.speed)
 ```
 
-### `.power`
+### `.radio_frequency`
+Choose what frequency the radio will operate at. All radios must be tuned to the same frequency to communicate. Choose between 915, 918, 922(default), 925, 228.
 
-(default=6) is an integer value from 0 to 7 (inclusive) to indicate the strength of signal used when broadcasting a message. The higher the value the stronger the signal, but the more power is consumed by the device. The numbering translates to positions in the following list of dBm (decibel milliwatt) values: -30, -20, -16, -12, -8, -4, 0, 4.
+Example Usage:
+``` Python
+radio.radio_frequency = 918 # I have interference at the default 922 MHz
+print(radio.radio_frequency)
+```
 
-### `.data_rate`
+### `.tx_power`
+Set the transmitter power
 
-(default=radio.RATE_1MBIT) indicates the speed at which data throughput takes place. Can be one of the following contants defined in the ``radio`` module : `RATE_250KBIT`, `RATE_1MBIT` or `RATE_2MBIT`.
+Example Usage:
+``` Python
+radio.tx_power = -2 # I don't want to interfeare with nearby devices
+print(radio.tx_power)
+```
 
 ## Methods
+### `.off()`
+
+Turns off the radio.
 
 ### `.on()`
 
 Turns the radio on.
 
-### `.off()`
+### `.send(message, value, destination radio address)`
 
-Turns off the radio.
-
-### `.send(message, value, address)`
-
-Sends a message string. This is the equivalent of send_bytes(bytes(message, 'utf8')).
+Sends a message string.
 
 #### Examples
 
@@ -82,7 +92,11 @@ Sends a message string. This is the equivalent of send_bytes(bytes(message, 'utf
 
 ### `.receive()`
 
-if radio.received_integer():
+Checks for a new message.
+
+``` Python
+if radio.receive():
+
     print(radio.message)
 
 if radio.received_number():
@@ -93,16 +107,13 @@ if radio.received_value():
     
 if radio.received_string():
     print(radio.message)
+```
 
 ### Set or Get RFM69 Register Values
 
 `value = radio.get_rfm69_register(0x29)`
 
 `radio.set_rfm69_register(0x29, 221)`
-
-| channel                   |             | 1     | 0 to 255     | Channel
-| source_radio_adddress     |             | 1     | 1 to 255     | Source radio address
-| destination_radio_address |             | 1     | 0 to 255     | Destination radio address
 
 
 ## Payload
@@ -115,7 +126,7 @@ Tx Position = Rx Position - 2
 | Name                      | Rx Position | Bytes | Range        | Description
 | ------------------------- | ----------- | ----- | ------------ | -----------
 | rssi                      | 0           | 1     | 0 to 255     | RSSI (module negates the value)
-| source_radio_address        | 1           | 1     | 0 to 255     | Source Radio Address
+| source_radio_address      | 1           | 1     | 0 to 255     | Source Radio Address
 | type                      | 2           | 1     | 0 - 3        | Type of message (0: invalid, 1: key, int, 2: key, float, 3: message string)
 
 If the type is 1 or 2:
