@@ -50,7 +50,7 @@ def _set_bit(x, n):
     return x | (1 << n)
 
 class PiicoDev_Radio(object):
-    def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None, radio_address=1, channel=0, suppress_warnings=False, debug=False):
+    def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None, channel=0, radio_address=1, speed=2, radio_frequency=922, suppress_warnings=False, debug=False):
         try:
             if compat_ind >= 1:
                 pass
@@ -74,7 +74,8 @@ class PiicoDev_Radio(object):
         self.key = ''
         self.value = None
         self.source_radio_address = 0
-        self._speed = 2
+        self.radio_frequency = radio_frequency
+        self.speed = speed
         try:
             if self.whoami != _DEVICE_ID:
                 print("* Incorrect device found at address {}".format(address))   
@@ -252,7 +253,12 @@ class PiicoDev_Radio(object):
         self._write_int(_REG_RFM69_REG, register)
         self._write_int(_REG_RFM69_VALUE, value)
     
-    def set_frequency(self, frequency):
+    @property
+    def radio_frequency(self):
+        return self._radio_frequency
+    
+    @radio_frequency.setter
+    def radio_frequency(self, frequency):
         while self.transceiver_ready == False:
             sleep_ms(10)
         if frequency == 915:
@@ -263,7 +269,18 @@ class PiicoDev_Radio(object):
             sleep_ms(5)
             self.set_rfm69_register(_RFM69_REG_FRFLSB,0x00)
             sleep_ms(5)
+            self._radio_frequency = 915
             print('frequency set to 915')
+        elif frequency == 918:
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFMSB,0xE5)
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFMID,0x80)
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFLSB,0x00)
+            sleep_ms(5)
+            self._radio_frequency = 918
+            print('frequency set to 918')
         elif frequency == 922:
             sleep_ms(5)
             self.set_rfm69_register(_RFM69_REG_FRFMSB,0xE6)
@@ -272,7 +289,18 @@ class PiicoDev_Radio(object):
             sleep_ms(5)
             self.set_rfm69_register(_RFM69_REG_FRFLSB,0x00)
             sleep_ms(5)
+            self._radio_frequency = 922
             print('frequency set to 922')
+        elif frequency == 925:
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFMSB,0xE7)
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFMID,0x40)
+            sleep_ms(5)
+            self.set_rfm69_register(_RFM69_REG_FRFLSB,0x00)
+            sleep_ms(5)
+            self._radio_frequency = 925
+            print('frequency set to 925')
         elif frequency == 928:
             sleep_ms(5)
             self.set_rfm69_register(_RFM69_REG_FRFMSB,0xE8)
@@ -281,22 +309,10 @@ class PiicoDev_Radio(object):
             sleep_ms(5)
             self.set_rfm69_register(_RFM69_REG_FRFLSB,0x00)
             sleep_ms(5)
+            self._radio_frequency = 928
+            print('frequency set to 928')
         else:
             print(' * frequency not supported')
-            
-    def get_frequency(self):
-        print(self.get_rfm69_register(_RFM69_REG_FRFMSB))
-        print(self.get_rfm69_register(_RFM69_REG_FRFMID))
-        print(self.get_rfm69_register(_RFM69_REG_FRFLSB))
-    
-#define RF_BITRATEMSB_9600            0x0D
-#define RF_BITRATELSB_9600            0x05
-#define RF_BITRATEMSB_115200          0x01
-#define RF_BITRATELSB_115200          0x16
-#define RF_BITRATEMSB_300000          0x00
-#define RF_BITRATELSB_300000          0x6B
-#define REG_BITRATEMSB    0x03
-#define REG_BITRATELSB    0x04
     
     @property
     def speed(self):
@@ -310,21 +326,21 @@ class PiicoDev_Radio(object):
             sleep_ms(10)
             self.set_rfm69_register(_RFM69_REG_BITRATELSB,0x05)
             sleep_ms(10)
-            _speed = 1
+            self._speed = 1
         elif speed == 2: # 115200
             sleep_ms(10)
             self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0x01)
             sleep_ms(10)
             self.set_rfm69_register(_RFM69_REG_BITRATELSB,0x16)
             sleep_ms(10)
-            _speed = 2
+            self._speed = 2
         elif speed == 3: # 300000
             sleep_ms(10)
             self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0x00)
             sleep_ms(10)
             self.set_rfm69_register(_RFM69_REG_BITRATELSB,0x6B)
             sleep_ms(10)
-            _speed = 3
+            self._speed = 3
         else:
             print('* speed not valid')
     
