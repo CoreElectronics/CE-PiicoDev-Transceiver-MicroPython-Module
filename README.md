@@ -13,10 +13,6 @@ This module has been tested on:
  - Raspberry Pi SBC
 -->
 
-## Overview
-
-![Overview](docs/overview.svg "Overview")
-
 ## Initialisation
 
 ### `PiicoDev_Radio(bus=, freq=, sda=, scl=, address=0x1A, id=, channel=0, radio_address=1, speed=2, radio_frequency=922, suppress_warnings=False)`
@@ -45,8 +41,9 @@ This module has been tested on:
 | 1      | 9.6             | Slower, longer range
 | 2      | 115.2           | Balanced speed and range (default)
 | 3      | 300             | Fastest, short range.
+
 Example Usage:
-```
+``` Python
 radio.speed = 1 # I want long range
 print(radio.speed)
 ```
