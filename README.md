@@ -13,6 +13,16 @@ This module has been tested on:
  - Raspberry Pi SBC
 -->
 
+## Overview
+
+There are three message types that can be sent
+| Type Number | Description
+| ----------- | -----------
+| 1           | key, value pair.  The key can be up to 55 characters and the value is an integer
+| 2           | key, value pair.  The key can be up to 55 characters and the value is a float
+| 3           | message of up to 59 characters
+
+
 ## Initialisation
 
 ### `PiicoDev_Radio(bus=, freq=, sda=, scl=, address=0x1A, id=, channel=0, radio_address=1, speed=2, , radio_frequency=922, tx_power=20, suppress_warnings=False)`
@@ -96,17 +106,10 @@ Checks for a new message.
 
 ``` Python
 if radio.receive():
-
-    print(radio.message)
-
-if radio.received_number():
-    print(radio.number)
-    
-if radio.received_value():
-    print(radio.name, radio.value)
-    
-if radio.received_string():
-    print(radio.message)
+    if (radio.type == 3): 
+        print(radio.message)
+    else:
+        print(radio.name, radio.value)
 ```
 
 ### Set or Get RFM69 Register Values
@@ -142,7 +145,7 @@ If the type is 3:
 | Name                      | Rx Position | Bytes | Range        | Description
 | ------------------------- | ----------- | ----- | ------------ | -----------
 | length                    | 3           | 1     |              | Key length
-| message                   | 4           | <=58  | 59 chars max | Message
+| message                   | 4           | <=59  | 59 chars max | Message
 
 ## Smart Module I2C Registers
 
