@@ -4,7 +4,7 @@
    Based off the Core Electronics Potentiometer module https://github.com/CoreElectronics/CE-PiicoDev-Potentiometer-MicroPython-Module
    Based off work by Felix Rusu 2018, http://www.LowPowerLab.com/contact
    Date: OCTOBER 2022
-   An I2C based module that utilises an RFM69 radio
+   An I2C based module that utilises an RFM69HCW radio
 
    Feel like supporting PiicoDev? Buy a module here:
    Radio: https://core-electronics.com.au/catalog/product/view/sku/CE08757
@@ -12,17 +12,13 @@
 */
 
 #include <RFM69.h> // by LowPowerLab version 1.5.2 get it here: https://www.github.com/lowpowerlab/rfm69
-//#include <RFM69_ATC.h>     //get it here: https://www.github.com/lowpowerlab/rfm69
-//#include <SPIFlash.h>      //get it here: https://www.github.com/lowpowerlab/spiflash
 #include <SPI.h>  //included with Arduino IDE install (www.arduino.cc)
 #include <RFM69registers.h>
 #include <CircularBuffer.h> // by AgileWare version 1.3.3
 #include <SoftwareSerial.h>
 
-#define DEBUG falsee  // If true, expect I2C bus to hang for 1s for I2C transactions
+#define DEBUG false  // If true, expect I2C bus to hang for 1s for I2C transactions
 #if DEBUG == true
-//#define debug(x) Serial.print(x)
-//#define debugln(x) Serial.println(x)
 #define debug(x) swsri.print(x)
 #define debugln(x) swsri.println(x)
 #else
@@ -44,7 +40,6 @@
 #define I2C_BUFFER_SIZE 32  //For ATmega328 based Arduinos, the I2C buffer is limited to 32 bytes
 #define RX_BUFFER_SIZE 64
 #define FREQUENCY RF69_915MHZ
-//#define FREQUENCY   RF69_433MHZ
 #define MYNODEID 1
 #define NETWORKID 0
 #define TONODEID 0
@@ -134,26 +129,16 @@ struct memoryMapData {
   uint8_t firmwareMajor;
   uint8_t firmwareMinor;
   uint8_t i2cAddress;
-  uint8_t ledRead;
-  uint8_t ledWrite;
-  int8_t txPowerRead;
-  int8_t txPowerWrite;
-  uint8_t rfm69RadioStateRead;
-  uint8_t rfm69RadioStateWrite;
-  uint8_t rfm69NodeIDRead;
-  uint8_t rfm69NodeIDWrite;
-  uint8_t rfm69NetworkIDRead;
-  uint8_t rfm69NetworkIDWrite;
-  uint8_t rfm69ToNodeIDRead;
-  uint8_t rfm69ToNodeIDWrite;
+  uint8_t led;
+  int8_t txPower;
+  uint8_t rfm69RadioState;
+  uint8_t rfm69NodeID;
+  uint8_t rfm69NetworkID;
+  uint8_t rfm69ToNodeID;
   uint8_t rfm69Reg;
-  uint8_t rfm69ValueRead;
-  uint8_t rfm69ValueWrite;
+  uint8_t rfm69Value;
   uint8_t rfm69Reset;
-  uint8_t payloadLengthRead;
-  uint8_t payloadLengthWrite;
-  uint8_t payloadRead;  // Dummy - CircularBuffer payloadBufferIncoming used instead
-  uint8_t payloadWrite; // Dummy - CircularBuffer payloadBufferOutgoing used instead
+  uint8_t payloadLength;
   uint8_t payloadNew;
   uint8_t payloadGo;
   uint8_t transceiverReady;
@@ -195,26 +180,16 @@ volatile memoryMapData valueMap = {
   .firmwareMajor = FIRMWARE_MAJOR,
   .firmwareMinor = FIRMWARE_MINOR,
   .i2cAddress = DEFAULT_I2C_ADDRESS,
-  .ledRead = 1,
-  .ledWrite = 1,
-  .txPowerRead = 0,
-  .txPowerWrite = 0,
-  .rfm69RadioStateRead = 0,
-  .rfm69RadioStateWrite = 0,
-  .rfm69NodeIDRead = 1,
-  .rfm69NodeIDWrite = 1,
-  .rfm69NetworkIDRead = 0,
-  .rfm69NetworkIDWrite = 0,
-  .rfm69ToNodeIDRead = 0,
-  .rfm69ToNodeIDWrite = 0,
+  .led = 1,
+  .txPower = 0,
+  .rfm69RadioState = 0,
+  .rfm69NodeID = 1,
+  .rfm69NetworkID = 0,
+  .rfm69ToNodeID = 0,
   .rfm69Reg = 0,
-  .rfm69ValueRead = 0,
-  .rfm69ValueWrite = 0,
+  .rfm69Value = 0,
   .rfm69Reset = 0,
-  .payloadLengthRead = 0,
-  .payloadLengthWrite = 0,
-  .payloadRead = 0,
-  .payloadWrite = 0,
+  .payloadLength = 0,
   .payloadNew = 0,
   .payloadGo = 0,
   .transceiverReady = 0,
@@ -349,11 +324,11 @@ void loop() {
   if (radioInitialise) {
     valueMap.transceiverReady = 0;
     debugln("Initialising Radio");
-    radio.initialize(FREQUENCY, valueMap.rfm69NodeIDWrite, valueMap.rfm69NetworkIDWrite);
+    radio.initialize(FREQUENCY, valueMap.rfm69NodeID, valueMap.rfm69NetworkID);
     debug("Node ID set to:");
-    debugln(valueMap.rfm69NodeIDWrite);
+    debugln(valueMap.rfm69NodeID);
     debug("Network ID set to:");
-    debugln(valueMap.rfm69NetworkIDWrite);
+    debugln(valueMap.rfm69NetworkID);
     radio.setHighPower(true); // Must do for HCW
     radio.writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY);
     radio.writeReg(REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_00);                                        // 0x02
@@ -374,53 +349,44 @@ void loop() {
     radio.writeReg(REG_PREAMBLELSB, 6);                                                                                                                                       // 0x2D
     radio.writeReg(REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_AUTO | RF_SYNC_SIZE_3 | RF_SYNC_TOL_0);                                                                      // 0x2E
     radio.writeReg(REG_SYNCVALUE1, 0x88);                                                                                                                                     // 0x2F
-    radio.writeReg(REG_SYNCVALUE2, valueMap.rfm69NetworkIDWrite);                                                                                                                                // 0x30
+    radio.writeReg(REG_SYNCVALUE2, valueMap.rfm69NetworkID);                                                                                                                                // 0x30
     radio.writeReg(REG_SYNCVALUE3, 0x88);                                                                                                                                     // 0x2F
     radio.writeReg(REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF | RF_PACKET1_CRCAUTOCLEAR_OFF | RF_PACKET1_ADRSFILTERING_OFF);  // 0x37
     radio.writeReg(REG_PAYLOADLENGTH, 66);                                                                                                                                    // 0x38
     radio.writeReg(REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFONOTEMPTY | RF_FIFOTHRESH_VALUE);                                                                                 // 0x3C
     radio.writeReg(REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_2BITS | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF);                                                    // 0x3D
     radio.writeReg(REG_TESTDAGC, RF_DAGC_IMPROVED_LOWBETA0);                                                                                                                  // 0x6F
-
-    //radio.setPowerLevel(0);
     radio.encrypt(null);
     radioInitialise = false;
     radio.readAllRegsCompact();
-    //updateFlag = true;
     valueMap.transceiverReady = 1;
   }
 
   if (radioSetPower) {
     valueMap.transceiverReady = 0;
-    radio.setPowerDBm(valueMap.txPowerWrite);
+    radio.setPowerDBm(valueMap.txPower);
     debug("TxPower:");
-    debugln(valueMap.txPowerWrite);
+    debugln(valueMap.txPower);
     radioSetPower = false;
     //---------------------
     // Print the header row and first register entry
     debugln(); debug("     ");
     for ( uint8_t reg = 0x00; reg < 0x10; reg++ ) {
-      //swsri.print(reg, HEX);
       debug("  ");
     }
-    debugln();
-    debug("00: -- ");
 
     // Loop over the registers from 0x01 to 0x7F and print their values
     for ( uint8_t reg = 0x01; reg < 0x80; reg++ ) {
       if ( reg % 16 == 0 ) {    // Print the header column entries
         debugln();
-        //swsri.print( reg, HEX );
         debug(": ");
       }
 
       // Print the actual register values
       uint8_t ret = radio.readReg( reg );
       if ( ret < 0x10 ) debug("0");  // Handle values less than 10
-      //swsri.print( ret, HEX);
       debug(" ");
     }
-    //---------------------
     valueMap.transceiverReady = 1;
   }
 
@@ -436,24 +402,12 @@ void loop() {
     debug(", message [");
     debug(counter);
     debugln("]");
-    //uint8_t i = 0;
-    //    while (!payloadBufferOutgoing.isEmpty()) {
-    //      transmitBuffer[i] = payloadBufferOutgoing.shift();
-    //      debug((char)transmitBuffer[i]);
-    //      i++;
-    //    }
 
     for (uint8_t i = 0; i < payloadBufferOutgoing.size() - 1; i++) {
       transmitBuffer[i] = payloadBufferOutgoing[i];
     }
-    radio.send(valueMap.rfm69ToNodeIDWrite, transmitBuffer, valueMap.payloadLengthWrite);  //radio.send(valueMap.rfm69ToNodeIDWrite, valueMap.payloadWrite, valueMap.payloadLengthWrite);
+    radio.send(valueMap.rfm69ToNodeID, transmitBuffer, valueMap.payloadLength);
     // What does our outgoing buffer look like?
-    debug("Reading back transmitbuffer");
-    for (uint8_t i = 0; i < sizeof(transmitBuffer) - 1; i++) {
-      debug(transmitBuffer[i]);
-      debug(",");
-    }
-    debugln("Transmit Buffer Read");
     counter++;
     if (counter == 255) {
       counter = 0;
@@ -464,9 +418,7 @@ void loop() {
 
   // RECEIVING
 
-  // In this section, we'll check with the RFM69HCW to see
-  // if it has received any packets:
-
+  // In this section, we'll check with the RFM69HCW to see if it has received any packets
   if (radioState) { // If the radio is off, don't run receiveDone() as this wakes the radio
     if (radio.receiveDone())  // Got one
     {
@@ -486,9 +438,9 @@ void loop() {
         debug("");
       }
       debug(F("]"));
-      valueMap.payloadLengthRead = radio.DATALEN;
-      debug("PayloadLengthRead:");
-      debug(valueMap.payloadLengthRead);
+      valueMap.payloadLength = radio.DATALEN;
+      debug("PayloadLength:");
+      debug(valueMap.payloadLength);
       debug(" RSSI:");
       debugln(radio.RSSI);
     }
@@ -526,8 +478,6 @@ void startI2C() {
   }
   // If none of the address jumpers are set, we use registerMap (but check to make sure that the value is legal first)
   else {
-    debug("valueMap.i2cAddress: ");
-    debugln(valueMap.i2cAddress);
     // if the value is legal, then set it
     if (valueMap.i2cAddress > 0x07 && valueMap.i2cAddress < 0x78)
       address = valueMap.i2cAddress;
@@ -539,13 +489,10 @@ void startI2C() {
 
   // save new address to the register map
   valueMap.i2cAddress = address;
-  //debugln("I2C Address:"); debugln(address);
   recordSystemSettings();  // save the new address to EEPROM
 
   // reconfigure Wire instance
   Wire.end();  //stop I2C on old address
-  //debug("Address: ");
-  //debugln(address);
   Wire.begin(address);  //rejoin the I2C bus on new address
 
   // The connections to the interrupts are severed when a Wire.begin occurs, so here we reattach them
