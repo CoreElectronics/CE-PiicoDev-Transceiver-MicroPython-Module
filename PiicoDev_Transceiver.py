@@ -48,7 +48,7 @@ def truncate(n, decimals=0):
 def _set_bit(x, n):
     return x | (1 << n)
 
-class PiicoDev_Radio(object):
+class PiicoDev_Transceiver(object):
     def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None, channel=0, radio_address=1, speed=2, radio_frequency=922, tx_power=20, suppress_warnings=False, debug=False):
         try:
             if compat_ind >= 1:
