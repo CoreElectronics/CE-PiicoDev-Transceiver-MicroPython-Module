@@ -4,7 +4,7 @@ from time import ticks_ms
 
 debugging=False
 
-radio = PiicoDev_Radio(radio_address=2, channel=0, debug=debugging)
+radio = PiicoDev_Radio(radio_address=127, channel=0, debug=debugging)
 
 i = 0
 key = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRS'
@@ -21,19 +21,28 @@ print('Channel:        ' + str(radio.channel))
 sleep_ms(3000)
 radio_state = True
 radio.on()
-radio.set_frequency(922)
 radio.tx_power = 21
 print('radio.tx_power:' + str(radio.tx_power))
 #radio.get_frequency()
 #sleep_ms(1000)
-radio.get_frequency()
-radio.speed = 1
+radio.radio_frequency = 915
+print(radio.radio_frequency)
+radio.radio_frequency = 918
+print(radio.radio_frequency)
+radio.radio_frequency = 922
+print(radio.radio_frequency)
+radio.radio_frequency = 925
+print(radio.radio_frequency)
+radio.radio_frequency = 928
+print(radio.radio_frequency)
+radio.radio_frequency = 922
+radio.speed = 2
 
 while i < 10000:
     i += 1
     radio.send(key,i,address=0)
-    sleep_ms(1000)
-    sleep_ms(40)  #200
+    #sleep_ms(1000)
+    sleep_ms(100)  #200
     if radio.receive():
         if (radio.value != value_prev + 1 or not radio.key == key) and i > 2:
             print(radio.key + ':' + str(radio.value) + ':ERROR' + str(radio.rssi))

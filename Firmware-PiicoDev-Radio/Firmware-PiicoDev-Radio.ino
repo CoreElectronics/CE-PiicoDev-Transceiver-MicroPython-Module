@@ -58,25 +58,13 @@ enum eepromLocations {
 
 uint8_t oldAddress;
 
-// Hardware Connectins
-// Prototyping with Arduino Uno
-#if defined(__AVR_ATmega328P__)
-const uint8_t powerLedPin = 3;
-const uint16_t addressPin1 = 8;
-const uint16_t addressPin2 = 7;
-const uint16_t addressPin3 = 6;
-const uint16_t addressPin4 = 4;
-const uint8_t rfm69ResetPin = 3;
-#else
-// ATTINY 8x6 or 16x6
+// Hardware Connectins ATTINY 8x6 or 16x6
 const uint8_t powerLedPin = PIN_PA5;
 const uint8_t addressPin1 = PIN_PC3;
 const uint8_t addressPin2 = PIN_PC2;
 const uint8_t addressPin3 = PIN_PC1;
 const uint8_t addressPin4 = PIN_PC0;
 const uint8_t rfm69ResetPin = PIN_PA7;
-
-#endif
 
 // System global variables
 volatile bool updateFlag = true;  // Goes true when new data received
@@ -132,9 +120,9 @@ struct memoryMapData {
   uint8_t led;
   int8_t txPower;
   uint8_t rfm69RadioState;
-  uint8_t rfm69NodeID;
+  uint16_t rfm69NodeID;
   uint8_t rfm69NetworkID;
-  uint8_t rfm69ToNodeID;
+  uint16_t rfm69ToNodeID;
   uint8_t rfm69Reg;
   uint8_t rfm69Value;
   uint8_t rfm69Reset;
@@ -295,14 +283,12 @@ void setup() {
 uint8_t counter = 0;
 long millisPrev = 0;
 
-//char *payloadRead;
-//char *payloadWrite;
-uint8_t rfm69ToNodeIDWrite = 0;
-uint8_t payloadLengthWrite;
-uint8_t payloadGo = 0;
-uint8_t payloadNew = 0;
-uint8_t payloadLengthRead = 0;
-int sendNow = 0;
+
+
+//uint8_t payloadGo = 0;
+//uint8_t payloadNew = 0;
+//uint8_t payloadLengthRead = 0;
+//int sendNow = 0;
 
 
 void loop() {
@@ -408,6 +394,12 @@ void loop() {
     }
     radio.send(valueMap.rfm69ToNodeID, transmitBuffer, valueMap.payloadLength);
     // What does our outgoing buffer look like?
+    debug("Reading back transmitbuffer");
+    for (uint8_t i = 0; i < sizeof(transmitBuffer) - 1; i++) {
+      debug(transmitBuffer[i]);
+      debug(",");
+    }
+    debugln("Transmit Buffer Read");
     counter++;
     if (counter == 255) {
       counter = 0;
@@ -431,11 +423,12 @@ void loop() {
       valueMap.payloadNew = 1;
       payloadBufferIncoming.clear();
       payloadBufferIncoming.push(abs(radio.RSSI));
+      payloadBufferIncoming.push(radio.SENDERID >> 8);
       payloadBufferIncoming.push(radio.SENDERID);
       for (byte i = 0; i < radio.DATALEN; i++) {
         debug((char)radio.DATA[i]);
         payloadBufferIncoming.push((char)radio.DATA[i]);
-        debug("");
+        debug(""); 
       }
       debug(F("]"));
       valueMap.payloadLength = radio.DATALEN;
@@ -443,6 +436,12 @@ void loop() {
       debug(valueMap.payloadLength);
       debug(" RSSI:");
       debugln(radio.RSSI);
+      debug("Reading back receive buffer");
+    for (uint8_t i = 0; i < payloadBufferIncoming.size(); i++) {
+      debug(payloadBufferIncoming[i]);
+      debug(",");
+    }
+    debugln("Receive Buffer Read");
     }
   }
 }

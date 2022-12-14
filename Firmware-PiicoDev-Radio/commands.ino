@@ -75,7 +75,7 @@ void getRfm69NodeID(int numberOfBytesReceived, char *data) {
 }
 
 void setRfm69NodeID(int numberOfBytesReceived, char *data) {
-  valueMap.rfm69NodeID = data[0];
+  valueMap.rfm69NodeID = data[0] << 8 | data[1];
   radioInitialise = true;
 }
 
@@ -93,7 +93,7 @@ void getRfm69ToNodeID(int numberOfBytesReceived, char *data) {
 }
 
 void setRfm69ToNodeID(int numberOfBytesReceived, char *data) {
-  valueMap.rfm69ToNodeID = data[0];
+  valueMap.rfm69ToNodeID = data[0] << 8 | data[1];
 }
 
 void setRfm69Reg(int numberOfBytesReceived, char *data) {

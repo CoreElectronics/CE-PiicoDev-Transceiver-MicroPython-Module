@@ -64,7 +64,11 @@ class PiicoDev_Radio(object):
             self._address=8+id[0]+2*id[1]+4*id[2]+8*id[3] # select address from pool
         else: self._address = address # accept an integer
         self.debug=debug
-        self._write_int(_REG_RFM69_NODE_ID, radio_address)
+        if radio_address < 0:
+            radio_address = 0
+        if radio_address > 127: # Only 7 bits seem to go over the air so any address higher than 127 gives an incorrect source address
+            radio_address = 127
+        self._write_int(_REG_RFM69_NODE_ID, radio_address, 2)
         self._write_int(_REG_RFM69_NETWORK_ID, channel)
 #         self.destination_radio_address = radio_config.destination_radio_address
         self.rssi = 0
@@ -122,7 +126,7 @@ class PiicoDev_Radio(object):
             if self.debug:
                 sleep_ms(100) # for debug mode
                 print('delay')
-            payload_length = self._read_int(_REG_PAYLOAD_LENGTH) + 2 # _MAXIMUM_PAYLOAD_LENGTH + RSSI + source_radio_address
+            payload_length = self._read_int(_REG_PAYLOAD_LENGTH) + 3 # _MAXIMUM_PAYLOAD_LENGTH + RSSI + source_radio_address
             unprocessed_payload_length = payload_length
             sleep_ms(5)
             number_of_chunks = int(truncate(payload_length / _MAXIMUM_I2C_SIZE))+1
@@ -167,16 +171,16 @@ class PiicoDev_Radio(object):
     @property
     def radio_address(self):
         """ There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino"""
-        return self._read_int(_REG_RFM69_NODE_ID)
+        return self._read_int(_REG_RFM69_NODE_ID, 2)
         print("Node ID Called")
         
     @property
     def destination_radio_address(self):
-        return self._read_int(_REG_RFM69_TO_NODE_ID)
+        return self._read_int(_REG_RFM69_TO_NODE_ID, 2)
     
     @destination_radio_address.setter
     def destination_radio_address(self, value):
-        self._write_int(_REG_RFM69_TO_NODE_ID, value)
+        self._write_int(_REG_RFM69_TO_NODE_ID, value, 2)
     
     def rfm69_reset(self):
         debug("Resetting RFM69")
@@ -199,17 +203,17 @@ class PiicoDev_Radio(object):
         if payload_length != 0:
             payload_bytes = bytes(payload)
             self.rssi = -int.from_bytes(payload_bytes[:1], 'big')
-            self.source_radio_address = int.from_bytes(payload_bytes[1:2], 'big')
-            self.type = int.from_bytes(payload_bytes[2:3], 'big')
+            self.source_radio_address = int.from_bytes(payload_bytes[1:3], 'big')
+            self.type = int.from_bytes(payload_bytes[3:4], 'big')
             try:
                 if self.type == 1:
-                    self.key = str(payload_bytes[8:], 'utf8')
-                    self.value = unpack('>i', (payload_bytes[3:7]))[0]
+                    self.key = str(payload_bytes[9:], 'utf8')
+                    self.value = unpack('>i', (payload_bytes[4:8]))[0]
                 if self.type == 2:
-                    self.key = str(payload_bytes[8:], 'utf8')
-                    self.value = unpack('>f', (payload_bytes[3:7]))[0]
+                    self.key = str(payload_bytes[9:], 'utf8')
+                    self.value = unpack('>f', (payload_bytes[4:8]))[0]
                 if self.type == 3:
-                    self.message = str(payload_bytes[3:], 'utf8')
+                    self.message = str(payload_bytes[4:], 'utf8')
             except:
                 print('* error parsing payload')
             return True

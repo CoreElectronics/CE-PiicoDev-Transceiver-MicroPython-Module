@@ -11,7 +11,7 @@ print('Radio Address   ' + str(radio.radio_address))
 print('Channel:        ' + str(radio.channel))
 
 radio.tx_power = 20
-radio.speed = 1
+radio.speed = 2
 
 while True:
     if radio.receive():
@@ -20,6 +20,6 @@ while True:
 #         print("Message Type:" + str(radio.type))
 #         print("Value:" + str(radio.value))
 #         print("Key:" + str(radio.key))
-        print(str(radio.value) + ':' + str(radio.key) + " RSSI:" + str(radio.rssi))
+        print(str(radio.source_radio_address)+':'+str(radio.type)+':'+str(radio.value) + ':' + str(radio.key) + " RSSI:" + str(radio.rssi))
         radio.send(radio.key, radio.value)
     sleep_ms(5)
