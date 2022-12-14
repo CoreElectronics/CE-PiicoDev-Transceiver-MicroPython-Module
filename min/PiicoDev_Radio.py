@@ -44,7 +44,10 @@ class PiicoDev_Radio:
 		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl,suppress_warnings=suppress_warnings);self._address=address
 		if type(id)is list and not all((v==0 for v in id)):assert max(id)<=1 and min(id)>=0 and len(id)==4,'id must be a list of 1/0, length=4';self._address=8+id[0]+2*id[1]+4*id[2]+8*id[3]
 		else:self._address=address
-		self.debug=debug;self._write_int(_REG_RFM69_NODE_ID,radio_address);self._write_int(_REG_RFM69_NETWORK_ID,channel);self.rssi=0;self.type=0;self.message='';self.key='';self.value=_A;self.source_radio_address=0;self.radio_frequency=radio_frequency;self.speed=speed;self.tx_power=tx_power
+		self.debug=debug
+		if radio_address<0:radio_address=0
+		if radio_address>127:radio_address=127
+		self._write_int(_REG_RFM69_NODE_ID,radio_address,2);self._write_int(_REG_RFM69_NETWORK_ID,channel);self.rssi=0;self.type=0;self.message='';self.key='';self.value=_A;self.source_radio_address=0;self.radio_frequency=radio_frequency;self.speed=speed;self.tx_power=tx_power
 		try:
 			if self.whoami!=_DEVICE_ID:print('* Incorrect device found at address {}'.format(address))
 		except:print("* Couldn't find a device - check switches and wiring")
@@ -67,7 +70,7 @@ class PiicoDev_Radio:
 		payload_length=0;payload=bytes(0)
 		if self._payload_new==1:
 			if self.debug:sleep_ms(100);print('delay')
-			payload_length=self._read_int(_REG_PAYLOAD_LENGTH)+2;unprocessed_payload_length=payload_length;sleep_ms(5);number_of_chunks=int(truncate(payload_length/_MAXIMUM_I2C_SIZE))+1
+			payload_length=self._read_int(_REG_PAYLOAD_LENGTH)+3;unprocessed_payload_length=payload_length;sleep_ms(5);number_of_chunks=int(truncate(payload_length/_MAXIMUM_I2C_SIZE))+1
 			for i in range(number_of_chunks):
 				chunk_length=_MAXIMUM_I2C_SIZE
 				if unprocessed_payload_length<32:chunk_length=unprocessed_payload_length
@@ -89,11 +92,11 @@ class PiicoDev_Radio:
 	@property
 	def channel(self):' There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino';return self._read_int(_REG_RFM69_NETWORK_ID)
 	@property
-	def radio_address(self):' There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino';return self._read_int(_REG_RFM69_NODE_ID);print('Node ID Called')
+	def radio_address(self):' There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino';return self._read_int(_REG_RFM69_NODE_ID,2);print('Node ID Called')
 	@property
-	def destination_radio_address(self):return self._read_int(_REG_RFM69_TO_NODE_ID)
+	def destination_radio_address(self):return self._read_int(_REG_RFM69_TO_NODE_ID,2)
 	@destination_radio_address.setter
-	def destination_radio_address(self,value):self._write_int(_REG_RFM69_TO_NODE_ID,value)
+	def destination_radio_address(self,value):self._write_int(_REG_RFM69_TO_NODE_ID,value,2)
 	def rfm69_reset(self):debug('Resetting RFM69');self._write_int(_REG_RFM69_RESET,1)
 	@property
 	def payload_length(self):return 0
@@ -104,11 +107,11 @@ class PiicoDev_Radio:
 	def receive(self):
 		payload_length,payload=self.receive_payload()
 		if payload_length!=0:
-			payload_bytes=bytes(payload);self.rssi=-int.from_bytes(payload_bytes[:1],_C);self.source_radio_address=int.from_bytes(payload_bytes[1:2],_C);self.type=int.from_bytes(payload_bytes[2:3],_C)
+			payload_bytes=bytes(payload);self.rssi=-int.from_bytes(payload_bytes[:1],_C);self.source_radio_address=int.from_bytes(payload_bytes[1:3],_C);self.type=int.from_bytes(payload_bytes[3:4],_C)
 			try:
-				if self.type==1:self.key=str(payload_bytes[8:],_D);self.value=unpack('>i',payload_bytes[3:7])[0]
-				if self.type==2:self.key=str(payload_bytes[8:],_D);self.value=unpack('>f',payload_bytes[3:7])[0]
-				if self.type==3:self.message=str(payload_bytes[3:],_D)
+				if self.type==1:self.key=str(payload_bytes[9:],_D);self.value=unpack('>i',payload_bytes[4:8])[0]
+				if self.type==2:self.key=str(payload_bytes[9:],_D);self.value=unpack('>f',payload_bytes[4:8])[0]
+				if self.type==3:self.message=str(payload_bytes[4:],_D)
 			except:print('* error parsing payload')
 			return True
 		return _B
