@@ -68,8 +68,20 @@ class PiicoDev_Transceiver(object):
             radio_address = 0
         if radio_address > 127: # Only 7 bits seem to go over the air so any address higher than 127 gives an incorrect source address
             radio_address = 127
+        print('start updating radio')
+        if self.debug:
+            sleep_ms(3000)
+        print('radio left alone for 3 seconds')
+        while self.transceiver_ready == False:
+            sleep_ms(100)
+            print(self.transceiver_ready)
         self._write_int(_REG_RFM69_NODE_ID, radio_address, 2)
+        if self.debug:
+            sleep_ms(3000)
+        while self.transceiver_ready == False:
+            sleep_ms(10)
         self._write_int(_REG_RFM69_NETWORK_ID, channel)
+        print('finished updating radio')
 #         self.destination_radio_address = radio_config.destination_radio_address
         self.rssi = 0
         self.type = 0
@@ -213,7 +225,7 @@ class PiicoDev_Transceiver(object):
                     self.key = str(payload_bytes[9:], 'utf8')
                     self.value = unpack('>f', (payload_bytes[4:8]))[0]
                 if self.type == 3:
-                    self.message = str(payload_bytes[4:], 'utf8')
+                    self.message = str(payload_bytes[5:], 'utf8')
             except:
                 print('* error parsing payload')
             return True
@@ -274,7 +286,6 @@ class PiicoDev_Transceiver(object):
             self.set_rfm69_register(_RFM69_REG_FRFLSB,0x00)
             sleep_ms(5)
             self._radio_frequency = 915
-            print('frequency set to 915')
         elif frequency == 918:
             sleep_ms(5)
             self.set_rfm69_register(_RFM69_REG_FRFMSB,0xE5)
@@ -284,7 +295,6 @@ class PiicoDev_Transceiver(object):
             self.set_rfm69_register(_RFM69_REG_FRFLSB,0x00)
             sleep_ms(5)
             self._radio_frequency = 918
-            print('frequency set to 918')
         elif frequency == 922:
             sleep_ms(5)
             self.set_rfm69_register(_RFM69_REG_FRFMSB,0xE6)
@@ -294,7 +304,6 @@ class PiicoDev_Transceiver(object):
             self.set_rfm69_register(_RFM69_REG_FRFLSB,0x00)
             sleep_ms(5)
             self._radio_frequency = 922
-            print('frequency set to 922')
         elif frequency == 925:
             sleep_ms(5)
             self.set_rfm69_register(_RFM69_REG_FRFMSB,0xE7)
@@ -304,7 +313,6 @@ class PiicoDev_Transceiver(object):
             self.set_rfm69_register(_RFM69_REG_FRFLSB,0x00)
             sleep_ms(5)
             self._radio_frequency = 925
-            print('frequency set to 925')
         elif frequency == 928:
             sleep_ms(5)
             self.set_rfm69_register(_RFM69_REG_FRFMSB,0xE8)
@@ -314,7 +322,6 @@ class PiicoDev_Transceiver(object):
             self.set_rfm69_register(_RFM69_REG_FRFLSB,0x00)
             sleep_ms(5)
             self._radio_frequency = 928
-            print('frequency set to 928')
         else:
             print(' * frequency not supported')
     
