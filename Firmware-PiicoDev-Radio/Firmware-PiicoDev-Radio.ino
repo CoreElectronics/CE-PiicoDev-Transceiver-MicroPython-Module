@@ -60,10 +60,10 @@ uint8_t oldAddress;
 
 // Hardware Connectins ATTINY 8x6 or 16x6
 const uint8_t powerLedPin = PIN_PA5;
-const uint8_t addressPin1 = PIN_PC3;
-const uint8_t addressPin2 = PIN_PC2;
-const uint8_t addressPin3 = PIN_PC1;
-const uint8_t addressPin4 = PIN_PC0;
+const uint8_t addressPin1 = PIN_PC0;
+const uint8_t addressPin2 = PIN_PC1;
+const uint8_t addressPin3 = PIN_PC2;
+const uint8_t addressPin4 = PIN_PC3;
 const uint8_t rfm69ResetPin = PIN_PA7;
 
 // System global variables
@@ -78,7 +78,6 @@ uint8_t responseBuffer[I2C_BUFFER_SIZE];  // Used to pass data back to master
 volatile uint8_t responseSize = 1;        // Defines how many bytes of relevant data is contained in the responseBuffer
 
 bool radioInitialise = true;
-bool radioState = true;
 bool radioSetPower = true;
 bool radioReset = false;
 
@@ -170,7 +169,7 @@ volatile memoryMapData valueMap = {
   .i2cAddress = DEFAULT_I2C_ADDRESS,
   .led = 1,
   .txPower = 0,
-  .rfm69RadioState = 0,
+  .rfm69RadioState = 1,
   .rfm69NodeID = 1,
   .rfm69NetworkID = 0,
   .rfm69ToNodeID = 0,
@@ -248,15 +247,15 @@ functionMap functions[] = {
   { registerMap.transceiverReady, getTransceiverReady },
 };
 
-typedef struct {
-  int nodeId;  //store this nodeId
-  char message[16];
-} Payload;
-Payload theDataRead;
-Payload theDataWrite;
+//typedef struct {
+//  int nodeId;  //store this nodeId
+//  char message[16];
+//} Payload;
+//Payload theDataRead;
+//Payload theDataWrite;
 
 void setup() {
-    #if DEBUG
+#if DEBUG
   //swsri.begin(9600);
   swsri.begin(115200);
   debugln("Begin");
@@ -283,14 +282,6 @@ void setup() {
 uint8_t counter = 0;
 long millisPrev = 0;
 
-
-
-//uint8_t payloadGo = 0;
-//uint8_t payloadNew = 0;
-//uint8_t payloadLengthRead = 0;
-//int sendNow = 0;
-
-
 void loop() {
   if (updateFlag) {
     startI2C();  // reinitialise I2C with new address, update EEPROM with custom address as necessary
@@ -308,14 +299,16 @@ void loop() {
   }
 
   if (radioInitialise) {
+    //powerLed(false);
     valueMap.transceiverReady = 0;
-    debugln("Initialising Radio");
+    debugln("Initialising Radio.");
     radio.initialize(FREQUENCY, valueMap.rfm69NodeID, valueMap.rfm69NetworkID);
     debug("Node ID set to:");
     debugln(valueMap.rfm69NodeID);
     debug("Network ID set to:");
     debugln(valueMap.rfm69NetworkID);
     radio.setHighPower(true); // Must do for HCW
+    debugln("High Power Set");
     radio.writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY);
     radio.writeReg(REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_00);                                        // 0x02
     //radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_300000);                                                                                                                     // 0x03
@@ -331,6 +324,7 @@ void loop() {
     radio.writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01);                                                                                                                  // 0x25
     radio.writeReg(REG_DIOMAPPING2, RF_DIOMAPPING2_CLKOUT_OFF);                                                                                                               //0x26
     radio.writeReg(REG_IRQFLAGS2, RF_IRQFLAGS2_FIFOOVERRUN);                                                                                                                  // 0x28
+    debugln("a");
     radio.writeReg(REG_RSSITHRESH, 220);                                                                                                                                      // 0x29
     radio.writeReg(REG_PREAMBLELSB, 6);                                                                                                                                       // 0x2D
     radio.writeReg(REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_AUTO | RF_SYNC_SIZE_3 | RF_SYNC_TOL_0);                                                                      // 0x2E
@@ -344,7 +338,9 @@ void loop() {
     radio.writeReg(REG_TESTDAGC, RF_DAGC_IMPROVED_LOWBETA0);                                                                                                                  // 0x6F
     radio.encrypt(null);
     radioInitialise = false;
-    radio.readAllRegsCompact();
+    //radio.readAllRegsCompact();
+    debugln("Transceiver Ready");
+    //powerLed(true);
     valueMap.transceiverReady = 1;
   }
 
@@ -375,43 +371,45 @@ void loop() {
     }
     valueMap.transceiverReady = 1;
   }
+  debug("valueMap.rfm69RadioState:");
+  debugln(valueMap.rfm69RadioState);
+  if (valueMap.rfm69RadioState == 1) { // If the radio is off, don't send payload or run receiveDone() as this wakes the radio
+    if (valueMap.payloadGo > 0) {
+      // Send the packet!
+      uint8_t transmitBuffer[payloadBufferOutgoing.size()];
+      for (byte i = 0; i < payloadBufferOutgoing.size(); i++) {
+        transmitBuffer[i] = 0;
+      }
 
-  if (valueMap.payloadGo > 0) {
-    // Send the packet!
-    uint8_t transmitBuffer[payloadBufferOutgoing.size()];
-    for (byte i = 0; i < payloadBufferOutgoing.size(); i++) {
-      transmitBuffer[i] = 0;
+      debug("sending to node ");
+      debug(TONODEID);
+      debug(", message [");
+      debug(counter);
+      debugln("]");
+
+      for (uint8_t i = 0; i < payloadBufferOutgoing.size() - 1; i++) {
+        transmitBuffer[i] = payloadBufferOutgoing[i];
+      }
+      radio.send(valueMap.rfm69ToNodeID, transmitBuffer, valueMap.payloadLength);
+      // What does our outgoing buffer look like?
+      debug("Reading back transmitbuffer");
+      for (uint8_t i = 0; i < sizeof(transmitBuffer) - 1; i++) {
+        debug(transmitBuffer[i]);
+        debug(",");
+      }
+      debugln("Transmit Buffer Read");
+      counter++;
+      if (counter == 255) {
+        counter = 0;
+      }
+      payloadBufferOutgoing.clear();
+      valueMap.payloadGo = 0;
     }
 
-    debug("sending to node ");
-    debug(TONODEID);
-    debug(", message [");
-    debug(counter);
-    debugln("]");
+    // RECEIVING
 
-    for (uint8_t i = 0; i < payloadBufferOutgoing.size() - 1; i++) {
-      transmitBuffer[i] = payloadBufferOutgoing[i];
-    }
-    radio.send(valueMap.rfm69ToNodeID, transmitBuffer, valueMap.payloadLength);
-    // What does our outgoing buffer look like?
-    debug("Reading back transmitbuffer");
-    for (uint8_t i = 0; i < sizeof(transmitBuffer) - 1; i++) {
-      debug(transmitBuffer[i]);
-      debug(",");
-    }
-    debugln("Transmit Buffer Read");
-    counter++;
-    if (counter == 255) {
-      counter = 0;
-    }
-    payloadBufferOutgoing.clear();
-    valueMap.payloadGo = 0;
-  }
+    // In this section, we'll check with the RFM69HCW to see if it has received any packets
 
-  // RECEIVING
-
-  // In this section, we'll check with the RFM69HCW to see if it has received any packets
-  if (radioState) { // If the radio is off, don't run receiveDone() as this wakes the radio
     if (radio.receiveDone())  // Got one
     {
       // Print out the information:
@@ -428,7 +426,7 @@ void loop() {
       for (byte i = 0; i < radio.DATALEN; i++) {
         debug((char)radio.DATA[i]);
         payloadBufferIncoming.push((char)radio.DATA[i]);
-        debug(""); 
+        debug("");
       }
       debug(F("]"));
       valueMap.payloadLength = radio.DATALEN;
@@ -437,11 +435,11 @@ void loop() {
       debug(" RSSI:");
       debugln(radio.RSSI);
       debug("Reading back receive buffer");
-    for (uint8_t i = 0; i < payloadBufferIncoming.size(); i++) {
-      debug(payloadBufferIncoming[i]);
-      debug(",");
-    }
-    debugln("Receive Buffer Read");
+      for (uint8_t i = 0; i < payloadBufferIncoming.size(); i++) {
+        debug(payloadBufferIncoming[i]);
+        debug(",");
+      }
+      debugln("Receive Buffer Read");
     }
   }
 }
@@ -485,7 +483,8 @@ void startI2C() {
     else
       address = DEFAULT_I2C_ADDRESS;
   }
-
+  debug("I2C Address:");
+  debug(address);
   // save new address to the register map
   valueMap.i2cAddress = address;
   recordSystemSettings();  // save the new address to EEPROM
