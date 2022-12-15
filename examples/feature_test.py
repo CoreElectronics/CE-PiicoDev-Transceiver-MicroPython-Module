@@ -27,18 +27,23 @@ def test_led():
 
 def test_off_and_on():
     radio.send('About to turn the radio OFF', address=DESTINATION_ADDRESS)
-    sleep_ms(10)
+    print('About to turn the radio OFF')
     radio.off()
-    while radio.transceiver_ready == False:
-        sleep_ms(10)
     radio.send('The radio should be OFF', address=DESTINATION_ADDRESS)
-    sleep_ms(2000)
+    print('The radio should be OFF')
+    sleep_ms(100)
     radio.send('The radio should still be OFF', address=DESTINATION_ADDRESS)
-    sleep_ms(1000)
+    print('The radio should still be OFF')
+    sleep_ms(100)
     radio.on()
-    while radio.transceiver_ready == False:
-        sleep_ms(10)
     radio.send('The radio should now be back ON', address=DESTINATION_ADDRESS)
+    print('The radio should now be back ON')
+
+def test_send_message():
+    radio.send(MESSAGE, address=DESTINATION_ADDRESS)
+    sleep_ms(300) # Compatible with 9600 baud
+    if radio.receive():
+        print('Source Radio Address:'+str(radio.source_radio_address)+' Type:'+str(radio.type)+' Message:'+str(radio.message) + " RSSI:" + str(radio.rssi))
 
 # radio.setI2Caddr(0x33)
 firmware = radio.firmware
@@ -48,14 +53,13 @@ print('          Speed: ' + str(radio.speed))
 print('Radio Frequency: ' + str(radio.radio_frequency))
 print('       Tx Power: ' + str(radio.tx_power))
 
+radio.led = True
+
+test_send_message()
 #test_led()
-#test_off_and_on()
+test_off_and_on()
 
 while True:
-    radio.send(MESSAGE, address=0)
-    sleep_ms(300) # Compatible with 9600 baud
-    if radio.receive():
-        print('Source Radio Address:'+str(radio.source_radio_address)+' Type:'+str(radio.type)+' Message:'+str(radio.message) + " RSSI:" + str(radio.rssi))
-#print(str(radio.source_radio_address)+':'+str(radio.type)+':'+str(radio.value) + ':' + str(radio.key) + " RSSI:" + str(radio.rssi))
-#    sleep_ms(1000)
 
+#print(str(radio.source_radio_address)+':'+str(radio.type)+':'+str(radio.value) + ':' + str(radio.key) + " RSSI:" + str(radio.rssi))
+   sleep_ms(1000)

@@ -62,7 +62,11 @@ void getRfm69RadioState(int numberOfBytesReceived, char *data) {
 void setRfm69RadioState(int numberOfBytesReceived, char *data) {
   valueMap.rfm69RadioState = data[0];
   if (data[0] == 1) {
-    radioInitialise = true;
+    // Clear commands that might have been buffered when the radio was off
+    payloadBufferIncoming.clear();
+    payloadBufferOutgoing.clear();
+    valueMap.payloadGo = 0;
+    radioSetPower = false;
   } else {
     radio.sleep();
   }

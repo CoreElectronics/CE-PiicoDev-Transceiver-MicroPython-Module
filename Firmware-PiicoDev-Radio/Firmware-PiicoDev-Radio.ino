@@ -247,13 +247,6 @@ functionMap functions[] = {
   { registerMap.transceiverReady, getTransceiverReady },
 };
 
-//typedef struct {
-//  int nodeId;  //store this nodeId
-//  char message[16];
-//} Payload;
-//Payload theDataRead;
-//Payload theDataWrite;
-
 void setup() {
 #if DEBUG
   //swsri.begin(9600);
@@ -337,14 +330,18 @@ void loop() {
     radio.writeReg(REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_2BITS | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF);                                                    // 0x3D
     radio.writeReg(REG_TESTDAGC, RF_DAGC_IMPROVED_LOWBETA0);                                                                                                                  // 0x6F
     radio.encrypt(null);
+    payloadBufferIncoming.clear();
+    payloadBufferOutgoing.clear();
+    valueMap.payloadGo = 0;
+    radioSetPower = false;
+    radioReset = false;
     radioInitialise = false;
     //radio.readAllRegsCompact();
     debugln("Transceiver Ready");
-    //powerLed(true);
     valueMap.transceiverReady = 1;
   }
 
-  if (radioSetPower) {
+  if (radioSetPower && (valueMap.rfm69RadioState == 1)) {
     valueMap.transceiverReady = 0;
     radio.setPowerDBm(valueMap.txPower);
     debug("TxPower:");
