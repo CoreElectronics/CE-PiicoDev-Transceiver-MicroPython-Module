@@ -1,4 +1,4 @@
-# PiicoDev® Radio MicroPython Module
+# PiicoDev® Transceiver MicroPython Module
 
 This is the firmware repo for the [Core Electronics PiicoDev® Radio](https://core-electronics.com.au/catalog/product/view/sku/CE08757)
 
@@ -25,7 +25,7 @@ There are three message types that can be sent
 
 ## Initialisation
 
-### `PiicoDev_Radio(bus=, freq=, sda=, scl=, address=0x1A, id=, channel=0, radio_address=1, speed=2, radio_frequency=922, tx_power=20, suppress_warnings=False)`
+### `PiicoDev_Transceiver(bus=, freq=, sda=, scl=, address=0x1A, id=, channel=0, radio_address=1, speed=2, radio_frequency=922, tx_power=20, suppress_warnings=False)`
 
 | Parameter         | Type                     | Range             | Default                               | Description
 | ----------------- | ------------------------ | ----------------- | ------------------------------------- | -----------
@@ -43,8 +43,6 @@ There are three message types that can be sent
 | suppress_warnings | bool                     |                   | False                                 | If True, warnings will be suppressed
 
 ## Properties
-
-
 
 ### `.speed`
 | Number | Baudrate (kbps) | Useage
