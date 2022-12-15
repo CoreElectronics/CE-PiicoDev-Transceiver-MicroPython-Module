@@ -63,10 +63,8 @@ void setRfm69RadioState(int numberOfBytesReceived, char *data) {
   valueMap.rfm69RadioState = data[0];
   if (data[0] == 1) {
     radioInitialise = true;
-    radioState = true;
   } else {
     radio.sleep();
-    radioState = false;
   }
 }
 
