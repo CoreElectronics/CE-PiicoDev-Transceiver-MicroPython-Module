@@ -363,6 +363,7 @@ class PiicoDev_Transceiver(object):
     @_on.setter
     def _on(self, val):
         """Turns the radio on"""
+        sleep_ms(5)
         self._write_int(_REG_RFM69_RADIO_STATE, 1)
         sleep_ms(5)
     
@@ -375,6 +376,7 @@ class PiicoDev_Transceiver(object):
     @_off.setter
     def _off(self, val):
         """Turns the radio off"""
+        sleep_ms(5)
         self._write_int(_REG_RFM69_RADIO_STATE, 0)
         sleep_ms(5)
     

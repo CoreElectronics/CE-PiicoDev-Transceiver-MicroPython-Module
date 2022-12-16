@@ -99,5 +99,5 @@ while True:
 
 #print(str(radio.source_radio_address)+':'+str(radio.type)+':'+str(radio.value) + ':' + str(radio.key) + " RSSI:" + str(radio.rssi))
     test_send_integer()
-#     test_send_float()
-#     test_send_message()
+    test_send_float()
+    test_send_message()

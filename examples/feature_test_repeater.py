@@ -5,7 +5,7 @@ RADIO_ADDRESS = 33
 SPEED = 2
 CHANNEL=0
 
-radio = PiicoDev_Transceiver(radio_address=RADIO_ADDRESS, speed=SPEED, channel=0)
+radio = PiicoDev_Transceiver(radio_address=RADIO_ADDRESS, speed=SPEED, channel=CHANNEL)
 
 while True:
     if radio.receive():
