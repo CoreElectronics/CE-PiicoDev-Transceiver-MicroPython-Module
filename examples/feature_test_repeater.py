@@ -1,9 +1,10 @@
 from PiicoDev_Transceiver import PiicoDev_Transceiver
 from PiicoDev_Unified import sleep_ms
 
-SPEED=1
+RADIO_ADDRESS = 33
+SPEED = 2
 
-radio = PiicoDev_Transceiver(radio_address=2, speed=SPEED, channel=0)
+radio = PiicoDev_Transceiver(radio_address=RADIO_ADDRESS, speed=SPEED, channel=0)
 
 while True:
     if radio.receive():
