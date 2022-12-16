@@ -76,6 +76,7 @@ print(radio.tx_power)
 ```
 
 ## Methods
+
 ### `.off()`
 
 Turns off the radio.
@@ -83,6 +84,10 @@ Turns off the radio.
 ### `.on()`
 
 Turns the radio on.
+
+### `.rfm69_reset()`
+
+Resets the radio.
 
 ### `.send(message, value, destination radio address)`
 
