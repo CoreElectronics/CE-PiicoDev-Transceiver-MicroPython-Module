@@ -79,7 +79,8 @@ class PiicoDev_Transceiver:
 			for i in range(number_of_chunks):
 				chunk_length=_MAXIMUM_I2C_SIZE
 				if unprocessed_payload_length<32:chunk_length=unprocessed_payload_length
-				payload=payload+self._read(_REG_PAYLOAD,length=chunk_length);unprocessed_payload_length-=_MAXIMUM_I2C_SIZE;sleep_ms(5)
+				if chunk_length>0:payload=payload+self._read(_REG_PAYLOAD,length=chunk_length)
+				unprocessed_payload_length-=_MAXIMUM_I2C_SIZE;sleep_ms(5)
 			payload=payload[:payload_length]
 		return payload_length,payload
 	def on(self):self._on=1
