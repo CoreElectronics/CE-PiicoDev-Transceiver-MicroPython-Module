@@ -194,7 +194,6 @@ class PiicoDev_Transceiver(object):
         self._write_int(_REG_RFM69_TO_NODE_ID, value, 2)
     
     def rfm69_reset(self):
-        debug("Resetting RFM69")
         self._write_int(_REG_RFM69_RESET, 1)
     
     @property
