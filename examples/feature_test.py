@@ -11,7 +11,7 @@ TX_POWER = 20
 MESSAGE = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVW'
 KEY = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRS'
 DESTINATION_ADDRESS = 33
-CHANNEL=1
+CHANNEL=0
 # RADIO_FREQUENCY = 915
 # RADIO_FREQUENCY = 918
 RADIO_FREQUENCY = 922
@@ -60,7 +60,7 @@ def test_send_integer():
     global value_integer
     value_integer += 1
     radio.send(KEY, value_integer, address=DESTINATION_ADDRESS)
-    sleep_ms(300) # Compatible with 9600 baud
+    sleep_ms(600) # Compatible with 9600 baud
     if radio.receive():
         print('Source Radio Address:'+str(radio.source_radio_address)+' Type:' + str(radio.type)+' Key:' + str(radio.key) + ' Value:' + str(radio.value) + ' RSSI:' + str(radio.rssi))
         

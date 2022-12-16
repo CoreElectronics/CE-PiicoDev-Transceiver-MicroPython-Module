@@ -145,7 +145,8 @@ class PiicoDev_Transceiver(object):
                 chunk_length = _MAXIMUM_I2C_SIZE
                 if unprocessed_payload_length < 32:
                     chunk_length = unprocessed_payload_length
-                payload = payload + self._read(_REG_PAYLOAD, length=chunk_length)
+                if chunk_length > 0:
+                    payload = payload + self._read(_REG_PAYLOAD, length=chunk_length)
                 unprocessed_payload_length -= _MAXIMUM_I2C_SIZE
                 sleep_ms(5)
             payload = payload[:payload_length]
