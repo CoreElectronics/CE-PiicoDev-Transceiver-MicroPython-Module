@@ -11,7 +11,7 @@ TX_POWER = 20
 MESSAGE = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVW'
 KEY = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRS'
 DESTINATION_ADDRESS = 33
-CHANNEL=0
+CHANNEL=1
 # RADIO_FREQUENCY = 915
 # RADIO_FREQUENCY = 918
 RADIO_FREQUENCY = 922
@@ -99,5 +99,5 @@ while True:
 
 #print(str(radio.source_radio_address)+':'+str(radio.type)+':'+str(radio.value) + ':' + str(radio.key) + " RSSI:" + str(radio.rssi))
     test_send_integer()
-    test_send_float()
-    test_send_message()
+#     test_send_float()
+#     test_send_message()

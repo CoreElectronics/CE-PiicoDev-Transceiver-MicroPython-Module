@@ -1,6 +1,0 @@
-2022-10-27 Used 3.3V adafruit feather instead of 5V Uno to improve SPI slew rate and low voltage
-2022-10-27 Tried 433 MHz board (changing the module, firmware frequency and antenna)
-2022-10-27 Increased RSSI from -110 to -104 by removing antenna to PCB connectionand making straight antennas
-2022-10-27 NEXT STEP - slow down the OTA transmission rate
-2022-10-27 NEXT STEP - try without any I2C comms
-2022-10-28 Got an example program that works perfectly.  Replaced the main loop of my program with the example - packet loss still there.  Replaced the setup() section - packet loss gone. Put the main loop back with the replaced setup(), problem returns. Try not using the valuemap.
