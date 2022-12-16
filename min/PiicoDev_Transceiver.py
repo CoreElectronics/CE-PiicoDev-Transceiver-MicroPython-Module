@@ -47,14 +47,12 @@ class PiicoDev_Transceiver:
 		self.debug=debug
 		if radio_address<0:radio_address=0
 		if radio_address>127:radio_address=127
-		print('start updating radio')
-		if self.debug:sleep_ms(3000)
-		print('radio left alone for 3 seconds')
-		while self.transceiver_ready==_B:sleep_ms(100);print(self.transceiver_ready)
+		if self.debug:print('start updating radio');sleep_ms(3000);print('radio left alone for 3 seconds')
+		while self.transceiver_ready==_B:sleep_ms(10);print(self.transceiver_ready)
 		self._write_int(_REG_RFM69_NODE_ID,radio_address,2)
 		if self.debug:sleep_ms(3000)
 		while self.transceiver_ready==_B:sleep_ms(10)
-		self._write_int(_REG_RFM69_NETWORK_ID,channel);print('finished updating radio');self.rssi=0;self.type=0;self.message='';self.key='';self.value=_A;self.source_radio_address=0;self.radio_frequency=radio_frequency;self.speed=speed;self.tx_power=tx_power
+		self._write_int(_REG_RFM69_NETWORK_ID,channel);self.rssi=0;self.type=0;self.message='';self.key='';self.value=_A;self.source_radio_address=0;self.radio_frequency=radio_frequency;self.speed=speed;self.tx_power=tx_power
 		try:
 			if self.whoami!=_DEVICE_ID:print('* Incorrect device found at address {}'.format(address))
 		except:print("* Couldn't find a device - check switches and wiring")
@@ -104,7 +102,7 @@ class PiicoDev_Transceiver:
 	def destination_radio_address(self):return self._read_int(_REG_RFM69_TO_NODE_ID,2)
 	@destination_radio_address.setter
 	def destination_radio_address(self,value):self._write_int(_REG_RFM69_TO_NODE_ID,value,2)
-	def rfm69_reset(self):debug('Resetting RFM69');self._write_int(_REG_RFM69_RESET,1)
+	def rfm69_reset(self):self._write_int(_REG_RFM69_RESET,1)
 	@property
 	def payload_length(self):return 0
 	@payload_length.setter
@@ -155,13 +153,13 @@ class PiicoDev_Transceiver:
 		elif speed==3:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,107);sleep_ms(10);self._speed=3
 		else:print('* speed not valid')
 	@property
-	def _on(self):'Checks the radio state';self._read_int(_REG_RFM69_RADIO_STATE,1)
+	def _on(self):'Checks the radio state';self._read_int(_REG_RFM69_RADIO_STATE,1);sleep_ms(5)
 	@_on.setter
-	def _on(self,val):'Turns the radio on';print('Turning radio on!');self._write_int(_REG_RFM69_RADIO_STATE,1)
+	def _on(self,val):'Turns the radio on';self._write_int(_REG_RFM69_RADIO_STATE,1);sleep_ms(5)
 	@property
-	def _off(self):'Checks the radio state';self._read_int(_REG_RFM69_RADIO_STATE,0)
+	def _off(self):'Checks the radio state';self._read_int(_REG_RFM69_RADIO_STATE,0);sleep_ms(5)
 	@_off.setter
-	def _off(self,val):'Turns the radio off';print('Turning radio off');self._write_int(_REG_RFM69_RADIO_STATE,0)
+	def _off(self,val):'Turns the radio off';self._write_int(_REG_RFM69_RADIO_STATE,0);sleep_ms(5)
 	@property
 	def address(self):'Returns the currently configured 7-bit I2C address';return self._address
 	@property
