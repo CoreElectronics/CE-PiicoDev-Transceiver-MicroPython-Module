@@ -156,11 +156,11 @@ class PiicoDev_Transceiver:
 	@property
 	def _on(self):'Checks the radio state';self._read_int(_REG_RFM69_RADIO_STATE,1);sleep_ms(5)
 	@_on.setter
-	def _on(self,val):'Turns the radio on';self._write_int(_REG_RFM69_RADIO_STATE,1);sleep_ms(5)
+	def _on(self,val):'Turns the radio on';sleep_ms(5);self._write_int(_REG_RFM69_RADIO_STATE,1);sleep_ms(5)
 	@property
 	def _off(self):'Checks the radio state';self._read_int(_REG_RFM69_RADIO_STATE,0);sleep_ms(5)
 	@_off.setter
-	def _off(self,val):'Turns the radio off';self._write_int(_REG_RFM69_RADIO_STATE,0);sleep_ms(5)
+	def _off(self,val):'Turns the radio off';sleep_ms(5);self._write_int(_REG_RFM69_RADIO_STATE,0);sleep_ms(5)
 	@property
 	def address(self):'Returns the currently configured 7-bit I2C address';return self._address
 	@property
