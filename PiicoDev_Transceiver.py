@@ -68,12 +68,12 @@ class PiicoDev_Transceiver(object):
             radio_address = 0
         if radio_address > 127: # Only 7 bits seem to go over the air so any address higher than 127 gives an incorrect source address
             radio_address = 127
-        print('start updating radio')
         if self.debug:
+            print('start updating radio')
             sleep_ms(3000)
-        print('radio left alone for 3 seconds')
+            print('radio left alone for 3 seconds')
         while self.transceiver_ready == False:
-            sleep_ms(100)
+            sleep_ms(10)
             print(self.transceiver_ready)
         self._write_int(_REG_RFM69_NODE_ID, radio_address, 2)
         if self.debug:
@@ -81,7 +81,6 @@ class PiicoDev_Transceiver(object):
         while self.transceiver_ready == False:
             sleep_ms(10)
         self._write_int(_REG_RFM69_NETWORK_ID, channel)
-        print('finished updating radio')
 #         self.destination_radio_address = radio_config.destination_radio_address
         self.rssi = 0
         self.type = 0
@@ -195,7 +194,6 @@ class PiicoDev_Transceiver(object):
         self._write_int(_REG_RFM69_TO_NODE_ID, value, 2)
     
     def rfm69_reset(self):
-        debug("Resetting RFM69")
         self._write_int(_REG_RFM69_RESET, 1)
     
     @property
@@ -359,23 +357,25 @@ class PiicoDev_Transceiver(object):
     def _on(self):
         """Checks the radio state"""
         self._read_int(_REG_RFM69_RADIO_STATE, 1)
+        sleep_ms(5)
     
     @_on.setter
     def _on(self, val):
         """Turns the radio on"""
-        print('Turning radio on!')
         self._write_int(_REG_RFM69_RADIO_STATE, 1)
+        sleep_ms(5)
     
     @property
     def _off(self):
         """Checks the radio state"""
         self._read_int(_REG_RFM69_RADIO_STATE, 0)
+        sleep_ms(5)
     
     @_off.setter
     def _off(self, val):
         """Turns the radio off"""
-        print('Turning radio off')
         self._write_int(_REG_RFM69_RADIO_STATE, 0)
+        sleep_ms(5)
     
     @property
     def address(self):
