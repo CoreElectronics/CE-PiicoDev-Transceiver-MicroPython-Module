@@ -301,11 +301,10 @@ void loop() {
     debug("Network ID set to:");
     debugln(valueMap.rfm69NetworkID);
     radio.setHighPower(true); // Must do for HCW
-    debugln("High Power Set");
     radio.writeReg(REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY);
     radio.writeReg(REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_00);                                        // 0x02
-    //radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_300000);                                                                                                                     // 0x03
-    //radio.writeReg(REG_BITRATELSB, RF_BITRATELSB_300000);                                                                                                                     // 0x04
+    //radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_300000);                                                                                                                   // 0x03
+    //radio.writeReg(REG_BITRATELSB, RF_BITRATELSB_300000);                                                                                                                   // 0x04
     radio.writeReg(REG_BITRATEMSB, RF_BITRATEMSB_115200);                                                                                                                     // 0x03
     radio.writeReg(REG_BITRATELSB, RF_BITRATELSB_115200);                                                                                                                     // 0x04
     radio.writeReg(REG_FDEVMSB, RF_FDEVMSB_300000);                                                                                                                           // 0x05
@@ -317,12 +316,11 @@ void loop() {
     radio.writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01);                                                                                                                  // 0x25
     radio.writeReg(REG_DIOMAPPING2, RF_DIOMAPPING2_CLKOUT_OFF);                                                                                                               //0x26
     radio.writeReg(REG_IRQFLAGS2, RF_IRQFLAGS2_FIFOOVERRUN);                                                                                                                  // 0x28
-    debugln("a");
     radio.writeReg(REG_RSSITHRESH, 220);                                                                                                                                      // 0x29
     radio.writeReg(REG_PREAMBLELSB, 6);                                                                                                                                       // 0x2D
     radio.writeReg(REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_AUTO | RF_SYNC_SIZE_3 | RF_SYNC_TOL_0);                                                                      // 0x2E
     radio.writeReg(REG_SYNCVALUE1, 0x88);                                                                                                                                     // 0x2F
-    radio.writeReg(REG_SYNCVALUE2, valueMap.rfm69NetworkID);                                                                                                                                // 0x30
+    radio.writeReg(REG_SYNCVALUE2, valueMap.rfm69NetworkID);                                                                                                                  // 0x30
     radio.writeReg(REG_SYNCVALUE3, 0x88);                                                                                                                                     // 0x2F
     radio.writeReg(REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_OFF | RF_PACKET1_CRCAUTOCLEAR_OFF | RF_PACKET1_ADRSFILTERING_OFF);  // 0x37
     radio.writeReg(REG_PAYLOADLENGTH, 66);                                                                                                                                    // 0x38
@@ -336,7 +334,6 @@ void loop() {
     radioSetPower = false;
     radioReset = false;
     radioInitialise = false;
-    //radio.readAllRegsCompact();
     debugln("Transceiver Ready");
     valueMap.transceiverReady = 1;
   }
@@ -347,25 +344,6 @@ void loop() {
     debug("TxPower:");
     debugln(valueMap.txPower);
     radioSetPower = false;
-    //---------------------
-    // Print the header row and first register entry
-    debugln(); debug("     ");
-    for ( uint8_t reg = 0x00; reg < 0x10; reg++ ) {
-      debug("  ");
-    }
-
-    // Loop over the registers from 0x01 to 0x7F and print their values
-    for ( uint8_t reg = 0x01; reg < 0x80; reg++ ) {
-      if ( reg % 16 == 0 ) {    // Print the header column entries
-        debugln();
-        debug(": ");
-      }
-
-      // Print the actual register values
-      uint8_t ret = radio.readReg( reg );
-      if ( ret < 0x10 ) debug("0");  // Handle values less than 10
-      debug(" ");
-    }
     valueMap.transceiverReady = 1;
   }
   debug("valueMap.rfm69RadioState:");
@@ -377,24 +355,15 @@ void loop() {
       for (byte i = 0; i < payloadBufferOutgoing.size(); i++) {
         transmitBuffer[i] = 0;
       }
-
       debug("sending to node ");
       debug(TONODEID);
       debug(", message [");
       debug(counter);
       debugln("]");
-
       for (uint8_t i = 0; i < payloadBufferOutgoing.size() - 1; i++) {
         transmitBuffer[i] = payloadBufferOutgoing[i];
       }
       radio.send(valueMap.rfm69ToNodeID, transmitBuffer, valueMap.payloadLength);
-      // What does our outgoing buffer look like?
-      debug("Reading back transmitbuffer");
-      for (uint8_t i = 0; i < sizeof(transmitBuffer) - 1; i++) {
-        debug(transmitBuffer[i]);
-        debug(",");
-      }
-      debugln("Transmit Buffer Read");
       counter++;
       if (counter == 255) {
         counter = 0;
@@ -402,19 +371,14 @@ void loop() {
       payloadBufferOutgoing.clear();
       valueMap.payloadGo = 0;
     }
-
-    // RECEIVING
-
-    // In this section, we'll check with the RFM69HCW to see if it has received any packets
-
-    if (radio.receiveDone())  // Got one
+    // Check the RFM69HCW to see if it has received any packets
+    if (radio.receiveDone())
     {
       // Print out the information:
       debugln(F("-------------------"));
       debug(F("received from node "));
       debug(radio.SENDERID);
       debug(F(", message ["));
-
       valueMap.payloadNew = 1;
       payloadBufferIncoming.clear();
       payloadBufferIncoming.push(abs(radio.RSSI));
@@ -431,12 +395,6 @@ void loop() {
       debug(valueMap.payloadLength);
       debug(" RSSI:");
       debugln(radio.RSSI);
-      debug("Reading back receive buffer");
-      for (uint8_t i = 0; i < payloadBufferIncoming.size(); i++) {
-        debug(payloadBufferIncoming[i]);
-        debug(",");
-      }
-      debugln("Receive Buffer Read");
     }
   }
 }
