@@ -3,7 +3,7 @@ from PiicoDev_Unified import sleep_ms
 
 RADIO_ADDRESS = 33
 SPEED = 2
-CHANNEL=0
+CHANNEL=1
 
 radio = PiicoDev_Transceiver(radio_address=RADIO_ADDRESS, speed=SPEED, channel=CHANNEL)
 

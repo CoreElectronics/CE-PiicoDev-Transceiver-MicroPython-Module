@@ -17,7 +17,7 @@ CHANNEL=1
 RADIO_FREQUENCY = 922
 # RADIO_FREQUENCY = 925
 # RADIO_FREQUENCY = 928
-# radio = PiicoDev_Transceiver(address=0x33)
+#radio = PiicoDev_Transceiver(address=0x33)
 radio = PiicoDev_Transceiver(id=ID, channel=CHANNEL, radio_address=1, speed=SPEED, radio_frequency=RADIO_FREQUENCY, tx_power=TX_POWER, suppress_warnings=False, debug=False)
 
 value_integer = 0
@@ -49,11 +49,9 @@ def test_off_and_on():
     
 def test_reset():
     radio.send('About to test reset', address=DESTINATION_ADDRESS)
-    radio.speed=1
-    sleep_ms(1000)
+    radio.speed=3
     radio.send('This message SHOULD NOT get through', address=DESTINATION_ADDRESS)
     radio.rfm69_reset()
-    sleep_ms(1000)
     radio.send('This message SHOULD get through', address=DESTINATION_ADDRESS)
 
 def test_send_integer():
@@ -88,16 +86,16 @@ print('       Tx Power: ' + str(radio.tx_power))
 
 radio.led = True
 
-#test_led()
-#test_off_and_on()
-#test_reset()
-#test_send_integer()
-#test_send_float()
-#test_send_message()
+# test_led()
+# test_off_and_on()
+# test_reset()
+# test_send_integer()
+# test_send_float()
+# test_send_message()
 
 while True:
 
 #print(str(radio.source_radio_address)+':'+str(radio.type)+':'+str(radio.value) + ':' + str(radio.key) + " RSSI:" + str(radio.rssi))
     test_send_integer()
-#     test_send_float()
-#     test_send_message()
+    test_send_float()
+    test_send_message()
