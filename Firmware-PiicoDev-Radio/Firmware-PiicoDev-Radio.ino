@@ -371,6 +371,7 @@ void loop() {
       payloadBufferOutgoing.clear();
       valueMap.payloadGo = 0;
     }
+    
     // Check the RFM69HCW to see if it has received any packets
     if (radio.receiveDone())
     {
