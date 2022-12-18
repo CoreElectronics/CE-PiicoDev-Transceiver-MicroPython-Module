@@ -32,7 +32,6 @@ _RFM69_REG_FRFMID=8
 _RFM69_REG_FRFLSB=9
 _MAXIMUM_PAYLOAD_LENGTH=61
 _MAXIMUM_I2C_SIZE=32
-def tempdebug(text):print(str(ticks_ms()-start_time)+':'+str(value))
 def truncate(n,decimals=0):multiplier=10**decimals;return int(n*multiplier)/multiplier
 def _set_bit(x,n):return x|1<<n
 class PiicoDev_Transceiver:
@@ -44,9 +43,11 @@ class PiicoDev_Transceiver:
 		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl,suppress_warnings=suppress_warnings);self._address=address
 		if type(id)is list and not all((v==0 for v in id)):assert max(id)<=1 and min(id)>=0 and len(id)==4,'id must be a list of 1/0, length=4';self._address=8+id[0]+2*id[1]+4*id[2]+8*id[3]
 		else:self._address=address
-		self.debug=debug
 		if radio_address<0:radio_address=0
 		if radio_address>127:radio_address=127
+		if channel<0:channel=0
+		if channel>255:channel=255
+		self.debug=debug
 		if self.debug:print('start updating radio');sleep_ms(3000);print('radio left alone for 3 seconds')
 		while self.transceiver_ready==_B:sleep_ms(10);print(self.transceiver_ready)
 		self._write_int(_REG_RFM69_NODE_ID,radio_address,2)
@@ -79,7 +80,7 @@ class PiicoDev_Transceiver:
 			for i in range(number_of_chunks):
 				chunk_length=_MAXIMUM_I2C_SIZE
 				if unprocessed_payload_length<32:chunk_length=unprocessed_payload_length
-				if chunk_length>0:payload=payload+self._read(_REG_PAYLOAD,length=chunk_length)
+				if chunk_length>0:payload=payload+bytes(self._read(_REG_PAYLOAD,length=chunk_length))
 				unprocessed_payload_length-=_MAXIMUM_I2C_SIZE;sleep_ms(5)
 			payload=payload[:payload_length]
 		return payload_length,payload
@@ -88,7 +89,7 @@ class PiicoDev_Transceiver:
 	@property
 	def tx_power(self):
 		while self.transceiver_ready==_B:sleep_ms(10)
-		value=unpack('b',self._read(_REG_TX_POWER));return value[0]
+		value=unpack('b',bytes(self._read(_REG_TX_POWER)));return value[0]
 	@tx_power.setter
 	def tx_power(self,value):
 		if value<-2:value=-2
@@ -98,12 +99,15 @@ class PiicoDev_Transceiver:
 	@property
 	def channel(self):' There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino';return self._read_int(_REG_RFM69_NETWORK_ID)
 	@property
-	def radio_address(self):' There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino';return self._read_int(_REG_RFM69_NODE_ID,2);print('Node ID Called')
+	def radio_address(self):' There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino';return self._read_int(_REG_RFM69_NODE_ID,2)
 	@property
 	def destination_radio_address(self):return self._read_int(_REG_RFM69_TO_NODE_ID,2)
 	@destination_radio_address.setter
-	def destination_radio_address(self,value):self._write_int(_REG_RFM69_TO_NODE_ID,value,2)
-	def rfm69_reset(self):self._write_int(_REG_RFM69_RESET,1)
+	def destination_radio_address(self,value):
+		if value<0:return
+		if value>127:return
+		self._write_int(_REG_RFM69_TO_NODE_ID,value,2)
+	def rfm69_reset(self):self._write_int(_REG_RFM69_RESET,1);sleep_ms(10)
 	@property
 	def payload_length(self):return 0
 	@payload_length.setter
@@ -122,7 +126,7 @@ class PiicoDev_Transceiver:
 			return True
 		return _B
 	def send(self,message_string,value=_A,address=0):
-		A='s';self.destination_radio_address=address
+		A='s';self.destination_radio_address=address;sleep_ms(8)
 		if isinstance(value,int):type=1;message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-6];format_characters='>BiB'+str(len(message_string))+A;data=pack(format_characters,type,value,len(message_string),bytes(message_string,_D))
 		if isinstance(value,float):type=2;message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-6];format_characters='>BfB'+str(len(message_string))+A;data=pack(format_characters,type,value,len(message_string),bytes(message_string,_D))
 		if value is _A:type=3;message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-2];format_characters='>BB'+str(len(message_string))+A;data=pack(format_characters,type,len(message_string),bytes(message_string,_D))
