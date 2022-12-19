@@ -118,9 +118,9 @@ if radio.receive():
         print(radio.name, radio.value)
 ```
 
-### `.send_bytes`
+### `.send_bytes()`
 
-For more advanced users, send up to 60 bytes.
+For more advanced users who want to write their own data structure. Send up to 60 bytes.
 
 Example:
 
@@ -129,9 +129,9 @@ Example:
     radio.send_bytes(data, address=2)
 ```
 
-### `.receive_bytes`
+### `.receive_bytes()`
 
-For more advanced users, send up to 60 bytes.
+For more advanced users. Use in conjunction with `.send_bytes()`
 
 Example:
 
