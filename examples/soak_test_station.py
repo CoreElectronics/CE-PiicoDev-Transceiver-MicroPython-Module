@@ -22,7 +22,7 @@ print('Channel:        ' + str(radio.channel))
 while i < 10000:
     i += 1
     radio.send(key,i,address=2)
-    sleep_ms(100)  #200
+    sleep_ms(200)  #200
     if radio.receive():
         if (radio.value != value_prev + 1 or not radio.key == key) and i > 2:
             print(radio.key + ':' + str(radio.value) + ':ERROR' + str(radio.rssi))
