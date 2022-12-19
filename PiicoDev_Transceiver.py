@@ -73,16 +73,12 @@ class PiicoDev_Transceiver(object):
             print('start updating radio')
             sleep_ms(3000)
             print('radio left alone for 3 seconds')
-        while self.transceiver_ready == False:
-            sleep_ms(10)
-            print(self.transceiver_ready)
         self._write_int(_REG_RFM69_NODE_ID, radio_address, 2)
         if self.debug:
             sleep_ms(3000)
         while self.transceiver_ready == False:
             sleep_ms(10)
         self._write_int(_REG_RFM69_NETWORK_ID, channel)
-#         self.destination_radio_address = radio_config.destination_radio_address
         self.rssi = 0
         self.type = 0
         self.message = ''
@@ -122,7 +118,7 @@ class PiicoDev_Transceiver(object):
     def _write_int(self, register, integer, length=1):
         self._write(register, int.to_bytes(integer, length, 'big'))
         
-    def send_payload(self, payload):
+    def _send_payload(self, payload):
          # if the payload is too long, truncate it
         payload_list = [payload[i:i+_MAXIMUM_I2C_SIZE-1] for i in range(0, len(payload), _MAXIMUM_I2C_SIZE-1)] # Split the bytes into a list
         self._write_int(_REG_PAYLOAD_LENGTH, len(payload))
@@ -132,7 +128,7 @@ class PiicoDev_Transceiver(object):
             sleep_ms(5) #was 12
         self._write_int(_REG_PAYLOAD_GO, 1)
         
-    def receive_payload(self):
+    def _receive_payload(self):
         payload_length = 0
         payload = bytes(0)
         if self._payload_new == 1:
@@ -154,136 +150,86 @@ class PiicoDev_Transceiver(object):
             payload = payload[:payload_length]
         return payload_length, payload
     
-    def on(self):
-        self._on = 1
-        
-    def off(self):
-        self._off = 1
-        
     @property
-    def tx_power(self):
-        while self.transceiver_ready == False:
-            sleep_ms(10)
-        value = unpack('b', bytes(self._read(_REG_TX_POWER)))
-        return value[0]
-    
-    @tx_power.setter
-    def tx_power(self, value):
-        if value < -2:
-            value = -2
-        if value > 20:
-            value = 20
-        while self.transceiver_ready == False:
-            sleep_ms(10)
-        self._write(_REG_TX_POWER, pack('b',value))
+    def _payload_new(self):
+        """ Is set to 1 if a new payload has arrived """
+        return self._read_int(_REG_PAYLOAD_NEW)
     
     @property
-    def channel(self):
-        """ There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino"""
-        return self._read_int(_REG_RFM69_NETWORK_ID)
-    
-    @property
-    def radio_address(self):
-        """ There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino"""
-        return self._read_int(_REG_RFM69_NODE_ID, 2)
-        
-    @property
-    def destination_radio_address(self):
+    def _destination_radio_address(self):
         return self._read_int(_REG_RFM69_TO_NODE_ID, 2)
     
-    @destination_radio_address.setter
-    def destination_radio_address(self, value):
+    @_destination_radio_address.setter
+    def _destination_radio_address(self, value):
         if value < 0:
             return
         if value > 127:
             return
         self._write_int(_REG_RFM69_TO_NODE_ID, value, 2)
-    
-    def rfm69_reset(self):
-        self._write_int(_REG_RFM69_RESET, 1)
-        sleep_ms(10)
-    
-    @property
-    def payload_length(self):
-        return 0
-    
-    @payload_length.setter
-    def payload_length(self, value):
-        self._write_int(_REG_PAYLOAD_LENGTH, value)
-        
-    @property
-    def _payload_new(self):
-        return self._read_int(_REG_PAYLOAD_NEW)
-    
-    def receive(self):
-        payload_length, payload = self.receive_payload()
-        if payload_length != 0:
-            payload_bytes = bytes(payload)
-            self.rssi = -int.from_bytes(payload_bytes[:1], 'big')
-            self.source_radio_address = int.from_bytes(payload_bytes[1:3], 'big')
-            self.type = int.from_bytes(payload_bytes[3:4], 'big')
-            try:
-                if self.type == 1:
-                    self.key = str(payload_bytes[9:], 'utf8')
-                    self.value = unpack('>i', (payload_bytes[4:8]))[0]
-                if self.type == 2:
-                    self.key = str(payload_bytes[9:], 'utf8')
-                    self.value = unpack('>f', (payload_bytes[4:8]))[0]
-                if self.type == 3:
-                    self.message = str(payload_bytes[5:], 'utf8')
-            except:
-                print('* error parsing payload')
-            return True
-        return False
-    
-    def send(self, message_string, value=None, address=0):
-        self.destination_radio_address = address
-        sleep_ms(8)
-        if isinstance(value, int):
-            type = 1
-            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-6)]
-            format_characters = '>BiB' + str(len(message_string)) + 's'
-            data = pack(format_characters, type, value, len(message_string), bytes(message_string, 'utf8'))
-        if isinstance(value, float):
-            type = 2
-            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-6)]
-            format_characters = '>BfB' + str(len(message_string)) + 's'
-            data = pack(format_characters, type, value, len(message_string), bytes(message_string, 'utf8'))
-        if value is None:
-            type = 3
-            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-2)]
-            format_characters = '>BB' + str(len(message_string)) + 's'
-            data = pack(format_characters, type, len(message_string), bytes(message_string, 'utf8'))
-        self.send_payload(data)
-        
-    def send_bytes(self, data, address=0):
-        self.destination_radio_address = address
-        self.send_payload(data)
-        
-    def receive_bytes(self):
-        payload_length, payload = self.receive_payload()
-        if payload_length != 0:
-            payload_bytes = bytes(payload)
-            self.rssi = -int.from_bytes(payload_bytes[:1], 'big')
-            self.source_radio_address = int.from_bytes(payload_bytes[1:3], 'big')
-            self.received_bytes = payload_bytes[3:]
-            return True
-        return False
-    
+
     def get_rfm69_register(self, register):
+        """ Gets a register on the RFM69 radio """
         self._write_int(_REG_RFM69_REG, register)
         return self._read_int(_REG_RFM69_VALUE)
         
     def set_rfm69_register(self, register, value):
+        """ Sets a register on the RFM69 radio """
         self._write_int(_REG_RFM69_REG, register)
         self._write_int(_REG_RFM69_VALUE, value)
+
+    def on(self):
+        """ Turns the RFM69 radio on """
+        self._on = 1
+        
+    def off(self):
+        """ Turns the RFM69 radio off """
+        self._off = 1
+        
+    def rfm69_reset(self):
+        """ Resets the RFM69 radio """
+        self._write_int(_REG_RFM69_RESET, 1)
+        sleep_ms(10)
+    
+    @property
+    def speed(self):
+        """ gets the over-the-air radio speed """
+        return self._speed
+    
+    @speed.setter
+    def speed(self, speed):
+        """ sets the over-the-air radio speed """
+        if speed == 1: # 9600
+            sleep_ms(10)
+            self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0x0D)
+            sleep_ms(10)
+            self.set_rfm69_register(_RFM69_REG_BITRATELSB,0x05)
+            sleep_ms(10)
+            self._speed = 1
+        elif speed == 2: # 115200
+            sleep_ms(10)
+            self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0x01)
+            sleep_ms(10)
+            self.set_rfm69_register(_RFM69_REG_BITRATELSB,0x16)
+            sleep_ms(10)
+            self._speed = 2
+        elif speed == 3: # 300000
+            sleep_ms(10)
+            self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0x00)
+            sleep_ms(10)
+            self.set_rfm69_register(_RFM69_REG_BITRATELSB,0x6B)
+            sleep_ms(10)
+            self._speed = 3
+        else:
+            print('* speed not valid')
     
     @property
     def radio_frequency(self):
+        """ gets the radio transmitter frequency """
         return self._radio_frequency
     
     @radio_frequency.setter
     def radio_frequency(self, frequency):
+        """ sets the radio transmitter frequency """
         while self.transceiver_ready == False:
             sleep_ms(10)
         if frequency == 915:
@@ -335,90 +281,149 @@ class PiicoDev_Transceiver(object):
             print(' * frequency not supported')
     
     @property
-    def speed(self):
-        return self._speed
+    def tx_power(self):
+        """ Set the RFM69 transmitter power """
+        while self.transceiver_ready == False:
+            sleep_ms(10)
+        value = unpack('b', bytes(self._read(_REG_TX_POWER)))
+        return value[0]
     
-    @speed.setter
-    def speed(self, speed):
-        if speed == 1: # 9600
+    @tx_power.setter
+    def tx_power(self, value):
+        """ Set the RFM69 transmitter power """
+        if value < -2:
+            value = -2
+        if value > 20:
+            value = 20
+        while self.transceiver_ready == False:
             sleep_ms(10)
-            self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0x0D)
-            sleep_ms(10)
-            self.set_rfm69_register(_RFM69_REG_BITRATELSB,0x05)
-            sleep_ms(10)
-            self._speed = 1
-        elif speed == 2: # 115200
-            sleep_ms(10)
-            self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0x01)
-            sleep_ms(10)
-            self.set_rfm69_register(_RFM69_REG_BITRATELSB,0x16)
-            sleep_ms(10)
-            self._speed = 2
-        elif speed == 3: # 300000
-            sleep_ms(10)
-            self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0x00)
-            sleep_ms(10)
-            self.set_rfm69_register(_RFM69_REG_BITRATELSB,0x6B)
-            sleep_ms(10)
-            self._speed = 3
-        else:
-            print('* speed not valid')
+        self._write(_REG_TX_POWER, pack('b',value))
+    
+    @property
+    def channel(self):
+        """ There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino"""
+        return self._read_int(_REG_RFM69_NETWORK_ID)
+    
+    @property
+    def radio_address(self):
+        """ There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino"""
+        return self._read_int(_REG_RFM69_NODE_ID, 2)
+    
+    def send(self, message_string, value=None, address=0):
+        """ Sends a message """
+        self._destination_radio_address = address
+        sleep_ms(8)
+        if isinstance(value, int):
+            type = 1
+            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-6)]
+            format_characters = '>BiB' + str(len(message_string)) + 's'
+            data = pack(format_characters, type, value, len(message_string), bytes(message_string, 'utf8'))
+        if isinstance(value, float):
+            type = 2
+            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-6)]
+            format_characters = '>BfB' + str(len(message_string)) + 's'
+            data = pack(format_characters, type, value, len(message_string), bytes(message_string, 'utf8'))
+        if value is None:
+            type = 3
+            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-2)]
+            format_characters = '>BB' + str(len(message_string)) + 's'
+            data = pack(format_characters, type, len(message_string), bytes(message_string, 'utf8'))
+        self._send_payload(data)
+    
+    def receive(self):
+        """ If a new message has arrived, populate the class's variables and return a True """
+        payload_length, payload = self._receive_payload()
+        if payload_length != 0:
+            payload_bytes = bytes(payload)
+            self.rssi = -int.from_bytes(payload_bytes[:1], 'big')
+            self.source_radio_address = int.from_bytes(payload_bytes[1:3], 'big')
+            self.type = int.from_bytes(payload_bytes[3:4], 'big')
+            try:
+                if self.type == 1:
+                    self.key = str(payload_bytes[9:], 'utf8')
+                    self.value = unpack('>i', (payload_bytes[4:8]))[0]
+                if self.type == 2:
+                    self.key = str(payload_bytes[9:], 'utf8')
+                    self.value = unpack('>f', (payload_bytes[4:8]))[0]
+                if self.type == 3:
+                    self.message = str(payload_bytes[5:], 'utf8')
+            except:
+                print('* error parsing payload')
+            return True
+        return False
+        
+    def send_bytes(self, data, address=0):
+        """ Send bytes """
+        self._destination_radio_address = address
+        self._send_payload(data)
+        
+    def receive_bytes(self):
+        """ If a new message has arrived, populate the class's variables and return a True """
+        payload_length, payload = self._receive_payload()
+        if payload_length != 0:
+            payload_bytes = bytes(payload)
+            self.rssi = -int.from_bytes(payload_bytes[:1], 'big')
+            self.source_radio_address = int.from_bytes(payload_bytes[1:3], 'big')
+            self.received_bytes = payload_bytes[3:]
+            return True
+        return False
     
     @property
     def _on(self):
-        """Checks the radio state"""
+        """ Checks the radio state """
         self._read_int(_REG_RFM69_RADIO_STATE, 1)
         sleep_ms(5)
     
     @_on.setter
     def _on(self, val):
-        """Turns the radio on"""
+        """ Turns the radio on """
         sleep_ms(5)
         self._write_int(_REG_RFM69_RADIO_STATE, 1)
         sleep_ms(5)
     
     @property
     def _off(self):
-        """Checks the radio state"""
+        """ Checks the radio state """
         self._read_int(_REG_RFM69_RADIO_STATE, 0)
         sleep_ms(5)
     
     @_off.setter
     def _off(self, val):
-        """Turns the radio off"""
+        """ Turns the radio off """
         sleep_ms(5)
         self._write_int(_REG_RFM69_RADIO_STATE, 0)
         sleep_ms(5)
     
     @property
     def address(self):
-        """Returns the currently configured 7-bit I2C address"""
+        """ Returns the currently configured 7-bit I2C address """
         return self._address
 
     @property
     def led(self):
-        """Returns the state onboard "Power" LED. `True` / `False`"""
+        """ Returns the state onboard "Power" LED. `True` / `False` """
         return bool(self._read_int(_REG_LED))
     
     @led.setter
     def led(self, x):
-        """control the state onboard "Power" LED. accepts `True` / `False`"""
+        """ control the state onboard "Power" LED. accepts `True` / `False` """
         self._write_int(_REG_LED, int(x))
 
     @property
     def whoami(self):
-        """returns the device identifier"""
+        """ Returns the device identifier """
         return self._read_int(_REG_WHOAMI, 2)
     
     @property
     def firmware(self):
-        """Returns the firmware version"""
+        """ Returns the firmware version """
         v=[0,0]
         v[1]=self._read_int(_REG_FIRM_MAJ)
         v[0]=self._read_int(_REG_FIRM_MIN)
         return (v[1],v[0])
     
     def setI2Caddr(self, newAddr):
+        """ Set a new I2C address """
         x=int(newAddr)
         assert 8 <= x <= 0x77, 'address must be >=0x08 and <=0x77'
         self._write_int(_REG_I2C_ADDRESS, x)
@@ -428,4 +433,5 @@ class PiicoDev_Transceiver(object):
     
     @property
     def transceiver_ready(self):
+        """ Check is the transceiver is ready to receive data """
         return bool(self._read_int(_REG_TRANSCEIVER_READY))
