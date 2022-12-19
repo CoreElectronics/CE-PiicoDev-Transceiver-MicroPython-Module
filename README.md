@@ -38,7 +38,7 @@ There are three message types that can be sent
 | channel           | int                      | 0 - 255           | 0                                     | Defines an arbitrary "channel" to which the radio is tuned. Messages will be sent via this channel and only messages received via this channel will shown.
 | radio_adddress    | int                      | 0 - 127           | 1                                     | Used to filter incoming packets, keeping only those that match the address you set.
 | speed             | int                      | 1, 2, 3           | 2                                     | See `.speed` property for more information.
-| radio_frequency   | int                      | 915, 918, 922, 925, 228 | 922                             | See `.radio_frequency` property for more information.
+| radio_frequency   | int                      | 915, 918, 922, 925, 928 | 922                             | See `.radio_frequency` property for more information.
 | tx_power          | int                      | -2 to 20 dB       | 20                                    | See `.tx_power` property for more information.
 | suppress_warnings | bool                     |                   | False                                 | If True, warnings will be suppressed
 
