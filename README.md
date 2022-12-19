@@ -79,7 +79,7 @@ print(radio.tx_power)
 
 ### `.off()`
 
-Turns off the radio.
+Turns the radio off.
 
 ### `.on()`
 
@@ -97,11 +97,8 @@ Examples:
 
 ``` Python
 radio.send('Hello')
-
 radio.send('TempC', 25.0)
-
 radio.send('Counter', 9)
-
 radio.send('secret', radio_address=7)
 ```
 
@@ -125,8 +122,8 @@ For more advanced users who want to write their own data structure. Send up to 6
 Example:
 
 ``` Python
-    data = pack('>i', value)
-    radio.send_bytes(data, address=2)
+data = pack('>i', value)
+radio.send_bytes(data, address=2)
 ```
 
 ### `.receive_bytes()`
@@ -141,9 +138,15 @@ if radio.receive_bytes():
     print(value)
 ```
 
-### Set or Get RFM69 Register Values
+### `.get_rfm69_registerValues(register)`
+
+Example:
 
 `value = radio.get_rfm69_register(0x29)`
+
+### `.set_rfm69_registerValues(register, value)`
+
+Example:
 
 `radio.set_rfm69_register(0x29, 221)`
 
