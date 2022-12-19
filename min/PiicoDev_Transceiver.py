@@ -49,7 +49,6 @@ class PiicoDev_Transceiver:
 		if channel>255:channel=255
 		self.debug=debug
 		if self.debug:print('start updating radio');sleep_ms(3000);print('radio left alone for 3 seconds')
-		while self.transceiver_ready==_B:sleep_ms(10);print(self.transceiver_ready)
 		self._write_int(_REG_RFM69_NODE_ID,radio_address,2)
 		if self.debug:sleep_ms(3000)
 		while self.transceiver_ready==_B:sleep_ms(10)
@@ -68,11 +67,11 @@ class PiicoDev_Transceiver:
 		if data is _A:return _A
 		else:return int.from_bytes(data,_C)
 	def _write_int(self,register,integer,length=1):self._write(register,int.to_bytes(integer,length,_C))
-	def send_payload(self,payload):
+	def _send_payload(self,payload):
 		payload_list=[payload[i:i+_MAXIMUM_I2C_SIZE-1]for i in range(0,len(payload),_MAXIMUM_I2C_SIZE-1)];self._write_int(_REG_PAYLOAD_LENGTH,len(payload));sleep_ms(5)
 		for i in range(len(payload_list)):self._write(_REG_PAYLOAD,payload_list[i]);sleep_ms(5)
 		self._write_int(_REG_PAYLOAD_GO,1)
-	def receive_payload(self):
+	def _receive_payload(self):
 		payload_length=0;payload=bytes(0)
 		if self._payload_new==1:
 			if self.debug:sleep_ms(100);print('delay')
@@ -84,14 +83,49 @@ class PiicoDev_Transceiver:
 				unprocessed_payload_length-=_MAXIMUM_I2C_SIZE;sleep_ms(5)
 			payload=payload[:payload_length]
 		return payload_length,payload
-	def on(self):self._on=1
-	def off(self):self._off=1
+	@property
+	def _payload_new(self):' Is set to 1 if a new payload has arrived ';return self._read_int(_REG_PAYLOAD_NEW)
+	@property
+	def _destination_radio_address(self):return self._read_int(_REG_RFM69_TO_NODE_ID,2)
+	@_destination_radio_address.setter
+	def _destination_radio_address(self,value):
+		if value<0:return
+		if value>127:return
+		self._write_int(_REG_RFM69_TO_NODE_ID,value,2)
+	def get_rfm69_register(self,register):' Gets a register on the RFM69 radio ';self._write_int(_REG_RFM69_REG,register);return self._read_int(_REG_RFM69_VALUE)
+	def set_rfm69_register(self,register,value):' Sets a register on the RFM69 radio ';self._write_int(_REG_RFM69_REG,register);self._write_int(_REG_RFM69_VALUE,value)
+	def on(self):' Turns the RFM69 radio on ';self._on=1
+	def off(self):' Turns the RFM69 radio off ';self._off=1
+	def rfm69_reset(self):' Resets the RFM69 radio ';self._write_int(_REG_RFM69_RESET,1);sleep_ms(10)
+	@property
+	def speed(self):' gets the over-the-air radio speed ';return self._speed
+	@speed.setter
+	def speed(self,speed):
+		' sets the over-the-air radio speed '
+		if speed==1:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,13);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,5);sleep_ms(10);self._speed=1
+		elif speed==2:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,1);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,22);sleep_ms(10);self._speed=2
+		elif speed==3:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,107);sleep_ms(10);self._speed=3
+		else:print('* speed not valid')
+	@property
+	def radio_frequency(self):' gets the radio transmitter frequency ';return self._radio_frequency
+	@radio_frequency.setter
+	def radio_frequency(self,frequency):
+		' sets the radio transmitter frequency '
+		while self.transceiver_ready==_B:sleep_ms(10)
+		if frequency==915:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,228);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,192);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=915
+		elif frequency==918:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,229);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,128);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=918
+		elif frequency==922:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,230);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,128);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=922
+		elif frequency==925:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,231);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,64);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=925
+		elif frequency==928:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,232);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,0);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=928
+		else:print(' * frequency not supported')
 	@property
 	def tx_power(self):
+		' Set the RFM69 transmitter power '
 		while self.transceiver_ready==_B:sleep_ms(10)
 		value=unpack('b',bytes(self._read(_REG_TX_POWER)));return value[0]
 	@tx_power.setter
 	def tx_power(self,value):
+		' Set the RFM69 transmitter power '
 		if value<-2:value=-2
 		if value>20:value=20
 		while self.transceiver_ready==_B:sleep_ms(10)
@@ -100,22 +134,14 @@ class PiicoDev_Transceiver:
 	def channel(self):' There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino';return self._read_int(_REG_RFM69_NETWORK_ID)
 	@property
 	def radio_address(self):' There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino';return self._read_int(_REG_RFM69_NODE_ID,2)
-	@property
-	def destination_radio_address(self):return self._read_int(_REG_RFM69_TO_NODE_ID,2)
-	@destination_radio_address.setter
-	def destination_radio_address(self,value):
-		if value<0:return
-		if value>127:return
-		self._write_int(_REG_RFM69_TO_NODE_ID,value,2)
-	def rfm69_reset(self):self._write_int(_REG_RFM69_RESET,1);sleep_ms(10)
-	@property
-	def payload_length(self):return 0
-	@payload_length.setter
-	def payload_length(self,value):self._write_int(_REG_PAYLOAD_LENGTH,value)
-	@property
-	def _payload_new(self):return self._read_int(_REG_PAYLOAD_NEW)
+	def send(self,message_string,value=_A,address=0):
+		' Sends a message ';A='s';self._destination_radio_address=address;sleep_ms(8)
+		if isinstance(value,int):type=1;message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-6];format_characters='>BiB'+str(len(message_string))+A;data=pack(format_characters,type,value,len(message_string),bytes(message_string,_D))
+		if isinstance(value,float):type=2;message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-6];format_characters='>BfB'+str(len(message_string))+A;data=pack(format_characters,type,value,len(message_string),bytes(message_string,_D))
+		if value is _A:type=3;message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-2];format_characters='>BB'+str(len(message_string))+A;data=pack(format_characters,type,len(message_string),bytes(message_string,_D))
+		self._send_payload(data)
 	def receive(self):
-		payload_length,payload=self.receive_payload()
+		" If a new message has arrived, populate the class's variables and return a True ";payload_length,payload=self._receive_payload()
 		if payload_length!=0:
 			payload_bytes=bytes(payload);self.rssi=-int.from_bytes(payload_bytes[:1],_C);self.source_radio_address=int.from_bytes(payload_bytes[1:3],_C);self.type=int.from_bytes(payload_bytes[3:4],_C)
 			try:
@@ -125,56 +151,29 @@ class PiicoDev_Transceiver:
 			except:print('* error parsing payload')
 			return True
 		return _B
-	def send(self,message_string,value=_A,address=0):
-		A='s';self.destination_radio_address=address;sleep_ms(8)
-		if isinstance(value,int):type=1;message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-6];format_characters='>BiB'+str(len(message_string))+A;data=pack(format_characters,type,value,len(message_string),bytes(message_string,_D))
-		if isinstance(value,float):type=2;message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-6];format_characters='>BfB'+str(len(message_string))+A;data=pack(format_characters,type,value,len(message_string),bytes(message_string,_D))
-		if value is _A:type=3;message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-2];format_characters='>BB'+str(len(message_string))+A;data=pack(format_characters,type,len(message_string),bytes(message_string,_D))
-		self.send_payload(data)
-	def send_bytes(self,data,address=0):self.destination_radio_address=address;self.send_payload(data)
+	def send_bytes(self,data,address=0):' Send bytes ';self._destination_radio_address=address;self._send_payload(data)
 	def receive_bytes(self):
-		payload_length,payload=self.receive_payload()
+		" If a new message has arrived, populate the class's variables and return a True ";payload_length,payload=self._receive_payload()
 		if payload_length!=0:payload_bytes=bytes(payload);self.rssi=-int.from_bytes(payload_bytes[:1],_C);self.source_radio_address=int.from_bytes(payload_bytes[1:3],_C);self.received_bytes=payload_bytes[3:];return True
 		return _B
-	def get_rfm69_register(self,register):self._write_int(_REG_RFM69_REG,register);return self._read_int(_REG_RFM69_VALUE)
-	def set_rfm69_register(self,register,value):self._write_int(_REG_RFM69_REG,register);self._write_int(_REG_RFM69_VALUE,value)
 	@property
-	def radio_frequency(self):return self._radio_frequency
-	@radio_frequency.setter
-	def radio_frequency(self,frequency):
-		while self.transceiver_ready==_B:sleep_ms(10)
-		if frequency==915:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,228);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,192);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=915
-		elif frequency==918:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,229);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,128);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=918
-		elif frequency==922:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,230);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,128);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=922
-		elif frequency==925:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,231);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,64);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=925
-		elif frequency==928:sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMSB,232);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFMID,0);sleep_ms(5);self.set_rfm69_register(_RFM69_REG_FRFLSB,0);sleep_ms(5);self._radio_frequency=928
-		else:print(' * frequency not supported')
-	@property
-	def speed(self):return self._speed
-	@speed.setter
-	def speed(self,speed):
-		if speed==1:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,13);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,5);sleep_ms(10);self._speed=1
-		elif speed==2:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,1);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,22);sleep_ms(10);self._speed=2
-		elif speed==3:sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATEMSB,0);sleep_ms(10);self.set_rfm69_register(_RFM69_REG_BITRATELSB,107);sleep_ms(10);self._speed=3
-		else:print('* speed not valid')
-	@property
-	def _on(self):'Checks the radio state';self._read_int(_REG_RFM69_RADIO_STATE,1);sleep_ms(5)
+	def _on(self):' Checks the radio state ';self._read_int(_REG_RFM69_RADIO_STATE,1);sleep_ms(5)
 	@_on.setter
-	def _on(self,val):'Turns the radio on';sleep_ms(5);self._write_int(_REG_RFM69_RADIO_STATE,1);sleep_ms(5)
+	def _on(self,val):' Turns the radio on ';sleep_ms(5);self._write_int(_REG_RFM69_RADIO_STATE,1);sleep_ms(5)
 	@property
-	def _off(self):'Checks the radio state';self._read_int(_REG_RFM69_RADIO_STATE,0);sleep_ms(5)
+	def _off(self):' Checks the radio state ';self._read_int(_REG_RFM69_RADIO_STATE,0);sleep_ms(5)
 	@_off.setter
-	def _off(self,val):'Turns the radio off';sleep_ms(5);self._write_int(_REG_RFM69_RADIO_STATE,0);sleep_ms(5)
+	def _off(self,val):' Turns the radio off ';sleep_ms(5);self._write_int(_REG_RFM69_RADIO_STATE,0);sleep_ms(5)
 	@property
-	def address(self):'Returns the currently configured 7-bit I2C address';return self._address
+	def address(self):' Returns the currently configured 7-bit I2C address ';return self._address
 	@property
-	def led(self):'Returns the state onboard "Power" LED. `True` / `False`';return bool(self._read_int(_REG_LED))
+	def led(self):' Returns the state onboard "Power" LED. `True` / `False` ';return bool(self._read_int(_REG_LED))
 	@led.setter
-	def led(self,x):'control the state onboard "Power" LED. accepts `True` / `False`';self._write_int(_REG_LED,int(x))
+	def led(self,x):' control the state onboard "Power" LED. accepts `True` / `False` ';self._write_int(_REG_LED,int(x))
 	@property
-	def whoami(self):'returns the device identifier';return self._read_int(_REG_WHOAMI,2)
+	def whoami(self):' Returns the device identifier ';return self._read_int(_REG_WHOAMI,2)
 	@property
-	def firmware(self):'Returns the firmware version';v=[0,0];v[1]=self._read_int(_REG_FIRM_MAJ);v[0]=self._read_int(_REG_FIRM_MIN);return v[1],v[0]
-	def setI2Caddr(self,newAddr):x=int(newAddr);assert 8<=x<=119,'address must be >=0x08 and <=0x77';self._write_int(_REG_I2C_ADDRESS,x);self._address=x;sleep_ms(5);return 0
+	def firmware(self):' Returns the firmware version ';v=[0,0];v[1]=self._read_int(_REG_FIRM_MAJ);v[0]=self._read_int(_REG_FIRM_MIN);return v[1],v[0]
+	def setI2Caddr(self,newAddr):' Set a new I2C address ';x=int(newAddr);assert 8<=x<=119,'address must be >=0x08 and <=0x77';self._write_int(_REG_I2C_ADDRESS,x);self._address=x;sleep_ms(5);return 0
 	@property
-	def transceiver_ready(self):return bool(self._read_int(_REG_TRANSCEIVER_READY))
+	def transceiver_ready(self):' Check is the transceiver is ready to receive data ';return bool(self._read_int(_REG_TRANSCEIVER_READY))
