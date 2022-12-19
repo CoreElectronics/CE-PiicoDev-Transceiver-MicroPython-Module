@@ -53,7 +53,7 @@ class PiicoDev_Transceiver:
 		self._write_int(_REG_RFM69_NODE_ID,radio_address,2)
 		if self.debug:sleep_ms(3000)
 		while self.transceiver_ready==_B:sleep_ms(10)
-		self._write_int(_REG_RFM69_NETWORK_ID,channel);self.rssi=0;self.type=0;self.message='';self.key='';self.value=_A;self.receive_bytes=b'';self.source_radio_address=0;self.radio_frequency=radio_frequency;self.speed=speed;self.tx_power=tx_power
+		self._write_int(_REG_RFM69_NETWORK_ID,channel);self.rssi=0;self.type=0;self.message='';self.key='';self.value=_A;self.received_bytes=b'';self.source_radio_address=0;self.radio_frequency=radio_frequency;self.speed=speed;self.tx_power=tx_power
 		try:
 			if self.whoami!=_DEVICE_ID:print('* Incorrect device found at address {}'.format(address))
 		except:print("* Couldn't find a device - check switches and wiring")
