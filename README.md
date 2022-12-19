@@ -161,7 +161,7 @@ Tx Position = Rx Position - 2
 | Name                      | Rx Position | Bytes | Range        | Description
 | ------------------------- | ----------- | ----- | ------------ | -----------
 | rssi                      | 0           | 1     | 0 to 255     | RSSI (module negates the value)
-| source_radio_address      | 1           | 1     | 0 to 127   | Source Radio Address
+| source_radio_address      | 1           | 2     | 0 to 127   | Source Radio Address
 | type                      | 3           | 1     | 0 - 3        | Type of message (0: invalid, 1: key, int, 2: key, float, 3: message string)
 
 If the type is 1 or 2:
