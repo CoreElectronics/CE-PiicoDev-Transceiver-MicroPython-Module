@@ -1,9 +1,7 @@
 from PiicoDev_Radio import PiicoDev_Radio
 from PiicoDev_Unified import sleep_ms
 
-radio = PiicoDev_Radio()   # Initialise the Radio module
-
-
+radio = PiicoDev_Transceiver()   # Initialise the Radio module
 
 i=0
 
