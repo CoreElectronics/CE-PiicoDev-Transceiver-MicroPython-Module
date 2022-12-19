@@ -131,11 +131,11 @@ class PiicoDev_Transceiver:
 		if isinstance(value,float):type=2;message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-6];format_characters='>BfB'+str(len(message_string))+A;data=pack(format_characters,type,value,len(message_string),bytes(message_string,_D))
 		if value is _A:type=3;message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-2];format_characters='>BB'+str(len(message_string))+A;data=pack(format_characters,type,len(message_string),bytes(message_string,_D))
 		self.send_payload(data)
-	def send_byte(self,value):data=pack('B',value);self.send_payload(data)
-	def receive_byte(self):
-		data=0;payload=self.receive_payload()
-		if payload!=0:data=int.from_bytes(payload,_C)
-		return data
+	def send_bytes(self,data,address=0):self.destination_radio_address=address;self.send_payload(data)
+	def receive_bytes(self):
+		payload_length,payload=self.receive_payload()
+		if payload_length!=0:payload_bytes=bytes(payload);self.rssi=-int.from_bytes(payload_bytes[:1],_C);self.source_radio_address=int.from_bytes(payload_bytes[1:3],_C);self.received_bytes=payload_bytes[3:];return True
+		return _B
 	def get_rfm69_register(self,register):self._write_int(_REG_RFM69_REG,register);return self._read_int(_REG_RFM69_VALUE)
 	def set_rfm69_register(self,register,value):self._write_int(_REG_RFM69_REG,register);self._write_int(_REG_RFM69_VALUE,value)
 	@property
