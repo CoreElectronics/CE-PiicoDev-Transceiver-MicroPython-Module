@@ -93,26 +93,52 @@ Resets the radio.
 
 Sends a message string.
 
-#### Examples
+Examples:
 
-`radio.send('Hello')`
+``` Python
+radio.send('Hello')
 
-`radio.send('TempC', 25.0)`
+radio.send('TempC', 25.0)
 
-`radio.send('Counter', 9)`
+radio.send('Counter', 9)
 
-`radio.send('secret', radio_address=7)`
+radio.send('secret', radio_address=7)
+```
 
 ### `.receive()`
 
 Checks for a new message.
 
+Examples:
 ``` Python
 if radio.receive():
     if (radio.type == 3): 
         print(radio.message)
     else:
         print(radio.name, radio.value)
+```
+
+### `.send_bytes`
+
+For more advanced users, send up to 60 bytes.
+
+Example:
+
+``` Python
+    data = pack('>i', value)
+    radio.send_bytes(data, address=2)
+```
+
+### `.receive_bytes`
+
+For more advanced users, send up to 60 bytes.
+
+Example:
+
+``` Python
+if radio.receive_bytes():
+    value = unpack('>i', radio.received_bytes)[0]
+    print(value)
 ```
 
 ### Set or Get RFM69 Register Values
@@ -161,9 +187,9 @@ If the type is 3:
 | LED               | 0x05/0x85 | 1      | R/W  | 1                | 0=OFF, 1=ON
 | Tx Power          | 0x13/0x93 | 1      | R/W  |                  | -2 to +20 dBm
 | RFM69 Radio State | 0x14/0x94 | 1      | R/W  | 0                | 0=OFF, 1=ON
-| RFM69 Node ID     | 0x15/0x95 | 2      | R/W  | 1                | 
-| RFM69 Network ID  | 0x16/0x96 | 1      | R/W  | 0                | 
-| RFM69 To Node ID  | 0x17/0x97 | 2      | R/W  | 0                | 
+| RFM69 Node ID     | 0x15/0x95 | 2      | R/W  | 1                | Corresponds to Radio Address
+| RFM69 Network ID  | 0x16/0x96 | 1      | R/W  | 0                | Corresponds to Channel
+| RFM69 To Node ID  | 0x17/0x97 | 2      | R/W  | 0                | Corresponds to Destination Radio Address
 | RFM69 Reg         | 0x98      | 1      | W    | N/A              | To read or write to a register in the RFM69, write the address of interest to this register then read or write the value to _RFM69 Value_ Register
 | RFM69 Value       | 0x19/0x99 | 1      | R/W  | N/A              | To read or write to a register in the RFM69, write the address of interest to _RFM69 Reg_ Register then read or write the value this register
 | RFM69 Reset       | 0xA0      | 1      | W    | 0                | Set to 1 to reset

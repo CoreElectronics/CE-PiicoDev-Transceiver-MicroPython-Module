@@ -255,16 +255,19 @@ class PiicoDev_Transceiver(object):
             data = pack(format_characters, type, len(message_string), bytes(message_string, 'utf8'))
         self.send_payload(data)
         
-    def send_byte(self, value):
-        data = pack('B', value)
+    def send_bytes(self, data, address=0):
+        self.destination_radio_address = address
         self.send_payload(data)
         
-    def receive_byte(self):
-        data = 0
-        payload = self.receive_payload()
-        if payload != 0:
-            data = int.from_bytes(payload,"big")
-        return data
+    def receive_bytes(self):
+        payload_length, payload = self.receive_payload()
+        if payload_length != 0:
+            payload_bytes = bytes(payload)
+            self.rssi = -int.from_bytes(payload_bytes[:1], 'big')
+            self.source_radio_address = int.from_bytes(payload_bytes[1:3], 'big')
+            self.received_bytes = payload_bytes[3:]
+            return True
+        return False
     
     def get_rfm69_register(self, register):
         self._write_int(_REG_RFM69_REG, register)
