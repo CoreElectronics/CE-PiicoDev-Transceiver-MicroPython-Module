@@ -15,16 +15,10 @@ radio.speed = 2
 
 while True:
     if radio.receive():
-        print('received something')
-#         print(" RSSI:" + str(radio.rssi))
-#         print("Source Radio Address:" + str(radio.source_radio_address))
-#         print("Message Type:" + str(radio.type))
-#         print("Value:" + str(radio.value))
-#         print("Key:" + str(radio.key))
         if radio.type == 3:
-            print(str(radio.source_radio_address)+':'+str(radio.type)+':'+str(radio.message) + " RSSI:" + str(radio.rssi))
-            radio.send(radio.message)
+            print('Source Address' + str(radio.source_radio_address)+':'+str(radio.type)+':'+str(radio.message) + " RSSI:" + str(radio.rssi))
+            radio.send(radio.message, address=radio.source_radio_address)
         else:
-            print(str(radio.source_radio_address)+':'+str(radio.type)+':'+str(radio.value) + ':' + str(radio.key) + " RSSI:" + str(radio.rssi))
-            radio.send(radio.key, radio.value)
+            print('Source Address' + str(radio.source_radio_address)+':'+str(radio.type)+':'+str(radio.value) + ':' + str(radio.key) + " RSSI:" + str(radio.rssi))
+            radio.send(radio.key, radio.value, address=radio.source_radio_address)
     sleep_ms(5)
