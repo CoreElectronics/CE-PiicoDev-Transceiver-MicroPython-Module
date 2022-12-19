@@ -1,7 +1,7 @@
 from PiicoDev_Transceiver import PiicoDev_Transceiver
 from PiicoDev_Unified import sleep_ms
 
-radio = PiicoDev_Transceiver(radio_address=2, speed=1, channel=0)
+radio = PiicoDev_Transceiver(radio_address=2, speed=2, channel=0)
 
 firmware = radio.firmware
 print('ID:             ' + str(radio.whoami))
@@ -9,9 +9,6 @@ print('Firmware:       ' + str(firmware[0]) + '.' + str(firmware[1]))
 print('Tx Power:       ' + str(int(radio.tx_power)))
 print('Radio Address   ' + str(radio.radio_address))
 print('Channel:        ' + str(radio.channel))
-
-radio.tx_power = 20
-radio.speed = 2
 
 while True:
     if radio.receive():
