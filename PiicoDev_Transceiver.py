@@ -88,7 +88,7 @@ class PiicoDev_Transceiver(object):
         self.message = ''
         self.key = ''
         self.value = None
-        self.receive_bytes = b''
+        self.received_bytes = b''
         self.source_radio_address = 0
         self.radio_frequency = radio_frequency
         self.speed = speed
