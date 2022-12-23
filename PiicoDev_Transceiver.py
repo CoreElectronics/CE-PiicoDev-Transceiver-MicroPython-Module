@@ -311,36 +311,39 @@ class PiicoDev_Transceiver(object):
     
     def send(self, *args, address=0):
         """ Sends a message """
+        data = args[0]
         message_string = ''
-        if isinstance(args[0], str): message_string = args[0]
-        if len(args) == 2:
-            value = args[1]
+        type=3 # assume sending a string message to begin
+        if isinstance(data, str): message_string = data
+        elif isinstance(data, tuple):
+            message_string = data[0]
+            value = data[1]
             if isinstance(value, int): type = 1
             else: type = 2
-        else: # sending a simple message only
-            type=3 # assume sending a string message
-            if isinstance(args[0], int):
-                value = args[0]
+        else: # sending int or float message only
+            if isinstance(data, int):
+                value = data
                 type=1
-            if isinstance(args[0], float):
-                value = args[0]
+            if isinstance(data, float):
+                value = data
                 type=2
-                
         self._destination_radio_address = address
         sleep_ms(8)
 
-        if type == 1: 
-            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-6)]
-            format_characters = '>BiB' + str(len(message_string)) + 's'
-            data = pack(format_characters, type, value, len(message_string), bytes(message_string, 'utf8'))
-        if type == 2:
-            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-6)]
-            format_characters = '>BfB' + str(len(message_string)) + 's'
-            data = pack(format_characters, type, value, len(message_string), bytes(message_string, 'utf8'))
         if type == 3:
             message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-2)]
             format_characters = '>BB' + str(len(message_string)) + 's'
             data = pack(format_characters, type, len(message_string), bytes(message_string, 'utf8'))
+        
+        else:
+            message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-6)]
+            if type == 1:
+                value_format = '>BiB'
+            if type == 2:
+                value_format = '>BfB'
+            format_characters = value_format + str(len(message_string)) + 's'
+            data = pack(format_characters, type, value, len(message_string), bytes(message_string, 'utf8'))
+        
         self._send_payload(data)
     
     def receive(self):

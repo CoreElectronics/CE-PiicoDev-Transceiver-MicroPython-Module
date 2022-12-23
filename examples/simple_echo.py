@@ -5,6 +5,8 @@ radio = PiicoDev_Transceiver()
 
 while True:
     if radio.receive():
-        print(radio.message)
+        message = radio.message
+        print(message)
+        radio.send(message) # echo back the same message
 
     sleep_ms(50)
