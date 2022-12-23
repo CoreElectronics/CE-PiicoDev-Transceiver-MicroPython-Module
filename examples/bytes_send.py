@@ -5,20 +5,17 @@
 # unpack() the data using the same format string.
 
 from PiicoDev_Transceiver import PiicoDev_Transceiver
-from PiicoDev_Unified import sleep_ms
 from struct import *
 
 radio = PiicoDev_Transceiver()
 
-# pack format string: ">bHlf9s"
-# > = force big-endian byte orderd
-# b = signed char (1 byte)
-# H = unsigned short (2 bytes)
-# l = signed long (4 bytes)
-# f = float (4 bytes).
-# 9s = string with 9 characters
+# pack format string: ">blf9s"
+# > forces big-endian byte order
+# b is a signed char (1 byte)
+# l is a signed long (4 bytes)
+# f is a float (4 bytes).
+# 9s is a 9-character string
 # For more information, refer to: https://docs.python.org/3/library/struct.html
 
-data = pack(">bHlf9s", -127, 65535, 2_147_483_647, 3.14159265359, 'a string!')
+data = pack(">blf9s", -127, 2_147_483_647, 3.14159265359, 'a string!')
 radio.send_bytes(data)
-sleep_ms(6)

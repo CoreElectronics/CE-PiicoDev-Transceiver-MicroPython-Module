@@ -13,11 +13,10 @@ radio = PiicoDev_Transceiver()
 
 while True:
     if radio.receive_bytes():
-        b,H,l,f, message = unpack('>bHlf9s', radio.received_bytes)
+        b,l,f, message = unpack('>blf9s', radio.received_bytes)
         print("signed char... : ", b)
-        print("unsigned short : " , H)
         print("long.......... : ", l)
         print("float......... : ", f)
         print("string........ : ", message)
         print("")
-    sleep_ms(5)
+    sleep_ms(50)
