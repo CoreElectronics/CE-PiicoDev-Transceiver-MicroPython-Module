@@ -309,22 +309,35 @@ class PiicoDev_Transceiver(object):
         """ There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino"""
         return self._read_int(_REG_RFM69_NODE_ID, 2)
     
-    def send(self, message_string, value=None, address=0):
+    def send(self, *args, address=0):
         """ Sends a message """
+        message_string = ''
+        if isinstance(args[0], str): message_string = args[0]
+        if len(args) == 2:
+            value = args[1]
+            if isinstance(value, int): type = 1
+            else: type = 2
+        else: # sending a simple message only
+            type=3 # assume sending a string message
+            if isinstance(args[0], int):
+                value = args[0]
+                type=1
+            if isinstance(args[0], float):
+                value = args[0]
+                type=2
+                
         self._destination_radio_address = address
         sleep_ms(8)
-        if isinstance(value, int):
-            type = 1
+
+        if type == 1: 
             message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-6)]
             format_characters = '>BiB' + str(len(message_string)) + 's'
             data = pack(format_characters, type, value, len(message_string), bytes(message_string, 'utf8'))
-        if isinstance(value, float):
-            type = 2
+        if type == 2:
             message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-6)]
             format_characters = '>BfB' + str(len(message_string)) + 's'
             data = pack(format_characters, type, value, len(message_string), bytes(message_string, 'utf8'))
-        if value is None:
-            type = 3
+        if type == 3:
             message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-2)]
             format_characters = '>BB' + str(len(message_string)) + 's'
             data = pack(format_characters, type, len(message_string), bytes(message_string, 'utf8'))
@@ -342,9 +355,13 @@ class PiicoDev_Transceiver(object):
                 if self.type == 1:
                     self.key = str(payload_bytes[9:], 'utf8')
                     self.value = unpack('>i', (payload_bytes[4:8]))[0]
+                    if self.key == '': self.message = self.value
+                    else: self.message = (self.key, self.value)
                 if self.type == 2:
                     self.key = str(payload_bytes[9:], 'utf8')
                     self.value = unpack('>f', (payload_bytes[4:8]))[0]
+                    if self.key == '': self.message = self.value
+                    else: self.message = (self.key, self.value)
                 if self.type == 3:
                     self.message = str(payload_bytes[5:], 'utf8')
             except:
