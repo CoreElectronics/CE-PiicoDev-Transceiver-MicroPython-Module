@@ -97,9 +97,11 @@ Examples:
 
 ``` Python
 radio.send('Hello')
-radio.send('TempC', 25.0)
+radio.send('TempC', 25.1)
 radio.send('Counter', 9)
 radio.send('secret', radio_address=7)
+radio.send(123)
+radio.send(123.4)
 ```
 
 ### `.receive()`
@@ -108,11 +110,11 @@ Checks for a new message.
 
 Examples:
 ``` Python
-if radio.receive():
-    if (radio.type == 3): 
-        print(radio.message)
-    else:
-        print(radio.name, radio.value)
+while True:
+    if radio.receive():
+        message = radio.message
+        print(message)
+        radio.send(message) # echo back the same message
 ```
 
 ### `.send_bytes()`

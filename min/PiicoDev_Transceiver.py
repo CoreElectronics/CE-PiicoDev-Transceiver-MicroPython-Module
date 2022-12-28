@@ -134,19 +134,35 @@ class PiicoDev_Transceiver:
 	def channel(self):' There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino';return self._read_int(_REG_RFM69_NETWORK_ID)
 	@property
 	def radio_address(self):' There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino';return self._read_int(_REG_RFM69_NODE_ID,2)
-	def send(self,message_string,value=_A,address=0):
-		' Sends a message ';A='s';self._destination_radio_address=address;sleep_ms(8)
-		if isinstance(value,int):type=1;message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-6];format_characters='>BiB'+str(len(message_string))+A;data=pack(format_characters,type,value,len(message_string),bytes(message_string,_D))
-		if isinstance(value,float):type=2;message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-6];format_characters='>BfB'+str(len(message_string))+A;data=pack(format_characters,type,value,len(message_string),bytes(message_string,_D))
-		if value is _A:type=3;message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-2];format_characters='>BB'+str(len(message_string))+A;data=pack(format_characters,type,len(message_string),bytes(message_string,_D))
+	def send(self,*args,address=0):
+		' Sends a message ';A='s';message_string=''
+		if isinstance(args[0],str):message_string=args[0]
+		if len(args)==2:
+			value=args[1]
+			if isinstance(value,int):type=1
+			else:type=2
+		else:
+			type=3
+			if isinstance(args[0],int):value=args[0];type=1
+			if isinstance(args[0],float):value=args[0];type=2
+		self._destination_radio_address=address;sleep_ms(8)
+		if type==1:message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-6];format_characters='>BiB'+str(len(message_string))+A;data=pack(format_characters,type,value,len(message_string),bytes(message_string,_D))
+		if type==2:message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-6];format_characters='>BfB'+str(len(message_string))+A;data=pack(format_characters,type,value,len(message_string),bytes(message_string,_D))
+		if type==3:message_string=message_string[:_MAXIMUM_PAYLOAD_LENGTH-2];format_characters='>BB'+str(len(message_string))+A;data=pack(format_characters,type,len(message_string),bytes(message_string,_D))
 		self._send_payload(data)
 	def receive(self):
 		" If a new message has arrived, populate the class's variables and return a True ";payload_length,payload=self._receive_payload()
 		if payload_length!=0:
 			payload_bytes=bytes(payload);self.rssi=-int.from_bytes(payload_bytes[:1],_C);self.source_radio_address=int.from_bytes(payload_bytes[1:3],_C);self.type=int.from_bytes(payload_bytes[3:4],_C)
 			try:
-				if self.type==1:self.key=str(payload_bytes[9:],_D);self.value=unpack('>i',payload_bytes[4:8])[0]
-				if self.type==2:self.key=str(payload_bytes[9:],_D);self.value=unpack('>f',payload_bytes[4:8])[0]
+				if self.type==1:
+					self.key=str(payload_bytes[9:],_D);self.value=unpack('>i',payload_bytes[4:8])[0]
+					if self.key=='':self.message=self.value
+					else:self.message=self.key,self.value
+				if self.type==2:
+					self.key=str(payload_bytes[9:],_D);self.value=unpack('>f',payload_bytes[4:8])[0]
+					if self.key=='':self.message=self.value
+					else:self.message=self.key,self.value
 				if self.type==3:self.message=str(payload_bytes[5:],_D)
 			except:print('* error parsing payload')
 			return True
