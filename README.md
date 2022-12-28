@@ -25,7 +25,7 @@ There are three message types that can be sent
 
 ## Initialisation
 
-### `PiicoDev_Transceiver(bus=, freq=, sda=, scl=, address=0x1A, id=, channel=0, radio_address=1, speed=2, radio_frequency=922, tx_power=20, suppress_warnings=False)`
+### `PiicoDev_Transceiver(bus=, freq=, sda=, scl=, address=0x1A, id=, group=0, radio_address=1, speed=2, radio_frequency=922, tx_power=20, suppress_warnings=False)`
 
 | Parameter         | Type                     | Range             | Default                               | Description
 | ----------------- | ------------------------ | ----------------- | ------------------------------------- | -----------
@@ -35,8 +35,8 @@ There are three message types that can be sent
 | scl               | Pin                      | Device Dependent  | Device Dependent                      | I2C SCL Pin. Implemented on Raspberry Pi Pico only.
 | address           | int                      | 0x1A, 0x08 - 0x77 | 0x1A                                  | Manually specify the address of the connected device. For when a software address is set on the device.
 | id                | List[int, int, int, int] | 1=ON, 0=OFF       | [0,0,0,0]                             | Hardware switches change the device address - Abstracts the need for user to look up an address, simply input the switch positions. Alternatively, use `address` for explicit address.
-| channel           | int                      | 0 - 255           | 0                                     | Defines an arbitrary "channel" to which the radio is tuned. Messages will be sent via this channel and only messages received via this channel will shown.
-| radio_adddress    | int                      | 0 - 127           | 1                                     | Used to filter incoming packets, keeping only those that match the address you set.
+| group             | int                      | 0 - 255           | 0                                     | Defines an arbitrary "group" to which the radio is tuned. Messages will be sent via this group and only messages received via this group will shown.
+| radio_adddress    | int                      | 0 - 127           | 0                                     | Used to filter incoming packets, keeping only those that match the address you set.
 | speed             | int                      | 1, 2, 3           | 2                                     | See `.speed` property for more information.
 | radio_frequency   | int                      | 915, 918, 922, 925, 928 | 922                             | See `.radio_frequency` property for more information.
 | tx_power          | int                      | -2 to 20 dB       | 20                                    | See `.tx_power` property for more information.
@@ -193,7 +193,7 @@ If the type is 3:
 | Tx Power          | 0x13/0x93 | 1      | R/W  |                  | -2 to +20 dBm
 | RFM69 Radio State | 0x14/0x94 | 1      | R/W  | 0                | 0=OFF, 1=ON
 | RFM69 Node ID     | 0x15/0x95 | 2      | R/W  | 1                | Corresponds to Radio Address
-| RFM69 Network ID  | 0x16/0x96 | 1      | R/W  | 0                | Corresponds to Channel
+| RFM69 Network ID  | 0x16/0x96 | 1      | R/W  | 0                | Corresponds to group
 | RFM69 To Node ID  | 0x17/0x97 | 2      | R/W  | 0                | Corresponds to Destination Radio Address
 | RFM69 Reg         | 0x98      | 1      | W    | N/A              | To read or write to a register in the RFM69, write the address of interest to this register then read or write the value to _RFM69 Value_ Register
 | RFM69 Value       | 0x19/0x99 | 1      | R/W  | N/A              | To read or write to a register in the RFM69, write the address of interest to _RFM69 Reg_ Register then read or write the value this register

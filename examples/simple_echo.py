@@ -1,7 +1,7 @@
 from PiicoDev_Transceiver import PiicoDev_Transceiver
 from PiicoDev_Unified import sleep_ms
 
-radio = PiicoDev_Transceiver()
+radio = PiicoDev_Transceiver(group=0)
 
 while True:
     if radio.receive():

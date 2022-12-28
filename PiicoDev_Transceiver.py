@@ -46,7 +46,7 @@ def _set_bit(x, n):
     return x | (1 << n)
 
 class PiicoDev_Transceiver(object):
-    def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None, channel=0, radio_address=1, speed=2, radio_frequency=922, tx_power=20, suppress_warnings=False, debug=False):
+    def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None, group=0, radio_address=0, speed=2, radio_frequency=922, tx_power=20, suppress_warnings=False, debug=False):
         try:
             if compat_ind >= 1:
                 pass
@@ -64,10 +64,10 @@ class PiicoDev_Transceiver(object):
             radio_address = 0
         if radio_address > 127: # Only 7 bits seem to go over the air so any address higher than 127 gives an incorrect source address
             radio_address = 127
-        if channel < 0:
-            channel = 0
-        if channel > 255:
-            channel = 255
+        if group < 0:
+            group = 0
+        if group > 255:
+            group = 255
         self.debug=debug
         if self.debug:
             print('start updating radio')
@@ -78,7 +78,7 @@ class PiicoDev_Transceiver(object):
             sleep_ms(3000)
         while self.transceiver_ready == False:
             sleep_ms(10)
-        self._write_int(_REG_RFM69_NETWORK_ID, channel)
+        self._write_int(_REG_RFM69_NETWORK_ID, group)
         self.rssi = 0
         self.type = 0
         self.message = ''
@@ -300,7 +300,7 @@ class PiicoDev_Transceiver(object):
         self._write(_REG_TX_POWER, pack('b',value))
     
     @property
-    def channel(self):
+    def group(self):
         """ There is no setter because we only want to set when initialising because changing this will trigger a re-initialise in the arduino"""
         return self._read_int(_REG_RFM69_NETWORK_ID)
     
@@ -334,7 +334,6 @@ class PiicoDev_Transceiver(object):
             message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-2)]
             format_characters = '>BB' + str(len(message_string)) + 's'
             data = pack(format_characters, type, len(message_string), bytes(message_string, 'utf8'))
-        
         else:
             message_string = message_string[:(_MAXIMUM_PAYLOAD_LENGTH-6)]
             if type == 1:

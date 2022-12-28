@@ -7,22 +7,24 @@ from PiicoDev_Unified import sleep_ms
 
 radio = PiicoDev_Transceiver()
 
-### Send text messages
+# Text messages
 radio.send("Hello, World!")
 sleep_ms(1000)
 
-### Send numeric values (integer and floating point accepted)
+# Numbers (integer or floating point)
 radio.send(123)
 sleep_ms(1000)
 
-### Send named values. Useful for labelling data from different sources
+# Named Values
 named_data = ('temperature[degC]', 25.0)
 radio.send(named_data)
 sleep_ms(100)
 
-named_data = ('pressure[kPa]', 101.325)
+named_data = ('humidity[%]', 60.0)
 radio.send(named_data)
 sleep_ms(1000)
+
+
 
 ### Demo: Generate and send a sine wave
 from math import sin
