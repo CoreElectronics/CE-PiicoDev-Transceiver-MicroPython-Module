@@ -3,7 +3,8 @@ _C='big'
 _B=False
 _A=None
 from PiicoDev_Unified import *
-from struct import *
+try:from ustruct import pack,unpack
+except:from struct import pack,unpack
 compat_str='\nUnified PiicoDev library out of date.  Get the latest module: https://piico.dev/unified \n'
 _BASE_ADDRESS=26
 _DEVICE_ID=495
@@ -35,14 +36,14 @@ _MAXIMUM_I2C_SIZE=32
 def truncate(n,decimals=0):multiplier=10**decimals;return int(n*multiplier)/multiplier
 def _set_bit(x,n):return x|1<<n
 class PiicoDev_Transceiver:
-	def __init__(self,bus=_A,freq=_A,sda=_A,scl=_A,address=_BASE_ADDRESS,id=_A,group=0,radio_address=0,speed=2,radio_frequency=922,tx_power=20,suppress_warnings=_B,debug=_B):
+	def __init__(self,bus=_A,freq=_A,sda=_A,scl=_A,i2c_address=_BASE_ADDRESS,id=_A,group=0,radio_address=0,speed=2,radio_frequency=922,tx_power=20,suppress_warnings=_B,debug=_B):
 		try:
 			if compat_ind>=1:0
 			else:print(compat_str)
 		except:print(compat_str)
-		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl,suppress_warnings=suppress_warnings);self._address=address
+		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl,suppress_warnings=suppress_warnings);self._address=i2c_address
 		if type(id)is list and not all((v==0 for v in id)):assert max(id)<=1 and min(id)>=0 and len(id)==4,'id must be a list of 1/0, length=4';self._address=8+id[0]+2*id[1]+4*id[2]+8*id[3]
-		else:self._address=address
+		self.led=True
 		if radio_address<0:radio_address=0
 		if radio_address>127:radio_address=127
 		if group<0:group=0
