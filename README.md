@@ -89,7 +89,7 @@ Turns the radio on.
 
 Resets the radio.
 
-### `.send(message, value, destination radio address)`
+### `.send(message, destination radio address)`
 
 Sends a message string.
 
@@ -97,8 +97,8 @@ Examples:
 
 ``` Python
 radio.send('Hello')
-radio.send('TempC', 25.1)
-radio.send('Counter', 9)
+radio.send(('TempC', 25.1))
+radio.send(('Counter', 9))
 radio.send('secret', radio_address=7)
 radio.send(123)
 radio.send(123.4)
