@@ -25,7 +25,7 @@ There are three message types that can be sent
 
 ## Initialisation
 
-### `PiicoDev_Transceiver(bus=, freq=, sda=, scl=, address=0x1A, id=, group=0, radio_address=1, speed=2, radio_frequency=922, tx_power=20, suppress_warnings=False)`
+### `PiicoDev_Transceiver(bus=, freq=, sda=, scl=, i2c_address=0x1A, id=, group=0, radio_address=1, speed=2, radio_frequency=922, tx_power=20, suppress_warnings=False)`
 
 | Parameter         | Type                     | Range             | Default                               | Description
 | ----------------- | ------------------------ | ----------------- | ------------------------------------- | -----------
@@ -33,7 +33,7 @@ There are three message types that can be sent
 | freq              | int                      | 100 to 1000000    | Device dependent                      | I2C Bus frequency (Hz). Ignored on Raspberry Pi.
 | sda               | Pin                      | Device Dependent  | Device Dependent                      | I2C SDA Pin. Implemented on Raspberry Pi Pico only.
 | scl               | Pin                      | Device Dependent  | Device Dependent                      | I2C SCL Pin. Implemented on Raspberry Pi Pico only.
-| address           | int                      | 0x1A, 0x08 - 0x77 | 0x1A                                  | Manually specify the address of the connected device. For when a software address is set on the device.
+| i2c_address       | int                      | 0x1A, 0x08 - 0x77 | 0x1A                                  | Manually specify the address of the connected device. For when a software address is set on the device.
 | id                | List[int, int, int, int] | 1=ON, 0=OFF       | [0,0,0,0]                             | Hardware switches change the device address - Abstracts the need for user to look up an address, simply input the switch positions. Alternatively, use `address` for explicit address.
 | group             | int                      | 0 - 255           | 0                                     | Defines an arbitrary "group" to which the radio is tuned. Messages will be sent via this group and only messages received via this group will shown.
 | radio_adddress    | int                      | 0 - 127           | 0                                     | Used to filter incoming packets, keeping only those that match the address you set.
