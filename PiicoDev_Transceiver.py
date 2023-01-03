@@ -3,7 +3,10 @@
 # 2022-10-19: Initial release
 
 from PiicoDev_Unified import *
-from struct import *
+try:
+    from ustruct import pack, unpack
+except:
+    from struct import pack, unpack
 
 compat_str = '\nUnified PiicoDev library out of date.  Get the latest module: https://piico.dev/unified \n'
 
@@ -46,7 +49,7 @@ def _set_bit(x, n):
     return x | (1 << n)
 
 class PiicoDev_Transceiver(object):
-    def __init__(self, bus=None, freq=None, sda=None, scl=None, address=_BASE_ADDRESS, id=None, group=0, radio_address=0, speed=2, radio_frequency=922, tx_power=20, suppress_warnings=False, debug=False):
+    def __init__(self, bus=None, freq=None, sda=None, scl=None, i2c_address=_BASE_ADDRESS, id=None, group=0, radio_address=0, speed=2, radio_frequency=922, tx_power=20, suppress_warnings=False, debug=False):
         try:
             if compat_ind >= 1:
                 pass
@@ -55,11 +58,11 @@ class PiicoDev_Transceiver(object):
         except:
             print(compat_str)
         self.i2c = create_unified_i2c(bus=bus, freq=freq, sda=sda, scl=scl, suppress_warnings=suppress_warnings)
-        self._address = address
+        self._address = i2c_address # accept an integer
         if type(id) is list and not all(v == 0 for v in id): # preference using the ID argument. ignore id if all elements zero
             assert max(id) <= 1 and min(id) >= 0 and len(id) == 4, "id must be a list of 1/0, length=4"
             self._address=8+id[0]+2*id[1]+4*id[2]+8*id[3] # select address from pool
-        else: self._address = address # accept an integer
+        self.led = True
         if radio_address < 0:
             radio_address = 0
         if radio_address > 127: # Only 7 bits seem to go over the air so any address higher than 127 gives an incorrect source address
