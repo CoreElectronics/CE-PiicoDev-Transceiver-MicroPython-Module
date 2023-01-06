@@ -1,4 +1,5 @@
-# Listen for any message and print to the shell
+# Listen for LED control messages
+# Valid messages set the state of the on-board LED
 
 from PiicoDev_Transceiver import PiicoDev_Transceiver
 from PiicoDev_Unified import sleep_ms
@@ -9,6 +10,7 @@ while True:
     if radio.receive():
         message = radio.message
         print(message)
-        radio.send(message) # echo back the same message - useful for debugging!
-
+        
+        if message == 'LED:ON': radio.led = True
+        if message == 'LED:OFF': radio.led = False
     sleep_ms(50)
